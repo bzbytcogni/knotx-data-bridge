@@ -16,14 +16,13 @@
 package io.knotx.databridge.adapter.http;
 
 import io.knotx.adapter.AbstractAdapterProxy;
-import io.knotx.adapter.common.http.HttpAdapterConfiguration;
 import io.knotx.adapter.common.http.HttpClientFacade;
-import io.knotx.dataobjects.AdapterRequest;
-import io.knotx.dataobjects.AdapterResponse;
-import io.knotx.dataobjects.ClientResponse;
 import io.knotx.databridge.adapter.http.cache.CacheableAdapterResponse;
 import io.knotx.databridge.adapter.http.cache.ResponseCache;
 import io.knotx.databridge.adapter.http.cache.StaleCache;
+import io.knotx.dataobjects.AdapterRequest;
+import io.knotx.dataobjects.AdapterResponse;
+import io.knotx.dataobjects.ClientResponse;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
@@ -42,9 +41,9 @@ public class DataSourceAdapterProxy extends AbstractAdapterProxy {
 
   private StaleCache<String, CacheableAdapterResponse> cache;
 
-  DataSourceAdapterProxy(Vertx vertx, DataSourceAdapterConfiguration conf) {
-    this.httpClientFacade = new HttpClientFacade(getWebClient(vertx, conf), conf);
-    this.cache = new ResponseCache(conf.getCacheSize(), conf.getCacheTtl());
+  DataSourceAdapterProxy(Vertx vertx, DataSourceAdapterOptions options) {
+    this.httpClientFacade = new HttpClientFacade(getWebClient(vertx, options), options);
+    this.cache = new ResponseCache(options.getCacheSize(), options.getCacheTtl());
   }
 
   @Override
@@ -97,10 +96,9 @@ public class DataSourceAdapterProxy extends AbstractAdapterProxy {
     return response;
   }
 
-  private WebClient getWebClient(Vertx vertx, HttpAdapterConfiguration configuration) {
-    JsonObject clientOptions = configuration.getClientOptions();
-    return clientOptions.isEmpty() ? WebClient.create(vertx) :
-        WebClient.create(vertx, new WebClientOptions(clientOptions));
+  private WebClient getWebClient(Vertx vertx, DataSourceAdapterOptions options) {
+    WebClientOptions clientOptions = options.getClientOptions();
+    return WebClient.create(vertx, new WebClientOptions(clientOptions));
   }
 
 }

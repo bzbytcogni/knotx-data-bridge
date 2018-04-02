@@ -1,0 +1,18 @@
+= Cheatsheets
+
+[[DataSourceAdapterOptions]]
+== DataSourceAdapterOptions
+
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[address]]`address`|`String`|-
+|[[cacheSize]]`cacheSize`|`Number (int)`|-
+|[[cacheTtl]]`cacheTtl`|`Number (int)`|-
+|[[clientOptions]]`clientOptions`|`link:dataobjects.html#WebClientOptions[WebClientOptions]`|-
+|[[customHttpHeader]]`customHttpHeader`|`link:dataobjects.html#CustomHttpHeader[CustomHttpHeader]`|-
+|[[services]]`services`|`Array of link:dataobjects.html#ServiceSettings[ServiceSettings]`|-
+|===
+

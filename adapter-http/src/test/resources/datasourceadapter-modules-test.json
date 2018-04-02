@@ -1,5 +1,31 @@
 {
   "modules": [
-    "knotx:test.io.knotx.databridge.adapter.http.DataSourceAdapter"
-  ]
+    "httpAdapter=java:io.knotx.databridge.adapter.http.DataSourceAdapter"
+  ],
+  "config": {
+    "httpAdapter": {
+      "options": {
+        "config": {
+          "address": "knotx.databridge.adapter.http",
+          "clientOptions": {
+            "maxPoolSize": 1000,
+            "keepAlive": false
+          },
+          "cacheTtl": 300,
+          "cacheSize": 1000,
+          "services": [
+            {
+              "path": "/content/.*",
+              "domain": "localhost",
+              "port": 4000,
+              "allowedRequestHeaders": [
+                "Content-Type",
+                "X-Server-Response-Control"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
 }

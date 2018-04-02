@@ -17,11 +17,18 @@ package io.knotx.databridge.adapter.http;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.runner.RunWith;
+
 import io.knotx.dataobjects.AdapterRequest;
 import io.knotx.dataobjects.AdapterResponse;
 import io.knotx.dataobjects.ClientRequest;
 import io.knotx.junit.rule.KnotxConfiguration;
-import io.knotx.junit.rule.Logback;
 import io.knotx.junit.rule.TestVertxDeployer;
 import io.knotx.reactivex.proxy.AdapterProxy;
 import io.reactivex.functions.Consumer;
@@ -40,19 +47,14 @@ import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.core.http.HttpServer;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.RuleChain;
-import org.junit.runner.RunWith;
+
 
 @RunWith(VertxUnitRunner.class)
 public class DataSourceAdapterTest {
 
   private static final String SERVER_RESPONSE_CONTROL_HEADER = "X-Server-Response-Control";
 
-  private final static String ADAPTER_ADDRESS = "datasource.adapter.http";
+  private final static String ADAPTER_ADDRESS = "knotx.databridge.adapter.http";
   private static final int SERVER_PORT = 4000;
 
   private static final String CORRECT_RESPONSE_JSON = "{\"data\":\"correct body\"}";
@@ -69,7 +71,7 @@ public class DataSourceAdapterTest {
 
   //Junit Rule, sets up logger, prepares verts, starts verticles according to the config (supplied in annotation of test method)
   @Rule
-  public RuleChain chain = RuleChain.outerRule(new Logback()).around(vertx).around(knotx);
+  public RuleChain chain = RuleChain.outerRule(vertx).around(knotx);
 
   /**
    * <pre>

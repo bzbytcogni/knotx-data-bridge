@@ -30,7 +30,7 @@ public class DataSourceAdapter extends AbstractVerticle {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataSourceAdapter.class);
 
-  private DataSourceAdapterConfiguration configuration;
+  private DataSourceAdapterOptions configuration;
 
   private MessageConsumer<JsonObject> consumer;
 
@@ -39,7 +39,7 @@ public class DataSourceAdapter extends AbstractVerticle {
   @Override
   public void init(Vertx vertx, Context context) {
     super.init(vertx, context);
-    this.configuration = new DataSourceAdapterConfiguration(config());
+    this.configuration = new DataSourceAdapterOptions(config());
   }
 
   @Override
