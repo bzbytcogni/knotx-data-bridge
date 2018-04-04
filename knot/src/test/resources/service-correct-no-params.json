@@ -1,0 +1,9 @@
+{
+  "services": [
+    {
+      "name" : "first-service",
+      "adapterAddress" : "knotx.core-adapter",
+      "cacheKey": "first"
+    }
+  ]
+}

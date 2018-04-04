@@ -1,0 +1,12 @@
+{
+  "services": [
+    {
+      "name" : "first-service",
+      "adapterAddress" : "knotx.core-adapter",
+      "params": {
+        "path": "/service/mock/first.json"
+      },
+      "cacheKey": "first"
+    }
+  ]
+}

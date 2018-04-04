@@ -11,3 +11,6 @@ rootProject.name = 'knotx-data-bridge'
 
 include ':adapter-http'
 project(':adapter-http').projectDir = "$rootDir/adapter-http" as File
+
+include ':data-bridge-knot'
+project(':data-bridge-knot').projectDir = "$rootDir/knot" as File
