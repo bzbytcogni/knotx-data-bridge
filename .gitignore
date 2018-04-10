@@ -82,3 +82,4 @@ bin/
 # Project specific   #
 ######################
 */out/*
+**/asciidoc/*

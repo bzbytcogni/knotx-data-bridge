@@ -7,10 +7,16 @@
  * in the user guide at https://docs.gradle.org/4.6/userguide/multi_project_builds.html
  */
 
+pluginManagement {
+  repositories {
+    jcenter()
+    maven { url "https://plugins.gradle.org/m2/" }
+  }
+}
+
 rootProject.name = 'knotx-data-bridge'
 
-include ':adapter-http'
-project(':adapter-http').projectDir = "$rootDir/adapter-http" as File
-
-include ':data-bridge-knot'
-project(':data-bridge-knot').projectDir = "$rootDir/knot" as File
+include 'data-source:api'
+include 'data-source:http'
+include 'data-source:http-stale'
+include 'core'

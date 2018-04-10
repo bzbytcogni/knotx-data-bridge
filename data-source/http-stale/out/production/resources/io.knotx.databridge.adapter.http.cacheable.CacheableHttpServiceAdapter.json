@@ -1,0 +1,21 @@
+{
+  "main": "io.knotx.databridge.datasource.http.cacheable.DataSourceAdapter",
+  "options": {
+    "config": {
+      "address": "knotx.knot.cacheablehttpserviceadapter",
+      "clientOptions": {
+        "maxPoolSize": 1000,
+        "setIdleTimeout": 600
+      },
+      "cacheTtl": 300,
+      "cacheSize": 1000,
+      "services": [
+        {
+          "path": "/content/.*",
+          "domain": "localhost",
+          "port": 8080
+        }
+      ]
+    }
+  }
+}

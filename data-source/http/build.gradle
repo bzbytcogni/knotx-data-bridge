@@ -1,0 +1,25 @@
+plugins {
+  id 'java'
+}
+
+apply from: "${rootProject.projectDir}/annotation-processing.gradle"
+
+compileJava {
+  targetCompatibility = 1.8
+  sourceCompatibility = 1.8
+
+  dependsOn annotationProcessing
+}
+
+sourceSets {
+  main {
+    java {
+      srcDirs += 'src/main/generated'
+    }
+  }
+}
+
+dependencies {
+  compile project(':data-source:api')
+}
+

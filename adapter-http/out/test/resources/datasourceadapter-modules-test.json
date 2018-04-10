@@ -1,5 +1,0 @@
-{
-  "modules": [
-    "knotx:test.io.knotx.databridge.adapter.http.DataSourceAdapter"
-  ]
-}
