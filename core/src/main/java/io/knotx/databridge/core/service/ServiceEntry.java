@@ -16,6 +16,7 @@
 package io.knotx.databridge.core.service;
 
 
+import io.knotx.databridge.core.attribute.DataSourceAttribute;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
@@ -42,8 +43,8 @@ public class ServiceEntry {
     this.params = serviceEntry.params.copy();
   }
 
-  public ServiceEntry(Attribute serviceAttribute, Attribute paramsAttribute) {
-    this.namespace = ServiceAttributeUtil.extractNamespace(serviceAttribute.getKey());
+  public ServiceEntry(DataSourceAttribute serviceAttribute, DataSourceAttribute paramsAttribute) {
+    this.namespace = serviceAttribute.getNamespace();
     this.name = serviceAttribute.getValue();
     this.params = getParams(paramsAttribute);
     this.cacheKey = String.format("%s|%s", getName(), getParams());
@@ -117,7 +118,7 @@ public class ServiceEntry {
     return Objects.hash(namespace, name, cacheKey, params);
   }
 
-  private JsonObject getParams(Attribute paramsAttribute) {
+  private JsonObject getParams(DataSourceAttribute paramsAttribute) {
     final JsonObject result;
     if (paramsAttribute == null || StringUtils.isEmpty(paramsAttribute.getValue())) {
       result = new JsonObject();

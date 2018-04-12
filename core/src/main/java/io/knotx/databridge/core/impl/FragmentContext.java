@@ -15,27 +15,24 @@
  */
 package io.knotx.databridge.core.impl;
 
+import com.google.common.base.MoreObjects;
+import io.knotx.databridge.core.attribute.DataSourceAttribute;
+import io.knotx.databridge.core.service.ServiceEntry;
+import io.knotx.dataobjects.Fragment;
+import io.reactivex.Observable;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import com.google.common.base.MoreObjects;
-
-import io.knotx.databridge.core.service.ServiceAttributeUtil;
-import io.knotx.databridge.core.service.ServiceEntry;
-import io.knotx.dataobjects.Fragment;
-import io.reactivex.Observable;
-
 public class FragmentContext {
 
-  private static final String DATA_SERVICE = "data-knotx-service.*";
-  private static final String DATA_PARAMS = "data-knotx-params.*";
+  private static final String DATA_SERVICE = "data-knotx-databridge-name.*";
+  private static final String DATA_PARAMS = "data-knotx-databridge-params.*";
 
   private Fragment fragment;
   List<ServiceEntry> services;
@@ -45,7 +42,8 @@ public class FragmentContext {
   }
 
   /**
-   * Factory method that creates context from the {@link Fragment}. All services and params are extracted to separate entries.
+   * Factory method that creates context from the {@link Fragment}. All services and params are
+   * extracted to separate entries.
    *
    * @param fragment - fragment from which the context will be created.
    * @return a FragmentContext that wraps given fragment.
@@ -56,30 +54,35 @@ public class FragmentContext {
 
     List<Attribute> attributes = scriptTag.attributes().asList();
 
-    Map<String, Attribute> serviceAttributes = attributes.stream()
+    Map<String, Attribute> dataSourceNameAttributes = attributes.stream()
         .filter(attribute -> attribute.getKey().matches(DATA_SERVICE))
         .collect(Collectors
-            .toMap(attribute -> ServiceAttributeUtil.extractNamespace(attribute.getKey()),
+            .toMap(attribute -> DataSourceAttribute.from(attribute).getNamespace(),
                 Function.identity()));
 
-    Map<String, Attribute> paramsAttributes = attributes.stream()
+    Map<String, Attribute> dataSourceParamsAttributes = attributes.stream()
         .filter(attribute -> attribute.getKey().matches(DATA_PARAMS))
         .collect(Collectors
-            .toMap(attribute -> ServiceAttributeUtil.extractNamespace(attribute.getKey()),
+            .toMap(attribute -> DataSourceAttribute.from(attribute).getNamespace(),
                 Function.identity()));
 
     return new FragmentContext()
         .fragment(fragment)
         .services(
-            serviceAttributes.entrySet().stream()
-                .map(entry -> new ServiceEntry(entry.getValue(),
-                    paramsAttributes.get(entry.getKey())))
+            dataSourceNameAttributes.entrySet().stream()
+                .map(entry -> {
+                  DataSourceAttribute nameAttr = DataSourceAttribute.from(entry.getValue());
+                  Attribute paramsAttr = dataSourceParamsAttributes.get(entry.getKey());
+                  return new ServiceEntry(nameAttr,
+                      paramsAttr == null ? null : DataSourceAttribute.from(paramsAttr));
+                })
                 .collect(Collectors.toList())
         );
   }
 
   /**
-   * @return an {@link Observable} that emits a list of {@link ServiceEntry} that were registered with current {@link Fragment}.
+   * @return an {@link Observable} that emits a list of {@link ServiceEntry} that were registered
+   * with current {@link Fragment}.
    */
   public Observable<ServiceEntry> services() {
     return Observable.fromIterable(services);

@@ -36,7 +36,7 @@ public class DataBridgeKnotProxy extends AbstractKnotProxy {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DataBridgeKnotProxy.class);
 
-  private static final String SUPPORTED_FRAGMENT_ID = "services";
+  private static final String SUPPORTED_FRAGMENT_ID = "databridge";
 
   private FragmentProcessor snippetProcessor;
 
