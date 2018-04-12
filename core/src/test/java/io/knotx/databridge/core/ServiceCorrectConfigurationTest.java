@@ -50,11 +50,11 @@ public class ServiceCorrectConfigurationTest {
     assertThat(correctConfig.getServices(), Matchers.hasItem(expectedService));
   }
 
-  private DataSourceMetadata createMockedService(String name, String adapterAddress,
+  private DataSourceMetadata createMockedService(String name, String address,
       String params, String cacheKey) {
     DataSourceMetadata newService = new DataSourceMetadata();
     newService.setName(name);
-    newService.setAdapterAddress(adapterAddress);
+    newService.setAddress(address);
     newService.setParams(new JsonObject(params));
     newService.setCacheKey(cacheKey);
     return newService;

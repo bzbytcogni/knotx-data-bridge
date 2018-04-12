@@ -27,7 +27,7 @@ import io.vertx.core.json.JsonObject;
 public class DataSourceMetadata {
 
   private String name;
-  private String adapterAddress;
+  private String address;
   private String cacheKey;
   private JsonObject params;
 
@@ -46,7 +46,7 @@ public class DataSourceMetadata {
    */
   public DataSourceMetadata(DataSourceMetadata other) {
     this.name = other.name;
-    this.adapterAddress = other.adapterAddress;
+    this.address = other.address;
     this.cacheKey = other.cacheKey;
     this.params = other.params.copy();
   }
@@ -96,20 +96,20 @@ public class DataSourceMetadata {
   }
 
   /**
-   * @return EB adapterAddress of the service adapter
+   * @return EB address of the service adapter
    */
-  public String getAdapterAddress() {
-    return adapterAddress;
+  public String getAddress() {
+    return address;
   }
 
   /**
-   * Sets the EB adapterAddress of the service adapter
+   * Sets the EB address of the service adapter
    *
-   * @param adapterAddress EB adapterAddress of the service adapter
+   * @param address EB address of the service adapter
    * @return a reference to this, so the API can be used fluently
    */
-  public DataSourceMetadata setAdapterAddress(String adapterAddress) {
-    this.adapterAddress = adapterAddress;
+  public DataSourceMetadata setAddress(String address) {
+    this.address = address;
     return this;
   }
 
@@ -159,13 +159,13 @@ public class DataSourceMetadata {
     }
     DataSourceMetadata that = (DataSourceMetadata) o;
     return Objects.equal(name, that.name) &&
-        Objects.equal(adapterAddress, that.adapterAddress) &&
+        Objects.equal(address, that.address) &&
         Objects.equal(cacheKey, that.cacheKey) &&
         Objects.equal(params, that.params);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(name, adapterAddress, cacheKey, params);
+    return Objects.hashCode(name, address, cacheKey, params);
   }
 }

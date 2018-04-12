@@ -37,7 +37,7 @@ public class DataBridgeKnotOptions {
 
   public final static List<DataSourceMetadata> DEFAULT_SERVICES_MOCK = Lists.newArrayList(
       new DataSourceMetadata()
-          .setAdapterAddress("mock-service-adapter")
+          .setAddress("mock-service-adapter")
           .setName("mock")
           .setParams(new JsonObject().put("path", "/service/mock/.*"))
   );

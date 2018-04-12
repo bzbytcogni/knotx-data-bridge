@@ -2,7 +2,7 @@
   "services": [
     {
       "name" : "first-service",
-      "adapterAddress" : "knotx.core-adapter",
+      "address" : "knotx.core-adapter",
       "cacheKey": "first"
     }
   ]

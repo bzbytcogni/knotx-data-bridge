@@ -49,10 +49,10 @@ public class ServiceEngine {
     this.options = options;
     this.adapters = new HashMap<>();
     this.options.getServices().stream().forEach(
-        service -> adapters.put(service.getAdapterAddress(),
+        service -> adapters.put(service.getAddress(),
             AdapterProxy.createProxyWithOptions(
                 vertx,
-                service.getAdapterAddress(),
+                service.getAddress(),
                 this.options.getDeliveryOptions())
         )
     );
@@ -76,7 +76,7 @@ public class ServiceEngine {
     return serviceMetadata.map(
         metadata ->
             new ServiceEntry(serviceEntry)
-                .setAddress(metadata.getAdapterAddress())
+                .setAddress(metadata.getAddress())
                 .mergeParams(metadata.getParams())
                 .setCacheKey(metadata.getCacheKey()))
         .orElseThrow(() -> {
