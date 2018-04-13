@@ -1,0 +1,8 @@
+<script
+  data-knotx-knots="databridge"
+  data-knotx-databridge-name="first-service"
+  data-knotx-databridge-params='{"path":"/overridden/path","anotherParam":"someValue"}'
+  data-knotx-databridge-params-undefined='{"notBound":"toAnyService"}'
+  type="text/knotx-snippet">
+  <h2>{{_result.message}}</h2>
+</script>

@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-  repositories {
-    jcenter()
-    maven { url "https://plugins.gradle.org/m2/" }
-    maven { url "https://oss.sonatype.org/content/groups/staging/" }
-  }
+package io.knotx.databridge.http.stale.cache;
+
+import java.util.Optional;
+
+public interface StaleCache<K, V extends Expirable> {
+
+  /**
+   * Returns Optional.empty() if value is not in the cache. Otherwise it returns stale value which
+   * can be expired or not.
+   */
+  Optional<V> get(K key);
+
+  /**
+   * Updates changed value.
+   */
+  boolean put(K key, V value);
+
 }
-// BOM support
-enableFeaturePreview('IMPROVED_POM_SUPPORT')
-
-// SETTINGS
-rootProject.name = 'knotx-data-bridge'
-
-// MODULES
-include 'data-source:api'
-include 'data-source:http'
-include 'data-source:http-stale'
-include 'core'
-include 'test:integration'

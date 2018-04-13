@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-  repositories {
-    jcenter()
-    maven { url "https://plugins.gradle.org/m2/" }
-    maven { url "https://oss.sonatype.org/content/groups/staging/" }
-  }
+package io.knotx.databridge.http.common.placeholders;
+
+import io.knotx.dataobjects.ClientRequest;
+
+@FunctionalInterface
+public interface PlaceholderSubstitutor {
+
+  /**
+   * Get the replacement value from the supplied clientRequest and placeholder name
+   *
+   * @param request the supplied clientRequest
+   * @param placeholder the placeholder name
+   * @return the replacement value, or null if no replacement can be get
+   */
+  String getValue(ClientRequest request, String placeholder);
+
 }
-// BOM support
-enableFeaturePreview('IMPROVED_POM_SUPPORT')
-
-// SETTINGS
-rootProject.name = 'knotx-data-bridge'
-
-// MODULES
-include 'data-source:api'
-include 'data-source:http'
-include 'data-source:http-stale'
-include 'core'
-include 'test:integration'

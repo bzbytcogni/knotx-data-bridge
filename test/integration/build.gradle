@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-  repositories {
-    jcenter()
-    maven { url "https://plugins.gradle.org/m2/" }
-    maven { url "https://oss.sonatype.org/content/groups/staging/" }
+plugins {
+  id 'java-library'
+}
+
+dependencies {
+  testCompile "com.github.tomakehurst:wiremock-standalone:2.16.0"
+  testCompile project(':core')
+  testCompile project(':data-source:api')
+  testCompile project(':data-source:http')
+}
+
+sourceSets {
+  test {
+    resources {
+      srcDirs = ['src/test/resources', '../../conf', '../../core/src/test/resources']
+    }
   }
 }
-// BOM support
-enableFeaturePreview('IMPROVED_POM_SUPPORT')
-
-// SETTINGS
-rootProject.name = 'knotx-data-bridge'
-
-// MODULES
-include 'data-source:api'
-include 'data-source:http'
-include 'data-source:http-stale'
-include 'core'
-include 'test:integration'

@@ -13,22 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-  repositories {
-    jcenter()
-    maven { url "https://plugins.gradle.org/m2/" }
-    maven { url "https://oss.sonatype.org/content/groups/staging/" }
+plugins {
+  id 'java-library'
+}
+apply from: "${rootProject.projectDir}/annotation-processing.gradle"
+
+dependencies {
+  testCompile group: 'com.googlecode.zohhak', name: 'zohhak', version: '1.1.1'
+  testCompile group: 'uk.co.datumedge', name: 'hamcrest-json', version: '0.2'
+  testCompile 'org.hamcrest:hamcrest-all:1.3'
+}
+
+compileJava {
+  targetCompatibility = 1.8
+  sourceCompatibility = 1.8
+
+  dependsOn annotationProcessing
+}
+
+sourceSets {
+  main {
+    java {
+      srcDirs += 'src/main/generated'
+    }
   }
 }
-// BOM support
-enableFeaturePreview('IMPROVED_POM_SUPPORT')
 
-// SETTINGS
-rootProject.name = 'knotx-data-bridge'
-
-// MODULES
-include 'data-source:api'
-include 'data-source:http'
-include 'data-source:http-stale'
-include 'core'
-include 'test:integration'
