@@ -58,7 +58,7 @@ public class ServiceEngine {
     );
   }
 
-  public Single<JsonObject> doServiceCall(ServiceEntry serviceEntry, KnotContext knotContext) {
+  public Single<JsonObject> doServiceCall(DataSourceEntry serviceEntry, KnotContext knotContext) {
     AdapterRequest adapterRequest = new AdapterRequest()
         .setRequest(knotContext.getClientRequest())
         .setParams(serviceEntry.getParams());
@@ -67,7 +67,7 @@ public class ServiceEngine {
         .map(resp -> buildResultObject(adapterRequest, resp));
   }
 
-  public ServiceEntry mergeWithConfiguration(final ServiceEntry serviceEntry) {
+  public DataSourceEntry mergeWithConfiguration(final DataSourceEntry serviceEntry) {
     Optional<DataSourceMetadata> serviceMetadata = options.getServices()
         .stream()
         .filter(service -> serviceEntry.getName().matches(service.getName()))
@@ -75,7 +75,7 @@ public class ServiceEngine {
 
     return serviceMetadata.map(
         metadata ->
-            new ServiceEntry(serviceEntry)
+            new DataSourceEntry(serviceEntry)
                 .setAddress(metadata.getAddress())
                 .mergeParams(metadata.getParams())
                 .setCacheKey(metadata.getCacheKey()))

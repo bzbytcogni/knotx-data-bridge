@@ -25,7 +25,7 @@ import com.googlecode.zohhak.api.Configure;
 import com.googlecode.zohhak.api.TestWith;
 import com.googlecode.zohhak.api.runners.ZohhakRunner;
 
-import io.knotx.databridge.core.service.ServiceEntry;
+import io.knotx.databridge.core.service.DataSourceEntry;
 import io.knotx.dataobjects.Fragment;
 import io.knotx.junit.coercers.KnotxCoercers;
 import io.vertx.core.json.JsonObject;
@@ -44,7 +44,7 @@ public class FragmentContextTest {
       Fragment fragment, String expectedParameters) throws Exception {
 
     final FragmentContext fragmentContext = FragmentContext.from(fragment);
-    final ServiceEntry serviceEntry = fragmentContext.services.get(0);
+    final DataSourceEntry serviceEntry = fragmentContext.services.get(0);
     assertThat(serviceEntry.getParams().toString(), sameJSONAs(expectedParameters));
   }
 

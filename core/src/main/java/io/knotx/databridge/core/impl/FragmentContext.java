@@ -17,7 +17,7 @@ package io.knotx.databridge.core.impl;
 
 import com.google.common.base.MoreObjects;
 import io.knotx.databridge.core.attribute.DataSourceAttribute;
-import io.knotx.databridge.core.service.ServiceEntry;
+import io.knotx.databridge.core.service.DataSourceEntry;
 import io.knotx.dataobjects.Fragment;
 import io.reactivex.Observable;
 import java.util.List;
@@ -35,7 +35,7 @@ public class FragmentContext {
   private static final String DATA_PARAMS = "data-knotx-databridge-params.*";
 
   private Fragment fragment;
-  List<ServiceEntry> services;
+  List<DataSourceEntry> services;
 
   private FragmentContext() {
     //hidden constructor
@@ -73,7 +73,7 @@ public class FragmentContext {
                 .map(entry -> {
                   DataSourceAttribute nameAttr = DataSourceAttribute.from(entry.getValue());
                   Attribute paramsAttr = dataSourceParamsAttributes.get(entry.getKey());
-                  return new ServiceEntry(nameAttr,
+                  return new DataSourceEntry(nameAttr,
                       paramsAttr == null ? null : DataSourceAttribute.from(paramsAttr));
                 })
                 .collect(Collectors.toList())
@@ -81,10 +81,10 @@ public class FragmentContext {
   }
 
   /**
-   * @return an {@link Observable} that emits a list of {@link ServiceEntry} that were registered
+   * @return an {@link Observable} that emits a list of {@link DataSourceEntry} that were registered
    * with current {@link Fragment}.
    */
-  public Observable<ServiceEntry> services() {
+  public Observable<DataSourceEntry> services() {
     return Observable.fromIterable(services);
   }
 
@@ -100,7 +100,7 @@ public class FragmentContext {
     return this;
   }
 
-  private FragmentContext services(List<ServiceEntry> services) {
+  private FragmentContext services(List<DataSourceEntry> services) {
     this.services = services;
     return this;
   }

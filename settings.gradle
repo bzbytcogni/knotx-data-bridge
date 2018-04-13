@@ -20,10 +20,13 @@ pluginManagement {
     maven { url "https://oss.sonatype.org/content/groups/staging/" }
   }
 }
+// BOM support
 enableFeaturePreview('IMPROVED_POM_SUPPORT')
 
+// SETTINGS
 rootProject.name = 'knotx-data-bridge'
 
+// MODULES
 include 'data-source:api'
 include 'data-source:http'
 include 'data-source:http-stale'

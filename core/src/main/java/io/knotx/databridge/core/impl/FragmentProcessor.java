@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutionException;
 
 import io.knotx.databridge.core.DataBridgeKnotOptions;
 import io.knotx.databridge.core.service.ServiceEngine;
-import io.knotx.databridge.core.service.ServiceEntry;
+import io.knotx.databridge.core.service.DataSourceEntry;
 import io.knotx.dataobjects.KnotContext;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -54,7 +54,7 @@ public class FragmentProcessor {
         .map(results -> applyData(fragmentContext, results));
   }
 
-  private Single<JsonObject> fetchServiceData(ServiceEntry service, KnotContext request) {
+  private Single<JsonObject> fetchServiceData(DataSourceEntry service, KnotContext request) {
     LOGGER.debug("Fetching data from service {} {}", service.getAddress(), service.getParams());
     try {
       return request.getCache()
@@ -76,7 +76,7 @@ public class FragmentProcessor {
     return fragmentContext;
   }
 
-  private void traceService(ServiceEntry serviceEntry) {
+  private void traceService(DataSourceEntry serviceEntry) {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Found service call definition: {} {}", serviceEntry.getAddress(),
           serviceEntry.getParams());

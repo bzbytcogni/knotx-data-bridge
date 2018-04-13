@@ -46,7 +46,7 @@ public class ServiceEntryTest {
 
   @Test
   public void mergePayload_pathFromParamsAttribute() {
-    ServiceEntry serviceEntry = new ServiceEntry(
+    DataSourceEntry serviceEntry = new DataSourceEntry(
         DataSourceAttribute.of(AtributeType.NAME).withNamespace(NAMESPACE)
             .withValue("first-service"),
         DataSourceAttribute.of(AtributeType.PARAMS).withNamespace(NAMESPACE)
@@ -58,7 +58,7 @@ public class ServiceEntryTest {
 
   @Test
   public void mergePayload_pathFromConfigAttribute() {
-    ServiceEntry serviceEntry = new ServiceEntry(
+    DataSourceEntry serviceEntry = new DataSourceEntry(
         DataSourceAttribute.of(AtributeType.NAME).withNamespace(NAMESPACE)
             .withValue("first-service"),
         DataSourceAttribute.of(AtributeType.PARAMS).withNamespace(NAMESPACE).withValue("{}"));
@@ -69,7 +69,7 @@ public class ServiceEntryTest {
 
   @Test
   public void mergePayload_nameFromParamsAttribute() {
-    ServiceEntry serviceEntry = new ServiceEntry(
+    DataSourceEntry serviceEntry = new DataSourceEntry(
         DataSourceAttribute.of(AtributeType.NAME).withNamespace(NAMESPACE)
             .withValue("first-service"),
         DataSourceAttribute.of(AtributeType.PARAMS).withNamespace(NAMESPACE)
@@ -82,7 +82,7 @@ public class ServiceEntryTest {
 
   @Test
   public void mergePayload_whenNoDefaultParams_expectDefinedParamsUsed() throws Exception {
-    ServiceEntry serviceEntry = new ServiceEntry(
+    DataSourceEntry serviceEntry = new DataSourceEntry(
         DataSourceAttribute.of(AtributeType.NAME).withNamespace(NAMESPACE)
             .withValue("first-service"),
         DataSourceAttribute.of(AtributeType.PARAMS).withNamespace(NAMESPACE)

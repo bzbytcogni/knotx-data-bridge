@@ -21,13 +21,12 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.jsoup.nodes.Attribute;
 
 import com.google.common.base.MoreObjects;
 
 import io.vertx.core.json.JsonObject;
 
-public class ServiceEntry {
+public class DataSourceEntry {
 
   private String namespace;
   private String name;
@@ -35,7 +34,7 @@ public class ServiceEntry {
   private String cacheKey;
   private JsonObject params;
 
-  public ServiceEntry(ServiceEntry serviceEntry) {
+  public DataSourceEntry(DataSourceEntry serviceEntry) {
     this.namespace = serviceEntry.namespace;
     this.name = serviceEntry.name;
     this.address = serviceEntry.address;
@@ -43,14 +42,14 @@ public class ServiceEntry {
     this.params = serviceEntry.params.copy();
   }
 
-  public ServiceEntry(DataSourceAttribute serviceAttribute, DataSourceAttribute paramsAttribute) {
+  public DataSourceEntry(DataSourceAttribute serviceAttribute, DataSourceAttribute paramsAttribute) {
     this.namespace = serviceAttribute.getNamespace();
     this.name = serviceAttribute.getValue();
     this.params = getParams(paramsAttribute);
     this.cacheKey = String.format("%s|%s", getName(), getParams());
   }
 
-  public ServiceEntry mergeParams(JsonObject defaultParams) {
+  public DataSourceEntry mergeParams(JsonObject defaultParams) {
     if (defaultParams != null) {
       this.params = defaultParams.copy().mergeIn(this.params);
     }
@@ -69,7 +68,7 @@ public class ServiceEntry {
     return address;
   }
 
-  ServiceEntry setAddress(String address) {
+  DataSourceEntry setAddress(String address) {
     this.address = address;
     return this;
   }
@@ -78,7 +77,7 @@ public class ServiceEntry {
     return cacheKey;
   }
 
-  public ServiceEntry setCacheKey(String newCacheKey) {
+  public DataSourceEntry setCacheKey(String newCacheKey) {
     if (StringUtils.isNotEmpty(newCacheKey)) {
       this.cacheKey = newCacheKey;
     }
@@ -99,8 +98,8 @@ public class ServiceEntry {
 
   @Override
   public boolean equals(Object o) {
-    if (o instanceof ServiceEntry) {
-      final ServiceEntry other = (ServiceEntry) o;
+    if (o instanceof DataSourceEntry) {
+      final DataSourceEntry other = (DataSourceEntry) o;
       return new EqualsBuilder()
           .append(namespace, other.getNamespace())
           .append(name, other.getName())
