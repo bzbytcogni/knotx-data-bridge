@@ -35,8 +35,6 @@ dependencies {
   testCompile project(':knotx-data-bridge-http')
 }
 
-print "../${project(":knotx-data-bridge-core").projectDir}/src/test/resources"
-
 sourceSets {
   test {
     resources {
