@@ -18,11 +18,8 @@ plugins {
 }
 
 ext {
-  KNOTX_VERSION = '1.3.0-SNAPSHOT'
-  JUNIT_VERSION = '4.12'
-  POWERMOCK_VERSION = '1.6.6'
-  MOCKITO_VERSION = '2.0.2-beta'
-  WIREMOCK_VERSION = '2.16.0'
+  knotxVersion = '1.3.0-SNAPSHOT'
+  wiremockVersion = '2.16.0'
 }
 
 defaultTasks = ['build']

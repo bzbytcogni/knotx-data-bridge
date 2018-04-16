@@ -20,14 +20,14 @@ plugins {
 
 dependencyManagement {
   imports {
-    mavenBom "io.knotx:knotx-dependencies:${KNOTX_VERSION}"
+    mavenBom "io.knotx:knotx-dependencies:${knotxVersion}"
   }
 }
 
 dependencies {
   testCompile 'io.vertx:vertx-unit'
   testCompile 'io.vertx:vertx-config'
-  testCompile "com.github.tomakehurst:wiremock-standalone:${WIREMOCK_VERSION}"
+  testCompile "com.github.tomakehurst:wiremock-standalone:${wiremockVersion}"
   testCompile 'junit:junit'
   testCompile group: 'io.knotx', name: 'knotx-core', classifier: 'tests'
   testCompile project(':core')

@@ -23,7 +23,7 @@ apply from: "${rootProject.projectDir}/annotation-processing.gradle"
 
 dependencyManagement {
   imports {
-    mavenBom "io.knotx:knotx-dependencies:${KNOTX_VERSION}"
+    mavenBom "io.knotx:knotx-dependencies:${knotxVersion}"
   }
 }
 

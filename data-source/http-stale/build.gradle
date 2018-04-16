@@ -31,7 +31,7 @@ compileJava {
 
 dependencyManagement {
   imports {
-    mavenBom "io.knotx:knotx-dependencies:${KNOTX_VERSION}"
+    mavenBom "io.knotx:knotx-dependencies:${knotxVersion}"
   }
 }
 
