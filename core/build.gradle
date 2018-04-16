@@ -15,13 +15,35 @@
  */
 plugins {
   id 'java-library'
+  id 'io.spring.dependency-management'
+  // for development purpose
+  id 'maven'
 }
 apply from: "${rootProject.projectDir}/annotation-processing.gradle"
 
+dependencyManagement {
+  imports {
+    mavenBom "io.knotx:knotx-dependencies:${knotxVersion}"
+  }
+}
+
 dependencies {
-  testCompile group: 'com.googlecode.zohhak', name: 'zohhak', version: '1.1.1'
-  testCompile group: 'uk.co.datumedge', name: 'hamcrest-json', version: '0.2'
-  testCompile 'org.hamcrest:hamcrest-all:1.3'
+  compile 'io.vertx:vertx-core'
+  compile 'io.vertx:vertx-codegen'
+  compile 'io.vertx:vertx-rx-java2'
+  compile 'io.vertx:vertx-service-proxy'
+
+  compile 'io.knotx:knotx-core'
+
+  testCompile 'com.googlecode.zohhak:zohhak'
+  testCompile 'uk.co.datumedge:hamcrest-json'
+  testCompile 'org.hamcrest:hamcrest-all'
+  testCompile 'junit:junit'
+  testCompile 'org.powermock:powermock-api-mockito'
+  testCompile 'org.powermock:powermock-module-junit4'
+
+  testCompile group: 'io.knotx', name: 'knotx-core', classifier: 'tests'
+
 }
 
 compileJava {
