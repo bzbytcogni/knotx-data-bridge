@@ -54,6 +54,22 @@ subprojects { subproject ->
 
     compileJava compileOptions
     compileTestJava compileOptions
+
+    jar {
+      manifest.attributes["Implementation-Title"] = subproject.name
+      manifest.attributes["Implementation-Version"] = subproject.version
+      manifest.attributes["Automatic-Module-Name"] = subproject.name.replace('-', '.')  // for Jigsaw
+
+      from("${rootProject.projectDir}") {
+        include "LICENSE"
+        into "META-INF"
+        expand(copyright: new Date().format("yyyy"), version: project.version)
+      }
+    }
   }
+
+//  if (!subproject.name.startsWith(":test")) {
+//
+//  }
 
 }
