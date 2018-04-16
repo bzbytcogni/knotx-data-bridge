@@ -13,10 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-def KNOTX_VERSION='1.3.0-SNAPSHOT'
-def JUNIT_VERSION='4.12'
-def POWERMOCK_VERSION='1.6.6'
-def MOCKITO_VERSION='2.0.2-beta'
+plugins {
+  id "io.spring.dependency-management" version "1.0.5.RELEASE" apply false
+}
+
+ext {
+  KNOTX_VERSION = '1.3.0-SNAPSHOT'
+  JUNIT_VERSION = '4.12'
+  POWERMOCK_VERSION = '1.6.6'
+  MOCKITO_VERSION = '2.0.2-beta'
+  WIREMOCK_VERSION = '2.16.0'
+}
+
 defaultTasks = ['build']
 
 allprojects {
@@ -25,6 +33,7 @@ allprojects {
 
   apply plugin: "eclipse"
   apply plugin: "idea"
+  apply plugin: 'maven'
 
   repositories {
     maven { url "https://oss.sonatype.org/content/groups/staging/" }
@@ -48,23 +57,6 @@ subprojects { subproject ->
 
     compileJava compileOptions
     compileTestJava compileOptions
-
-    dependencies {
-      // we can not use 'implementation' because of the annotationProcessing task configuration
-      compile group: 'io.knotx', name: 'knotx-dependencies', version: KNOTX_VERSION
-
-      compile group: 'io.vertx', name: 'vertx-codegen'
-      compile group: 'io.knotx', name: 'knotx-core'
-      testCompile group: 'io.vertx', name: 'vertx-unit'
-      testCompile group: 'io.knotx', name: 'knotx-core', classifier: 'tests'
-      testCompile group: 'io.knotx', name: 'knotx-mocks'
-
-      // BOM dependencies are not available in test scope
-      testCompile group: 'junit', name: 'junit', version: JUNIT_VERSION
-      testCompile group: 'org.powermock', name: 'powermock-api-mockito', version: POWERMOCK_VERSION
-      testCompile group: 'org.powermock', name: 'powermock-module-junit4', version: POWERMOCK_VERSION
-      testCompile group: 'org.mockito', name: 'mockito-all', version: MOCKITO_VERSION
-    }
   }
 
 }

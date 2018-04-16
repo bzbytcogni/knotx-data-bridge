@@ -15,6 +15,9 @@
  */
 plugins {
   id 'java-library'
+  id 'io.spring.dependency-management'
+  // for development purpose
+  id 'maven'
 }
 apply from: "${rootProject.projectDir}/annotation-processing.gradle"
 
@@ -23,6 +26,21 @@ compileJava {
   sourceCompatibility = 1.8
 
   dependsOn annotationProcessing
+}
+
+dependencyManagement {
+  imports {
+    mavenBom "io.knotx:knotx-dependencies:${KNOTX_VERSION}"
+  }
+}
+
+dependencies {
+  compile 'io.vertx:vertx-core'
+  compile 'io.vertx:vertx-codegen'
+  compile 'io.vertx:vertx-rx-java2'
+  compile 'io.vertx:vertx-service-proxy'
+
+  compile 'io.knotx:knotx-core'
 }
 
 sourceSets {

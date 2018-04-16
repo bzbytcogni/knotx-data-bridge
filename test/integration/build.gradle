@@ -15,10 +15,21 @@
  */
 plugins {
   id 'java-library'
+  id 'io.spring.dependency-management'
+}
+
+dependencyManagement {
+  imports {
+    mavenBom "io.knotx:knotx-dependencies:${KNOTX_VERSION}"
+  }
 }
 
 dependencies {
-  testCompile "com.github.tomakehurst:wiremock-standalone:2.16.0"
+  testCompile 'io.vertx:vertx-unit'
+  testCompile 'io.vertx:vertx-config'
+  testCompile "com.github.tomakehurst:wiremock-standalone:${WIREMOCK_VERSION}"
+  testCompile 'junit:junit'
+  testCompile group: 'io.knotx', name: 'knotx-core', classifier: 'tests'
   testCompile project(':core')
   testCompile project(':data-source:api')
   testCompile project(':data-source:http')
