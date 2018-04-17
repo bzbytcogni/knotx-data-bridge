@@ -94,7 +94,7 @@ public class HttpClientFacade {
   }
 
   private String toUrl(Pair<ClientRequest, HttpDataSourceSettings> request) {
-    return new StringBuilder(request.getRight().getDomain()).append(request.getRight().getPort())
+    return new StringBuilder(request.getRight().getDomain()).append(":").append(request.getRight().getPort())
         .append(request.getLeft().getPath()).toString();
   }
 
