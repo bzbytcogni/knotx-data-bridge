@@ -68,8 +68,8 @@ subprojects { subproject ->
     }
   }
 
-//  if (!subproject.name.startsWith(":test")) {
-//
-//  }
+  task wrapper(type: Wrapper) {
+    gradleVersion = '4.6'
+  }
 
 }
