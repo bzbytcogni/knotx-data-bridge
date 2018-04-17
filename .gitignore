@@ -1,15 +1,11 @@
 # Generated files #
 ###################
-node_modules
-node
-target-grunt
-.sass-cache
-.grunt
-C:
 .project
 .classpath
 .settings
 generated
+
+# Gradle files
 build
 .gradle
 
@@ -21,19 +17,6 @@ build
 *.exe
 *.o
 *.so
-
-# Packages #
-############
-# it's better to unpack these files and commit the raw source
-# git has its own built in compression methods
-*.7z
-*.dmg
-*.gz
-*.iso
-*.jar
-*.rar
-*.tar
-*.zip
 
 # Logs and databases #
 ######################
@@ -74,8 +57,8 @@ settings.json
 *.vlt
 *.vertx
 
+
 target
-atlassian-ide-plugin.xml
 bin/
 *.bak
 
