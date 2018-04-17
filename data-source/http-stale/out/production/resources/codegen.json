@@ -1,8 +1,0 @@
-{
-  "name": "knotx-cheatsheet",
-  "generators": [{
-    "kind": "dataObject",
-    "incremental": true,
-    "templateFilename": "knotx-codegen/dataObjectCheatsheet.templ"
-  }]
-}

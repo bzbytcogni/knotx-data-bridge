@@ -16,17 +16,6 @@
 plugins {
   id 'java-library'
   id 'io.spring.dependency-management'
-  // for development purpose
-  id 'maven'
-}
-
-apply from: "${rootProject.projectDir}/annotation-processing.gradle"
-
-compileJava {
-  targetCompatibility = 1.8
-  sourceCompatibility = 1.8
-
-  dependsOn annotationProcessing
 }
 
 dependencyManagement {
@@ -36,34 +25,20 @@ dependencyManagement {
 }
 
 dependencies {
-  compile 'io.vertx:vertx-core'
-  compile 'io.vertx:vertx-codegen'
-  compile 'io.vertx:vertx-rx-java2'
-  compile 'io.vertx:vertx-service-proxy'
-  compile 'io.vertx:vertx-web-client'
-
-  compile 'io.knotx:knotx-core'
-
   testCompile 'io.vertx:vertx-unit'
   testCompile 'io.vertx:vertx-config'
+  testCompile "com.github.tomakehurst:wiremock-standalone:${wiremockVersion}"
   testCompile 'junit:junit'
-  testCompile 'org.powermock:powermock-api-mockito'
-  testCompile 'org.powermock:powermock-module-junit4'
-  testCompile 'org.mockito:mockito-all'
-
   testCompile group: 'io.knotx', name: 'knotx-core', classifier: 'tests'
-  testCompile 'io.knotx:knotx-mocks'
+  testCompile project(':knotx-data-bridge-core')
+  testCompile project(':knotx-data-bridge-api')
+  testCompile project(':knotx-data-bridge-http')
 }
 
 sourceSets {
-  main {
-    java {
-      srcDirs += 'src/main/generated'
+  test {
+    resources {
+      srcDirs = ['src/test/resources', '../conf', '../data-bridge-core/src/test/resources']
     }
   }
 }
-
-dependencies {
-  compile project(':data-source:api')
-}
-

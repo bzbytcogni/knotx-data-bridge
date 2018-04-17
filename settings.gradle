@@ -21,12 +21,13 @@ pluginManagement {
   }
 }
 
-// SETTINGS
-rootProject.name = 'knotx-data-bridge'
+include 'data-bridge-core'
+include 'data-bridge-api'
+include 'data-bridge-http'
+include 'it-test'
 
-// MODULES
-include 'data-source:api'
-include 'data-source:http'
-include 'data-source:http-stale'
-include 'core'
-include 'test:integration'
+rootProject.name = 'knotx'
+rootProject.children.each {project ->
+  project.buildFileName = "${project.name}.gradle"
+  project.name = "${rootProject.name}-${project.name}"
+}

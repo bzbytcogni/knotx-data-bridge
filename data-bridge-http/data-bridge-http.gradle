@@ -47,6 +47,9 @@ dependencies {
   testCompile 'io.vertx:vertx-unit'
   testCompile 'io.vertx:vertx-config'
   testCompile 'junit:junit'
+  testCompile 'org.powermock:powermock-api-mockito'
+  testCompile 'org.powermock:powermock-module-junit4'
+  testCompile 'org.mockito:mockito-all'
 
   testCompile group: 'io.knotx', name: 'knotx-core', classifier: 'tests'
   testCompile 'io.knotx:knotx-mocks'
@@ -61,6 +64,6 @@ sourceSets {
 }
 
 dependencies {
-  compile project(':data-source:api')
-  compile project(':data-source:http')
+  compile project(':knotx-data-bridge-api')
 }
+
