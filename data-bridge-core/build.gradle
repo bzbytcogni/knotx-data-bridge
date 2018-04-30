@@ -1,0 +1,67 @@
+/*
+ * Copyright (C) 2018 Knot.x Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+description = "Knot.x Data Bridge Core"
+//
+//
+//plugins {
+//  id 'java-library'
+//  id 'io.spring.dependency-management'
+//  // for development purpose
+//  id 'maven'
+//}
+////apply from: "${rootProject.projectDir}/annotation-processing.gradle"
+//
+//dependencyManagement {
+//  imports {
+//    mavenBom "io.knotx:knotx-dependencies:${knotxVersion}"
+//  }
+//}
+//
+//dependencies {
+//  compile 'io.vertx:vertx-core'
+//  compile 'io.vertx:vertx-codegen'
+//  compile 'io.vertx:vertx-rx-java2'
+//  compile 'io.vertx:vertx-service-proxy'
+//
+//  compile 'io.knotx:knotx-core'
+//
+//  testCompile 'com.googlecode.zohhak:zohhak'
+//  testCompile 'uk.co.datumedge:hamcrest-json'
+//  testCompile 'org.hamcrest:hamcrest-all'
+//  testCompile 'junit:junit'
+//  testCompile 'org.powermock:powermock-api-mockito'
+//  testCompile 'org.powermock:powermock-module-junit4'
+//
+//  testCompile group: 'io.knotx', name: 'knotx-core', classifier: 'tests'
+//
+//}
+//
+////compileJava {
+////  targetCompatibility = 1.8
+////  sourceCompatibility = 1.8
+////
+////  //dependsOn annotationProcessing
+////}
+////
+////sourceSets {
+////  main {
+////    java {
+////      srcDirs += 'src/main/generated'
+////    }
+////  }
+////}
+//
