@@ -34,12 +34,12 @@ public class DataSourceAdapterResponse {
 
 
   public DataSourceAdapterResponse(JsonObject json) {
-    AdapterResponseConverter.fromJson(json, this);
+    DataSourceAdapterResponseConverter.fromJson(json, this);
   }
 
   public JsonObject toJson() {
     JsonObject json = new JsonObject();
-    AdapterResponseConverter.toJson(this, json);
+    DataSourceAdapterResponseConverter.toJson(this, json);
     return json;
   }
 

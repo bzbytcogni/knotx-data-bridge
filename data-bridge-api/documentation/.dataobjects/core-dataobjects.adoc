@@ -1,0 +1,32 @@
+[[DataSourceAdapterRequest]]
+== DataSourceAdapterRequest
+
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[adapterParams]]`adapterParams`|`Json object`|
++++
+Set the request params
++++
+|[[params]]`params`|`Json object`|
++++
+Set the request params
++++
+|[[request]]`request`|`link:cheatsheets.adoc#ClientRequest[ClientRequest]`|
++++
+Set the client request
++++
+|===
+[[DataSourceAdapterResponse]]
+== DataSourceAdapterResponse
+
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[response]]`response`|`link:cheatsheets.adoc#ClientResponse[ClientResponse]`|-
+|[[signal]]`signal`|`String`|-
+|===

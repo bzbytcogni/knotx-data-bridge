@@ -13,19 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 description = "Knot.x Data Bridge API"
 
-//// vertx.codegen
-//compileJava.dependsOn annotationProcessing
-//
-//dependencies {
-//  compileOnly {
-//    'io.vertx:vertx-core:3.5.0'
-//    'io.vertx:vertx-codegen:3.5.0'
-//    'io.vertx:vertx-rx-java2:3.5.0'
-//    'io.vertx:vertx-service-proxy:3.5.0'
-//    'io.knotx:knotx-core:1.3.0-SNAPSHOT'
-//  }
-//}
-//
-//
+compileJava.dependsOn annotationProcessing

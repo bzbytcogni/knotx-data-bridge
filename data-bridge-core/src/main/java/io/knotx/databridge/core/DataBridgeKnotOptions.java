@@ -15,14 +15,12 @@
  */
 package io.knotx.databridge.core;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.common.collect.Lists;
-
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.json.JsonObject;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Describes Service Knot configuration
@@ -71,7 +69,7 @@ public class DataBridgeKnotOptions {
    */
   public DataBridgeKnotOptions(JsonObject json) {
     init();
-    ServiceKnotOptionsConverter.fromJson(json, this);
+    DataBridgeKnotOptionsConverter.fromJson(json, this);
   }
 
   /**
@@ -81,7 +79,7 @@ public class DataBridgeKnotOptions {
    */
   public JsonObject toJson() {
     JsonObject json = new JsonObject();
-    ServiceKnotOptionsConverter.toJson(this, json);
+    DataBridgeKnotOptionsConverter.toJson(this, json);
     return json;
   }
 

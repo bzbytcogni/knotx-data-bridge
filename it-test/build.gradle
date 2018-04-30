@@ -15,32 +15,19 @@
  */
 description = "Knot.x Data Bridge Integration Tests"
 
-//plugins {
-//  id 'java-library'
-//  id 'io.spring.dependency-management'
-//}
-//
-//dependencyManagement {
-//  imports {
-//    mavenBom "io.knotx:knotx-dependencies:${knotxVersion}"
-//  }
-//}
-//
-//dependencies {
-//  testCompile 'io.vertx:vertx-unit'
-//  testCompile 'io.vertx:vertx-config'
-//  testCompile "com.github.tomakehurst:wiremock-standalone:${wiremockVersion}"
-//  testCompile 'junit:junit'
-//  testCompile group: 'io.knotx', name: 'knotx-core', classifier: 'tests'
-//  testCompile project(':knotx-data-bridge-core')
-//  testCompile project(':knotx-data-bridge-api')
-//  testCompile project(':knotx-data-bridge-http')
-//}
-//
-//sourceSets {
-//  test {
-//    resources {
-//      srcDirs = ['src/test/resources', '../conf', '../data-bridge-core/src/test/resources']
-//    }
-//  }
-//}
+dependencies {
+  compile project(':data-bridge-core')
+  compile project(':data-bridge-http')
+
+  compile "io.vertx:vertx-web-client"
+
+  testCompile project(path: ':data-bridge-core', configuration: 'testResources')
+}
+
+sourceSets {
+  test {
+    resources {
+      srcDirs = ['../conf']
+    }
+  }
+}

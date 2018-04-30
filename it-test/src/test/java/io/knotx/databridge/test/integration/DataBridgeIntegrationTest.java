@@ -22,7 +22,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import io.knotx.databridge.core.attribute.DataSourceAttribute;
 import io.knotx.dataobjects.ClientRequest;
 import io.knotx.dataobjects.Fragment;
 import io.knotx.dataobjects.KnotContext;
