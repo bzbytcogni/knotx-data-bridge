@@ -1,8 +1,8 @@
 {
-  "services": [
+  "dataDefinitions": [
     {
       "name" : "first-service",
-      "address" : "knotx.core-adapter",
+      "adapter" : "knotx.core-adapter",
       "cacheKey": "first"
     }
   ]

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.knotx.databridge.core.service;
+package io.knotx.databridge.core.datasource;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +22,7 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
 import io.knotx.databridge.core.DataBridgeKnotOptions;
-import io.knotx.databridge.core.DataSourceMetadata;
+import io.knotx.databridge.core.DataSourceDefinition;
 import io.knotx.dataobjects.AdapterRequest;
 import io.knotx.dataobjects.AdapterResponse;
 import io.knotx.dataobjects.KnotContext;
@@ -34,9 +34,9 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.reactivex.core.Vertx;
 
-public class ServiceEngine {
+public class DataSourcesEngine {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(ServiceEngine.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(DataSourcesEngine.class);
 
   private static final String RESULT_NAMESPACE_KEY = "_result";
   private static final String RESPONSE_NAMESPACE_KEY = "_response";
@@ -45,14 +45,14 @@ public class ServiceEngine {
 
   private final Map<String, AdapterProxy> adapters;
 
-  public ServiceEngine(Vertx vertx, DataBridgeKnotOptions options) {
+  public DataSourcesEngine(Vertx vertx, DataBridgeKnotOptions options) {
     this.options = options;
     this.adapters = new HashMap<>();
-    this.options.getServices().stream().forEach(
-        service -> adapters.put(service.getAddress(),
+    this.options.getDataDefinitions().stream().forEach(
+        service -> adapters.put(service.getAdapter(),
             AdapterProxy.createProxyWithOptions(
                 vertx,
-                service.getAddress(),
+                service.getAdapter(),
                 this.options.getDeliveryOptions())
         )
     );
@@ -68,7 +68,7 @@ public class ServiceEngine {
   }
 
   public DataSourceEntry mergeWithConfiguration(final DataSourceEntry serviceEntry) {
-    Optional<DataSourceMetadata> serviceMetadata = options.getServices()
+    Optional<DataSourceDefinition> serviceMetadata = options.getDataDefinitions()
         .stream()
         .filter(service -> serviceEntry.getName().matches(service.getName()))
         .findFirst();
@@ -76,7 +76,7 @@ public class ServiceEngine {
     return serviceMetadata.map(
         metadata ->
             new DataSourceEntry(serviceEntry)
-                .setAddress(metadata.getAddress())
+                .setAddress(metadata.getAdapter())
                 .mergeParams(metadata.getParams())
                 .setCacheKey(metadata.getCacheKey()))
         .orElseThrow(() -> {
