@@ -27,14 +27,17 @@ allprojects {
 
 defaultTasks = ['build']
 
-subprojects {
-  group = 'io.knotx.databridge'
+subprojects { subproject ->
+  group = 'io.knotx'
 
   apply plugin: 'java'
   apply plugin: 'eclipse'
   apply plugin: 'idea'
-  apply plugin: 'maven'
   apply plugin: 'io.spring.dependency-management'
+
+  if (subproject.name != "it-test") {
+    apply plugin: 'maven'
+  }
 
   sourceCompatibility = 1.8
   targetCompatibility = 1.8
@@ -104,6 +107,50 @@ subprojects {
     systemProperties = [
         'vertx.logger-delegate-factory-class-name': 'io.vertx.core.logging.SLF4JLogDelegateFactory'
     ]
+  }
+
+  plugins.withId 'maven', {
+
+    // http://central.sonatype.org/pages/gradle.html
+
+    //signing {
+    //  sign configurations.archives
+    //}
+
+    uploadArchives {
+      repositories {
+        mavenDeployer {
+          // beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+          repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+            authentication(userName: ossrhUsername, password: ossrhPassword)
+          }
+
+          snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+            authentication(userName: ossrhUsername, password: ossrhPassword)
+          }
+
+          pom.project {
+            name 'Knotx Data Bridge'
+            packaging 'jar'
+            url 'http://knotx.io'
+
+            scm {
+              connection 'scm:git:git://github.com/Knotx/knotx-data-bridge.git'
+              developerConnection 'scm:git:git://github.com/Knotx/knotx-data-bridge.git'
+              url 'http://github.com/Knotx/knotx-data-bridge/tree/master'
+            }
+
+            licenses {
+              license {
+                name 'The Apache Software License, Version 2.0'
+                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
 }
