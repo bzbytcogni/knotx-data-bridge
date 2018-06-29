@@ -106,49 +106,4 @@ subprojects {
     ]
   }
 
-  plugins.withId 'maven', {
-
-    // http://central.sonatype.org/pages/gradle.html
-
-    //signing {
-    //  sign configurations.archives
-    //}
-
-    uploadArchives {
-      repositories {
-        mavenDeployer {
-        // beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-          repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-            authentication(userName: ossrhUsername, password: ossrhPassword)
-          }
-
-          snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-            authentication(userName: ossrhUsername, password: ossrhPassword)
-          }
-
-          pom.project {
-            name 'Knotx Data Bridge API'
-            packaging 'jar'
-            description 'Knotx Data Bridge API allowing to handle different data sources.'
-            url 'http://knotx.io'
-
-            scm {
-              connection 'scm:git:git://github.com/Knotx/knotx-data-bridge.git'
-              developerConnection 'scm:git:git://github.com/Knotx/knotx-data-bridge.git'
-              url 'http://github.com/Knotx/knotx-data-bridge/tree/master'
-            }
-
-            licenses {
-              license {
-                name 'The Apache Software License, Version 2.0'
-                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
 }
