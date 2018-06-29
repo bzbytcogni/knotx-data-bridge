@@ -10,9 +10,9 @@
 [frame="topbot"]
 |===
 ^|Name | Type ^| Description
-|[[adapter]]`adapter`|`String`|
+|[[address]]`address`|`String`|
 +++
-Event Bus <code>adapter</code> the service adapter listening on. Default value is 'knotx.adapter.service.http'
+Event Bus <code>address</code> the service adapter listening on. Default value is 'knotx.adapter.service.http'
 +++
 |[[clientOptions]]`clientOptions`|`link:cheatsheets.adoc#WebClientOptions[WebClientOptions]`|
 +++

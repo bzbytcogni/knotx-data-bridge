@@ -13,41 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-plugins {
-  id 'java-library'
-  id 'io.spring.dependency-management'
-  // for development purpose
-  id 'maven'
-}
-apply from: "${rootProject.projectDir}/annotation-processing.gradle"
-
-compileJava {
-  targetCompatibility = 1.8
-  sourceCompatibility = 1.8
-
-  dependsOn annotationProcessing
-}
-
-dependencyManagement {
-  imports {
-    mavenBom "io.knotx:knotx-dependencies:${knotxVersion}"
-  }
-}
+description = "Knot.x Data Bridge Integration Tests"
 
 dependencies {
-  compile 'io.vertx:vertx-core'
-  compile 'io.vertx:vertx-codegen'
-  compile 'io.vertx:vertx-rx-java2'
-  compile 'io.vertx:vertx-service-proxy'
+  compile project(':data-bridge-core')
+  compile project(':data-bridge-http')
 
-  compile 'io.knotx:knotx-core'
+  compile "io.vertx:vertx-web-client"
+
+  testCompile project(path: ':data-bridge-core', configuration: 'testResources')
 }
 
 sourceSets {
-  main {
-    java {
-      srcDirs += 'src/main/generated'
+  test {
+    resources {
+      srcDirs = ['../conf']
     }
   }
 }
-

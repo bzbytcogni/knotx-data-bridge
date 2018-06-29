@@ -33,7 +33,7 @@ public class ServiceCorrectConfigurationTest {
   public final ExpectedException exception = ExpectedException.none();
 
   private DataBridgeKnotOptions correctConfig;
-  private DataSourceMetadata expectedService;
+  private DataSourceDefinition expectedService;
 
   @Before
   public void setUp() throws Exception {
@@ -45,16 +45,16 @@ public class ServiceCorrectConfigurationTest {
 
   @Test
   public void whenCorrectConfigIsProvided_expectConfigIsProperlyParsed() {
-    assertThat(correctConfig.getServices(), is(notNullValue()));
-    assertThat(correctConfig.getServices().size(), is(1));
-    assertThat(correctConfig.getServices(), Matchers.hasItem(expectedService));
+    assertThat(correctConfig.getDataDefinitions(), is(notNullValue()));
+    assertThat(correctConfig.getDataDefinitions().size(), is(1));
+    assertThat(correctConfig.getDataDefinitions(), Matchers.hasItem(expectedService));
   }
 
-  private DataSourceMetadata createMockedService(String name, String address,
+  private DataSourceDefinition createMockedService(String name, String address,
       String params, String cacheKey) {
-    DataSourceMetadata newService = new DataSourceMetadata();
+    DataSourceDefinition newService = new DataSourceDefinition();
     newService.setName(name);
-    newService.setAddress(address);
+    newService.setAdapter(address);
     newService.setParams(new JsonObject(params));
     newService.setCacheKey(cacheKey);
     return newService;

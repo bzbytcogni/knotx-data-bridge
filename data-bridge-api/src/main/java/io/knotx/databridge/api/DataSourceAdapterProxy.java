@@ -27,11 +27,11 @@ import io.vertx.core.eventbus.DeliveryOptions;
 public interface DataSourceAdapterProxy {
 
   static DataSourceAdapterProxy createProxy(Vertx vertx, String address) {
-    return new AdapterProxyVertxEBProxy(vertx, address);
+    return new DataSourceAdapterProxyVertxEBProxy(vertx, address);
   }
 
   static DataSourceAdapterProxy createProxyWithOptions(Vertx vertx, String address, DeliveryOptions deliveryOptions) {
-    return new AdapterProxyVertxEBProxy(vertx, address, deliveryOptions);
+    return new DataSourceAdapterProxyVertxEBProxy(vertx, address, deliveryOptions);
   }
 
   void process(DataSourceAdapterRequest request, Handler<AsyncResult<DataSourceAdapterResponse>> result);

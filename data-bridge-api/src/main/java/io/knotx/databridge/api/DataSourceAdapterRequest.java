@@ -36,12 +36,12 @@ public class DataSourceAdapterRequest {
   }
 
   public DataSourceAdapterRequest(JsonObject json) {
-    AdapterRequestConverter.fromJson(json, this);
+    DataSourceAdapterRequestConverter.fromJson(json, this);
   }
 
   public JsonObject toJson() {
     JsonObject json = new JsonObject();
-    AdapterRequestConverter.toJson(this, json);
+    DataSourceAdapterRequestConverter.toJson(this, json);
     return json;
   }
 

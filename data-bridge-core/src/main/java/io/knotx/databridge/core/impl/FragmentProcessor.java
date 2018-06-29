@@ -18,8 +18,8 @@ package io.knotx.databridge.core.impl;
 import java.util.concurrent.ExecutionException;
 
 import io.knotx.databridge.core.DataBridgeKnotOptions;
-import io.knotx.databridge.core.service.ServiceEngine;
-import io.knotx.databridge.core.service.DataSourceEntry;
+import io.knotx.databridge.core.datasource.DataSourcesEngine;
+import io.knotx.databridge.core.datasource.DataSourceEntry;
 import io.knotx.dataobjects.KnotContext;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -32,10 +32,10 @@ public class FragmentProcessor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(FragmentProcessor.class);
 
-  private final ServiceEngine serviceEngine;
+  private final DataSourcesEngine serviceEngine;
 
   public FragmentProcessor(Vertx vertx, DataBridgeKnotOptions options) {
-    this.serviceEngine = new ServiceEngine(vertx, options);
+    this.serviceEngine = new DataSourcesEngine(vertx, options);
   }
 
   public Single<FragmentContext> processSnippet(final FragmentContext fragmentContext,

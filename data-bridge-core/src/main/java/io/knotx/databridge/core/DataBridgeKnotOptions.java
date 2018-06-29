@@ -15,14 +15,12 @@
  */
 package io.knotx.databridge.core;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.common.collect.Lists;
-
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.json.JsonObject;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Describes Service Knot configuration
@@ -35,15 +33,15 @@ public class DataBridgeKnotOptions {
    */
   public final static String DEFAULT_ADDRESS = "knotx.core.service";
 
-  public final static List<DataSourceMetadata> DEFAULT_SERVICES_MOCK = Lists.newArrayList(
-      new DataSourceMetadata()
-          .setAddress("mock-service-adapter")
+  public final static List<DataSourceDefinition> DEFAULT_SERVICES_MOCK = Lists.newArrayList(
+      new DataSourceDefinition()
+          .setAdapter("mock-service-adapter")
           .setName("mock")
           .setParams(new JsonObject().put("path", "/service/mock/.*"))
   );
 
   private String address;
-  private List<DataSourceMetadata> services;
+  private List<DataSourceDefinition> dataDefinitions;
   private DeliveryOptions deliveryOptions;
 
   /**
@@ -60,7 +58,7 @@ public class DataBridgeKnotOptions {
    */
   public DataBridgeKnotOptions(DataBridgeKnotOptions other) {
     this.address = other.address;
-    this.services = new ArrayList<>(other.services);
+    this.dataDefinitions = new ArrayList<>(other.dataDefinitions);
     this.deliveryOptions = new DeliveryOptions(other.deliveryOptions);
   }
 
@@ -71,7 +69,7 @@ public class DataBridgeKnotOptions {
    */
   public DataBridgeKnotOptions(JsonObject json) {
     init();
-    ServiceKnotOptionsConverter.fromJson(json, this);
+    DataBridgeKnotOptionsConverter.fromJson(json, this);
   }
 
   /**
@@ -81,13 +79,13 @@ public class DataBridgeKnotOptions {
    */
   public JsonObject toJson() {
     JsonObject json = new JsonObject();
-    ServiceKnotOptionsConverter.toJson(this, json);
+    DataBridgeKnotOptionsConverter.toJson(this, json);
     return json;
   }
 
   private void init() {
     address = DEFAULT_ADDRESS;
-    services = DEFAULT_SERVICES_MOCK;
+    dataDefinitions = DEFAULT_SERVICES_MOCK;
     deliveryOptions = new DeliveryOptions();
   }
 
@@ -110,20 +108,20 @@ public class DataBridgeKnotOptions {
   }
 
   /**
-   * @return list of {@link DataSourceMetadata}
+   * @return list of {@link DataSourceDefinition}
    */
-  public List<DataSourceMetadata> getServices() {
-    return services;
+  public List<DataSourceDefinition> getDataDefinitions() {
+    return dataDefinitions;
   }
 
   /**
    * Sets the mapping between service aliases and service adapters that will serve the data.
    *
-   * @param services list of {@link DataSourceMetadata} objects representing service
+   * @param services list of {@link DataSourceDefinition} objects representing service
    * @return a reference to this, so the API can be used fluently
    */
-  public DataBridgeKnotOptions setServices(List<DataSourceMetadata> services) {
-    this.services = services;
+  public DataBridgeKnotOptions setDataDefinitions(List<DataSourceDefinition> services) {
+    this.dataDefinitions = services;
     return this;
   }
 
