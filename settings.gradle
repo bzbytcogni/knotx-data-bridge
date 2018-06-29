@@ -9,7 +9,10 @@
 
 rootProject.name = 'knotx-data-bridge'
 
-include 'data-bridge-api'
-include 'data-bridge-core'
-include 'data-bridge-adapter-http'
+include 'knotx-databridge-api'
+project(":knotx-databridge-api").projectDir = file("api")
+include 'knotx-databridge-core'
+project(":knotx-databridge-core").projectDir = file("core")
+include 'knotx-databridge-adapter-http'
+project(":knotx-databridge-adapter-http").projectDir = file("adapter-http")
 include 'it-test'
