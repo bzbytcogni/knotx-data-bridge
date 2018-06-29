@@ -1,13 +1,16 @@
 # Knot.x Data Bridge
-Knot.x Data Bridge collects all dynamic data from external data sources and exposes them for further 
-[processing](https://github.com/Cognifide/knotx/wiki/KnotRouting).
+Knot.x Data Bridge module is a "bridge" between Knot.x rendering mechanism and external data sources.
+Its main responsibility is to collect data from external data sources (these can be flat files, web services or any other kind of data sources) 
+and expose it in a common structure. Such structure is to be digested by further processing modules, such as handlebars.
 
 ## How does it work?
-Knot.x Data Bridge defines data sources, that can be utilized in HTML markup, in [Fragments](https://github.com/Cognifide/knotx/wiki/Splitter). 
-The data source can be any kind of system, from a web service, through low-level storages, such as a database
-or cache, to a custom data provider.
+In order to use data from external data sources you need to create an Knot.x [Fragments](https://github.com/Cognifide/knotx/wiki/Splitter).
+The fragments caries out a set of data source names to be used in your markup. 
+These names are to be used as variables under which you can find your data.
 
-The data source definition contains an unique name, parameters and a data source adapter:
+Data bridge binds those data source names with the Knot.x data source adapters (that retrieves data from the any kind of sources).
+
+Data source binding consists of unique name, parameters and a data source adapter address.:
 ```hocon
 dataDefinitions = [
   {
