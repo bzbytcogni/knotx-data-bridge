@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.knotx.databridge.core.service;
+package io.knotx.databridge.core.datasource;
 
 
 import io.knotx.databridge.core.attribute.DataSourceAttribute;

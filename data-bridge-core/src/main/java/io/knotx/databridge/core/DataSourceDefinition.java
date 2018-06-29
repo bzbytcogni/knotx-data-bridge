@@ -24,17 +24,17 @@ import io.vertx.core.json.JsonObject;
  * Describes a physical details of HTTP service endpoint the ServiceAdapter will use.
  */
 @DataObject(generateConverter = true, publicConverter = false)
-public class DataSourceMetadata {
+public class DataSourceDefinition {
 
   private String name;
-  private String address;
+  private String adapter;
   private String cacheKey;
   private JsonObject params;
 
   /**
    * Default constructor
    */
-  public DataSourceMetadata() {
+  public DataSourceDefinition() {
     init();
   }
 
@@ -44,9 +44,9 @@ public class DataSourceMetadata {
    *
    * @param other the instance to copy
    */
-  public DataSourceMetadata(DataSourceMetadata other) {
+  public DataSourceDefinition(DataSourceDefinition other) {
     this.name = other.name;
-    this.address = other.address;
+    this.adapter = other.adapter;
     this.cacheKey = other.cacheKey;
     this.params = other.params.copy();
   }
@@ -56,9 +56,9 @@ public class DataSourceMetadata {
    *
    * @param json the JSON
    */
-  public DataSourceMetadata(JsonObject json) {
+  public DataSourceDefinition(JsonObject json) {
     init();
-    DataSourceMetadataConverter.fromJson(json, this);
+    DataSourceDefinitionConverter.fromJson(json, this);
   }
 
   /**
@@ -68,7 +68,7 @@ public class DataSourceMetadata {
    */
   public JsonObject toJson() {
     JsonObject json = new JsonObject();
-    DataSourceMetadataConverter.toJson(this, json);
+    DataSourceDefinitionConverter.toJson(this, json);
     return json;
   }
 
@@ -90,26 +90,26 @@ public class DataSourceMetadata {
    * @param name name of the service
    * @return a reference to this, so the API can be used fluently
    */
-  public DataSourceMetadata setName(String name) {
+  public DataSourceDefinition setName(String name) {
     this.name = name;
     return this;
   }
 
   /**
-   * @return EB address of the service adapter
+   * @return EB adapter of the service adapter
    */
-  public String getAddress() {
-    return address;
+  public String getAdapter() {
+    return adapter;
   }
 
   /**
-   * Sets the EB address of the service adapter
+   * Sets the EB adapter of the service adapter
    *
-   * @param address EB address of the service adapter
+   * @param adapter EB adapter of the service adapter
    * @return a reference to this, so the API can be used fluently
    */
-  public DataSourceMetadata setAddress(String address) {
-    this.address = address;
+  public DataSourceDefinition setAdapter(String adapter) {
+    this.adapter = adapter;
     return this;
   }
 
@@ -126,7 +126,7 @@ public class DataSourceMetadata {
    * @param cacheKey cache key
    * @return a reference to this, so the API can be used fluently
    */
-  public DataSourceMetadata setCacheKey(String cacheKey) {
+  public DataSourceDefinition setCacheKey(String cacheKey) {
     this.cacheKey = cacheKey;
     return this;
   }
@@ -144,7 +144,7 @@ public class DataSourceMetadata {
    * @param params JsonObject with the additional parameters
    * @return a reference to this, so the API can be used fluently
    */
-  public DataSourceMetadata setParams(JsonObject params) {
+  public DataSourceDefinition setParams(JsonObject params) {
     this.params = params;
     return this;
   }
@@ -157,15 +157,15 @@ public class DataSourceMetadata {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    DataSourceMetadata that = (DataSourceMetadata) o;
+    DataSourceDefinition that = (DataSourceDefinition) o;
     return Objects.equal(name, that.name) &&
-        Objects.equal(address, that.address) &&
+        Objects.equal(adapter, that.adapter) &&
         Objects.equal(cacheKey, that.cacheKey) &&
         Objects.equal(params, that.params);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(name, address, cacheKey, params);
+    return Objects.hashCode(name, adapter, cacheKey, params);
   }
 }

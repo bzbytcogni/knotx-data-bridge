@@ -25,7 +25,7 @@ import com.googlecode.zohhak.api.Configure;
 import com.googlecode.zohhak.api.TestWith;
 import com.googlecode.zohhak.api.runners.ZohhakRunner;
 
-import io.knotx.databridge.core.service.DataSourceEntry;
+import io.knotx.databridge.core.datasource.DataSourceEntry;
 import io.knotx.dataobjects.Fragment;
 import io.knotx.junit.coercers.KnotxCoercers;
 import io.vertx.core.json.JsonObject;

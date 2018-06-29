@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.knotx.databridge.core.service;
+package io.knotx.databridge.core.datasource;
 
 
 import io.knotx.databridge.core.DataBridgeKnotOptions;
@@ -22,27 +22,26 @@ import io.knotx.databridge.core.attribute.DataSourceAttribute.AtributeType;
 import io.knotx.junit.util.FileReader;
 import io.vertx.core.json.JsonObject;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class ServiceEntryTest {
+public class DataSourceEntryTest {
 
   private static final String NAMESPACE = "first";
 
-  private DataBridgeKnotOptions configWithDefaultParams;
+  private static DataBridgeKnotOptions CONFIG_WITH_DEFAULT_PARAMS;
 
-  private DataBridgeKnotOptions configNoDefaultParams;
+  private static DataBridgeKnotOptions CONFIG_NO_DEFAULT_PARAMS;
 
-  @Before
-  public void setUp() throws Exception {
-    configWithDefaultParams = new DataBridgeKnotOptions(
+  @BeforeClass
+  public static void setUp() throws Exception {
+    CONFIG_WITH_DEFAULT_PARAMS = new DataBridgeKnotOptions(
         new JsonObject(FileReader.readText("service-correct.json"))
     );
-    configNoDefaultParams = new DataBridgeKnotOptions(
+    CONFIG_NO_DEFAULT_PARAMS = new DataBridgeKnotOptions(
         new JsonObject(FileReader.readText("service-correct-no-params.json"))
     );
   }
-
 
   @Test
   public void mergePayload_pathFromParamsAttribute() {
@@ -52,7 +51,7 @@ public class ServiceEntryTest {
         DataSourceAttribute.of(AtributeType.PARAMS).withNamespace(NAMESPACE)
             .withValue("{\"path\":\"first-service\"}"));
     serviceEntry
-        .mergeParams(configWithDefaultParams.getServices().stream().findFirst().get().getParams());
+        .mergeParams(CONFIG_WITH_DEFAULT_PARAMS.getDataDefinitions().iterator().next().getParams());
     Assert.assertEquals("first-service", serviceEntry.getParams().getString("path"));
   }
 
@@ -63,7 +62,7 @@ public class ServiceEntryTest {
             .withValue("first-service"),
         DataSourceAttribute.of(AtributeType.PARAMS).withNamespace(NAMESPACE).withValue("{}"));
     serviceEntry
-        .mergeParams(configWithDefaultParams.getServices().stream().findFirst().get().getParams());
+        .mergeParams(CONFIG_WITH_DEFAULT_PARAMS.getDataDefinitions().iterator().next().getParams());
     Assert.assertEquals("/service/mock/first.json", serviceEntry.getParams().getString("path"));
   }
 
@@ -75,20 +74,20 @@ public class ServiceEntryTest {
         DataSourceAttribute.of(AtributeType.PARAMS).withNamespace(NAMESPACE)
             .withValue("{\"name\":\"first-service-name\"}"));
     serviceEntry
-        .mergeParams(configWithDefaultParams.getServices().stream().findFirst().get().getParams());
+        .mergeParams(CONFIG_WITH_DEFAULT_PARAMS.getDataDefinitions().iterator().next().getParams());
     Assert.assertEquals("/service/mock/first.json", serviceEntry.getParams().getString("path"));
     Assert.assertEquals("first-service-name", serviceEntry.getParams().getString("name"));
   }
 
   @Test
-  public void mergePayload_whenNoDefaultParams_expectDefinedParamsUsed() throws Exception {
+  public void mergePayload_whenNoDefaultParams_expectDefinedParamsUsed() {
     DataSourceEntry serviceEntry = new DataSourceEntry(
         DataSourceAttribute.of(AtributeType.NAME).withNamespace(NAMESPACE)
             .withValue("first-service"),
         DataSourceAttribute.of(AtributeType.PARAMS).withNamespace(NAMESPACE)
             .withValue("{\"path\":\"some-other-service.json\"}"));
     serviceEntry
-        .mergeParams(configNoDefaultParams.getServices().stream().findFirst().get().getParams());
+        .mergeParams(CONFIG_NO_DEFAULT_PARAMS.getDataDefinitions().iterator().next().getParams());
     Assert.assertEquals("some-other-service.json", serviceEntry.getParams().getString("path"));
   }
 }

@@ -14,17 +14,17 @@
 +++
 Sets the EB address of the verticle. Default is 'knotx.core.service'
 +++
+|[[dataDefinitions]]`dataDefinitions`|`Array of link:cheatsheets.adoc#DataSourceDefinition[DataSourceDefinition]`|
++++
+Sets the mapping between service aliases and service adapters that will serve the data.
++++
 |[[deliveryOptions]]`deliveryOptions`|`link:cheatsheets.adoc#DeliveryOptions[DeliveryOptions]`|
 +++
 Sets the Vert.x EventBusDeliveryOptions for a given verticle
 +++
-|[[services]]`services`|`Array of link:cheatsheets.adoc#DataSourceMetadata[DataSourceMetadata]`|
-+++
-Sets the mapping between service aliases and service adapters that will serve the data.
-+++
 |===
-[[DataSourceMetadata]]
-== DataSourceMetadata
+[[DataSourceDefinition]]
+== DataSourceDefinition
 
 ++++
  Describes a physical details of HTTP service endpoint the ServiceAdapter will use.
@@ -35,9 +35,9 @@ Sets the mapping between service aliases and service adapters that will serve th
 [frame="topbot"]
 |===
 ^|Name | Type ^| Description
-|[[address]]`address`|`String`|
+|[[adapter]]`adapter`|`String`|
 +++
-Sets the EB address of the service adapter
+Sets the EB adapter of the service adapter
 +++
 |[[cacheKey]]`cacheKey`|`String`|
 +++

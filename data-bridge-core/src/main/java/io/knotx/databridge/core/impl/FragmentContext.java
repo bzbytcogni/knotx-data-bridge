@@ -17,7 +17,7 @@ package io.knotx.databridge.core.impl;
 
 import com.google.common.base.MoreObjects;
 import io.knotx.databridge.core.attribute.DataSourceAttribute;
-import io.knotx.databridge.core.service.DataSourceEntry;
+import io.knotx.databridge.core.datasource.DataSourceEntry;
 import io.knotx.dataobjects.Fragment;
 import io.reactivex.Observable;
 import java.util.List;
