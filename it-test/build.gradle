@@ -17,7 +17,7 @@ description = "Knot.x Data Bridge Integration Tests"
 
 dependencies {
   compile project(':data-bridge-core')
-  compile project(':data-bridge-http')
+  compile project(':data-bridge-adapter-http')
 
   compile "io.vertx:vertx-web-client"
 

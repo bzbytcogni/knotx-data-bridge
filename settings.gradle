@@ -11,5 +11,5 @@ rootProject.name = 'knotx-data-bridge'
 
 include 'data-bridge-api'
 include 'data-bridge-core'
-include 'data-bridge-http'
+include 'data-bridge-adapter-http'
 include 'it-test'
