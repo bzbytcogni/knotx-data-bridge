@@ -47,7 +47,7 @@ import org.junit.runner.RunWith;
 @RunWith(VertxUnitRunner.class)
 public class DataBridgeIntegrationTest {
 
-  private final static String CORE_MODULE_EB_ADDRESS = "knotx.databridge.core";
+  private final static String CORE_MODULE_EB_ADDRESS = "knotx.knot.databridge";
   private static final String MOCK_SERVICE_JSON_RESULT_KEY = "result";
   private static final String MOCK_SERVICE_JSON_RESULT_VALUE = "success";
   private static final int MOCK_SERVICE_PORT_NUMBER = 3000;
