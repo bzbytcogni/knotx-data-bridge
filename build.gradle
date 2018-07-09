@@ -34,10 +34,8 @@ subprojects { subproject ->
   apply plugin: 'eclipse'
   apply plugin: 'idea'
   apply plugin: 'io.spring.dependency-management'
-
-  if (subproject.name != "it-test") {
-    apply plugin: 'maven'
-  }
+  apply plugin: 'maven'
+  apply plugin: 'signing'
 
   sourceCompatibility = 1.8
   targetCompatibility = 1.8
@@ -92,6 +90,10 @@ subprojects { subproject ->
     }
   }
 
+  clean.doFirst {
+    file('src/main/generated').deleteDir()
+  }
+
   task annotationProcessing(type: JavaCompile, group: 'build') { // codegen
     source = sourceSets.main.java
     classpath = configurations.compile + configurations.compileOnly
@@ -109,43 +111,67 @@ subprojects { subproject ->
     ]
   }
 
-  plugins.withId 'maven', {
+  task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+  }
 
-    // http://central.sonatype.org/pages/gradle.html
+  task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+  }
 
-    //signing {
-    //  sign configurations.archives
-    //}
+  artifacts {
+    archives javadocJar, sourcesJar
+  }
 
-    uploadArchives {
-      repositories {
-        mavenDeployer {
-          // beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+  signing {
+    sign configurations.archives
+  }
 
-          repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-            authentication(userName: ossrhUsername, password: ossrhPassword)
+  uploadArchives {
+    repositories {
+      mavenDeployer {
+        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+          authentication(userName: ossrhUsername, password: ossrhPassword)
+        }
+
+        snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+          authentication(userName: ossrhUsername, password: ossrhPassword)
+        }
+
+        pom.project {
+          name 'Knotx Data Bridge'
+          packaging 'jar'
+          url 'http://knotx.io'
+
+          scm {
+            connection 'scm:git:git://github.com/Knotx/knotx-data-bridge.git'
+            developerConnection 'scm:git:git://github.com/Knotx/knotx-data-bridge.git'
+            url 'http://github.com/Knotx/knotx-data-bridge/tree/master'
           }
 
-          snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-            authentication(userName: ossrhUsername, password: ossrhPassword)
-          }
-
-          pom.project {
-            name 'Knotx Data Bridge'
-            packaging 'jar'
-            url 'http://knotx.io'
-
-            scm {
-              connection 'scm:git:git://github.com/Knotx/knotx-data-bridge.git'
-              developerConnection 'scm:git:git://github.com/Knotx/knotx-data-bridge.git'
-              url 'http://github.com/Knotx/knotx-data-bridge/tree/master'
+          licenses {
+            license {
+              name 'The Apache Software License, Version 2.0'
+              url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
             }
+          }
 
-            licenses {
-              license {
-                name 'The Apache Software License, Version 2.0'
-                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-              }
+          developers {
+            developer {
+              name 'Maciej Laskowski'
+              url 'https://github.com/Skejven'
+            }
+            developer {
+              name 'Marcin Czeczko'
+              url 'https://github.com/marcinczeczko'
+            }
+            developer {
+              name 'Tomasz Michalak'
+              url 'https://github.com/tomaszmichalak'
             }
           }
         }
