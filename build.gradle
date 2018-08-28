@@ -61,7 +61,11 @@ subprojects {
     compileOnly "io.vertx:vertx-codegen"
 
     // Test dependencies
-    testCompile 'junit:junit'
+    testCompile 'org.junit.jupiter:junit-jupiter-api'
+    testCompile 'org.junit.jupiter:junit-jupiter-engine'
+    testCompile 'org.junit.jupiter:junit-jupiter-params'
+    testCompile 'org.junit.jupiter:junit-jupiter-migrationsupport'
+    testCompile 'org.junit.vintage:junit-vintage-engine'
     testCompile 'com.googlecode.zohhak:zohhak'
     testCompile 'uk.co.datumedge:hamcrest-json'
     testCompile 'org.hamcrest:hamcrest-all'
@@ -71,9 +75,9 @@ subprojects {
 
     testCompileOnly "io.vertx:vertx-codegen"
     testCompile "io.vertx:vertx-config"
-    testCompile 'io.vertx:vertx-unit'
+    testCompile 'io.vertx:vertx-junit5'
     testCompile "io.knotx:knotx-mocks"
-    testCompile group: 'io.knotx', name: 'knotx-core', classifier: 'tests'
+    testCompile 'io.knotx:knotx-junit5:0.0.1-SNAPSHOT'
   }
 
   sourceSets {

@@ -15,102 +15,97 @@
  */
 package io.knotx.databridge.http.common.placeholders;
 
+import java.util.stream.Stream;
+
 import io.knotx.dataobjects.ClientRequest;
 import io.vertx.reactivex.core.MultiMap;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import java.util.Arrays;
-import java.util.Collection;
-
-@RunWith(Parameterized.class)
 public class UriTransformerReplaceTest {
 
-  @Parameterized.Parameter
-  public String servicePath;
-  @Parameterized.Parameter(value = 1)
-  public String requestedUri;
-  @Parameterized.Parameter(value = 2)
-  public String expectedUri;
-
-  @Parameterized.Parameters(name = "{index}: {0}")
-  public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][]{
+  /**
+   * Data source for following test
+   */
+  public static Stream<Arguments> data() {
+    return Stream.of(
         // SLING URI DECOMPOSITION
         // path
-        {"/path.html?path={slingUri.path}", "/a/b/c/d.s1.s2.html/c/d.s.txt#f",
-            "/path.html?path=/a/b/c/d"},
-        {"/path.html?path={slingUri.path}", "/a/b/c/d.s1.s2.html/c/d.s.txt#f",
-            "/path.html?path=/a/b/c/d"},
+        Arguments.of("/path.html?path={slingUri.path}", "/a/b/c/d.s1.s2.html/c/d.s.txt#f",
+            "/path.html?path=/a/b/c/d"),
+        Arguments.of("/path.html?path={slingUri.path}", "/a/b/c/d.s1.s2.html/c/d.s.txt#f",
+            "/path.html?path=/a/b/c/d"),
         // pathparts
-        {"/path/{slingUri.pathpart[2]}.html", "/a/b/c/d/e.s1.s2.html/c/d.s.txt#f",
-            "/path/c.html"},
-        {"/path/{slingUri.pathpart[7]}.html", "/a/b/c/d/e.s1.s2.html/c/d.s.txt#f",
-            "/path/.html"},
+        Arguments.of("/path/{slingUri.pathpart[2]}.html", "/a/b/c/d/e.s1.s2.html/c/d.s.txt#f",
+            "/path/c.html"),
+        Arguments.of("/path/{slingUri.pathpart[7]}.html", "/a/b/c/d/e.s1.s2.html/c/d.s.txt#f",
+            "/path/.html"),
         // extension
-        {"/path/second.html/a.{slingUri.extension}", "/a/b/c/d/e.s1.s2.html/suffix.xml",
-            "/path/second.html/a.html"},
+        Arguments.of("/path/second.html/a.{slingUri.extension}", "/a/b/c/d/e.s1.s2.html/suffix.xml",
+            "/path/second.html/a.html"),
         // selectors
-        {"/selectors.{slingUri.selectorstring}.html", "/a/b.s1.s2.html/c/d.s.txt#f",
-            "/selectors.s1.s2.html"},
-        {"/selectors.{slingUri.selector[0]}.html", "/a/b.s1.s2.html/c/d.s.txt#f",
-            "/selectors.s1.html"},
-        {"/selectors.{slingUri.selector[2]}.html", "/a/b.s1.s2.html/c/d.s.txt#f",
-            "/selectors..html"},
+        Arguments.of("/selectors.{slingUri.selectorstring}.html", "/a/b.s1.s2.html/c/d.s.txt#f",
+            "/selectors.s1.s2.html"),
+        Arguments.of("/selectors.{slingUri.selector[0]}.html", "/a/b.s1.s2.html/c/d.s.txt#f",
+            "/selectors.s1.html"),
+        Arguments.of("/selectors.{slingUri.selector[2]}.html", "/a/b.s1.s2.html/c/d.s.txt#f",
+            "/selectors..html"),
         // suffix
-        {"/suffix.html{slingUri.suffix}", "/a/b/dsds.dd.html/my/nice/suffix.html",
-            "/suffix.html/my/nice/suffix.html"},
+        Arguments.of("/suffix.html{slingUri.suffix}", "/a/b/dsds.dd.html/my/nice/suffix.html",
+            "/suffix.html/my/nice/suffix.html"),
         // REGULAR URI DECOMPOSITION
         // path
-        {"/path.html?path={uri.path}", "/a/b/c/d.s1.s2.html/c/d.s.txt#f",
-            "/path.html?path=/a/b/c/d.s1.s2.html/c/d.s.txt"},
+        Arguments.of("/path.html?path={uri.path}", "/a/b/c/d.s1.s2.html/c/d.s.txt#f",
+            "/path.html?path=/a/b/c/d.s1.s2.html/c/d.s.txt"),
         // pathpart
-        {"/path/{uri.pathpart[5]}.html", "/a/b/c/d/e.s1.s2.html/c/d.s.txt#f",
-            "/path/e.s1.s2.html.html"},
+        Arguments.of("/path/{uri.pathpart[5]}.html", "/a/b/c/d/e.s1.s2.html/c/d.s.txt#f",
+            "/path/e.s1.s2.html.html"),
         // pathpart
-        {"/path/{uri.pathpart[7]}.html", "/a/b/c/d/e.s1.s2.html/c/d.s.txt#f",
-            "/path/d.s.txt.html"},
+        Arguments.of("/path/{uri.pathpart[7]}.html", "/a/b/c/d/e.s1.s2.html/c/d.s.txt#f",
+            "/path/d.s.txt.html"),
         // pathpart
-        {"/path/{uri.pathpart[8]}.html", "/a/b/c/d/e.s1.s2.html/c/d.s.txt#f",
-            "/path/.html"},
+        Arguments.of("/path/{uri.pathpart[8]}.html", "/a/b/c/d/e.s1.s2.html/c/d.s.txt#f",
+            "/path/.html"),
         // extension
-        {"/path/second.html/a.{uri.extension}", "/a/b.s1.s2.html/c/d.xml",
-            "/path/second.html/a.xml"},
+        Arguments.of("/path/second.html/a.{uri.extension}", "/a/b.s1.s2.html/c/d.xml",
+            "/path/second.html/a.xml"),
         // extension
-        {"/path/second.html/a.{uri.extension}", "/a/b",
-            "/path/second.html/a."},
+        Arguments.of("/path/second.html/a.{uri.extension}", "/a/b",
+            "/path/second.html/a."),
         // param
-        {"/solr/search/{param.q}", "/c/d/s?q=my search is fetched from static getParams()",
-            "/solr/search/core%20%26%20x"},
+        Arguments
+            .of("/solr/search/{param.q}", "/c/d/s?q=my search is fetched from static getParams()",
+                "/solr/search/core%20%26%20x"),
         // headers
-        {"/solr/{header.authorizationId}/", "/c/d/s?q=my action from headers",
-            "/solr/486434684345/"},
+        Arguments.of("/solr/{header.authorizationId}/", "/c/d/s?q=my action from headers",
+            "/solr/486434684345/"),
         // invalid
-        {"/selectors.{invalid}.html", "/a/b.s1.s2.html/c/d.s.txt#f", "/selectors..html"}});
+        Arguments
+            .of("/selectors.{invalid}.html", "/a/b.s1.s2.html/c/d.s.txt#f", "/selectors..html"));
   }
 
   private static MultiMap getHeadersMultiMap() {
-    MultiMap map = MultiMap.caseInsensitiveMultiMap();
-    map.add("authorizationId", "486434684345");
-    return map;
+    return MultiMap.caseInsensitiveMultiMap()
+        .add("authorizationId", "486434684345");
   }
 
   private static MultiMap getParamsMultiMap() {
-    MultiMap map = MultiMap.caseInsensitiveMultiMap();
-    map.add("q", "core & x");
-    map.add("action", "/some/action/path");
-    return map;
+    return MultiMap.caseInsensitiveMultiMap()
+        .add("q", "core & x")
+        .add("action", "/some/action/path");
   }
 
-  @Test
-  public void getServiceUri_whenGivenUriWithPlaceholdersAndMockedRequest_expectPlaceholdersSubstitutedWithValues() {
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("data")
+  public void getServiceUri_whenGivenUriWithPlaceholdersAndMockedRequest_expectPlaceholdersSubstitutedWithValues(
+      String servicePath, String requestedUri, String expectedUri) {
     ClientRequest httpRequest = new ClientRequest().setHeaders(getHeadersMultiMap())
         .setParams(getParamsMultiMap()).setPath(requestedUri);
 
     String finalUri = UriTransformer.resolveServicePath(servicePath, httpRequest);
 
-    Assert.assertEquals(expectedUri, finalUri);
+    Assertions.assertEquals(expectedUri, finalUri);
   }
 }
