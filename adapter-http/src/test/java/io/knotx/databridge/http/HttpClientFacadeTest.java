@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
 @ExtendWith(KnotxExtension.class)
@@ -139,8 +139,8 @@ public class HttpClientFacadeTest {
           Assertions.assertEquals(error.getClass().getSimpleName(),
               IllegalArgumentException.class.getSimpleName());
           Mockito.verify(mockedWebClient, Mockito.times(0))
-              .request(Matchers.any(), Matchers.anyInt(), Matchers.anyString(),
-                  Matchers.anyString());
+              .request(ArgumentMatchers.any(), ArgumentMatchers.anyInt(), ArgumentMatchers.anyString(),
+                  ArgumentMatchers.anyString());
         })
         .subscribe(
             response -> context.failNow(new Exception("Error should occur!")),
@@ -166,8 +166,8 @@ public class HttpClientFacadeTest {
         .doOnError(error -> {
           Assertions.assertEquals(UnsupportedDataSourceException.class, error.getClass());
           Mockito.verify(mockedWebClient, Mockito.times(0))
-              .request(Matchers.any(), Matchers.anyInt(), Matchers.anyString(),
-                  Matchers.anyString());
+              .request(ArgumentMatchers.any(), ArgumentMatchers.anyInt(), ArgumentMatchers.anyString(),
+                  ArgumentMatchers.anyString());
         })
         .subscribe(
             response -> context.failNow(new Exception("Error should occur!")),
