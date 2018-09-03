@@ -19,6 +19,7 @@ plugins {
 
 allprojects {
   repositories {
+    mavenLocal()
     jcenter()
     maven { url "https://plugins.gradle.org/m2/" }
     maven { url "https://oss.sonatype.org/content/groups/staging/" }
@@ -52,13 +53,13 @@ subprojects {
   }
 
   dependencies {
-    compile "io.knotx:knotx-core"
+    compile 'io.knotx:knotx-core'
 
-    compile "io.vertx:vertx-core"
-    compile "io.vertx:vertx-service-proxy"
-    compile "io.vertx:vertx-rx-java2"
+    compile 'io.vertx:vertx-core'
+    compile 'io.vertx:vertx-service-proxy'
+    compile 'io.vertx:vertx-rx-java2'
 
-    compileOnly "io.vertx:vertx-codegen"
+    compileOnly 'io.vertx:vertx-codegen'
 
     // Test dependencies
     testCompile 'org.junit.jupiter:junit-jupiter-api'
@@ -66,18 +67,15 @@ subprojects {
     testCompile 'org.junit.jupiter:junit-jupiter-params'
     testCompile 'org.junit.jupiter:junit-jupiter-migrationsupport'
     testCompile 'org.junit.vintage:junit-vintage-engine'
-    testCompile 'com.googlecode.zohhak:zohhak'
     testCompile 'uk.co.datumedge:hamcrest-json'
     testCompile 'org.hamcrest:hamcrest-all'
-    testCompile 'org.powermock:powermock-api-mockito'
-    testCompile 'org.powermock:powermock-module-junit4'
-    testCompile "com.github.tomakehurst:wiremock:2.17.0"
+    testCompile 'com.github.tomakehurst:wiremock'
 
-    testCompileOnly "io.vertx:vertx-codegen"
-    testCompile "io.vertx:vertx-config"
+    testCompileOnly 'io.vertx:vertx-codegen'
+    testCompile 'io.vertx:vertx-config'
     testCompile 'io.vertx:vertx-junit5'
-    testCompile "io.knotx:knotx-mocks"
-    testCompile 'io.knotx:knotx-junit5:0.0.1-SNAPSHOT'
+    testCompile 'io.knotx:knotx-mocks'
+    testCompile 'io.knotx:knotx-junit5'
   }
 
   sourceSets {

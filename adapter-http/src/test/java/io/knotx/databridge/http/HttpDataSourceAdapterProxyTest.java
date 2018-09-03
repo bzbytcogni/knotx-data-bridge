@@ -72,7 +72,8 @@ public class HttpDataSourceAdapterProxyTest {
   }
 
   private void callAdapterServiceWithAssertions(
-      VertxTestContext context, Vertx vertx,
+      VertxTestContext context,
+      Vertx vertx,
       String servicePath,
       Consumer<AdapterResponse> onSuccess,
       Consumer<Throwable> onError) {

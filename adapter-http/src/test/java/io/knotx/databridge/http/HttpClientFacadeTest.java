@@ -42,7 +42,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
 
 @ExtendWith(KnotxExtension.class)
 public class HttpClientFacadeTest {
@@ -68,7 +67,7 @@ public class HttpClientFacadeTest {
   public void whenSupportedStaticPathServiceRequested_expectRequestExecutedAndResponseOKWithBody(
       VertxTestContext context, Vertx vertx) throws Exception {
     // given
-    final WebClient mockedWebClient = PowerMockito.spy(webClient(vertx));
+    final WebClient mockedWebClient = Mockito.spy(webClient(vertx));
     HttpClientFacade clientFacade = new HttpClientFacade(mockedWebClient,
         getConfiguration());
     final JsonObject expectedResponse = new JsonObject(KnotxTestUtils.readText("first-response.json"));
@@ -96,7 +95,7 @@ public class HttpClientFacadeTest {
   public void whenSupportedDynamicPathServiceRequested_expectRequestExecutedAndResponseOKWithBody(
       VertxTestContext context, Vertx vertx) throws Exception {
     // given
-    final WebClient mockedWebClient = PowerMockito.spy(webClient(vertx));
+    final WebClient mockedWebClient = Mockito.spy(webClient(vertx));
     HttpClientFacade clientFacade = new HttpClientFacade(mockedWebClient,
         getConfiguration());
     final JsonObject expectedResponse = new JsonObject(KnotxTestUtils.readText("first-response.json"));
@@ -125,9 +124,9 @@ public class HttpClientFacadeTest {
   @Test
   @KnotxApplyConfiguration("knotx-datasource-http-test.json")
   public void whenServiceRequestedWithoutPathParam_expectNoServiceRequestAndBadRequest(
-      VertxTestContext context, Vertx vertx) throws Exception {
+      VertxTestContext context, Vertx vertx) {
     // given
-    final WebClient mockedWebClient = PowerMockito.spy(webClient(vertx));
+    final WebClient mockedWebClient = Mockito.spy(webClient(vertx));
     HttpClientFacade clientFacade = new HttpClientFacade(mockedWebClient,
         getConfiguration());
 
@@ -151,9 +150,9 @@ public class HttpClientFacadeTest {
   @Test
   @KnotxApplyConfiguration("knotx-datasource-http-test.json")
   public void whenUnsupportedPathServiceRequested_expectNoServiceRequestAndBadRequest(
-      VertxTestContext context, Vertx vertx) throws Exception {
+      VertxTestContext context, Vertx vertx) {
     // given
-    final WebClient mockedWebClient = PowerMockito.spy(webClient(vertx));
+    final WebClient mockedWebClient = Mockito.spy(webClient(vertx));
     HttpClientFacade clientFacade = new HttpClientFacade(mockedWebClient,
         getConfiguration());
 
@@ -179,9 +178,9 @@ public class HttpClientFacadeTest {
   @Test
   @KnotxApplyConfiguration("knotx-datasource-http-test.json")
   public void whenServiceEmptyResponse_expectNoFailure(
-      VertxTestContext context, Vertx vertx) throws Exception {
+      VertxTestContext context, Vertx vertx) {
     // given
-    final WebClient mockedWebClient = PowerMockito.spy(webClient(vertx));
+    final WebClient mockedWebClient = Mockito.spy(webClient(vertx));
     HttpClientFacade clientFacade = new HttpClientFacade(mockedWebClient,
         getConfiguration());
 
