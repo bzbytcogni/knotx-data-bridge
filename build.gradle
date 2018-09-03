@@ -19,7 +19,6 @@ plugins {
 
 allprojects {
   repositories {
-    mavenLocal()
     jcenter()
     maven { url "https://plugins.gradle.org/m2/" }
     maven { url "https://oss.sonatype.org/content/groups/staging/" }
