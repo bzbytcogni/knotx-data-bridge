@@ -1,6 +1,3 @@
-## WORK IN PROGRESS
-
-
 # Signing
 In order to create OpenPGP signatures, you will need a key pair (instructions on creating a key pair using the GnuPG tools can be found in the GnuPG HOWTOs). 
 You need to provide the Signing Plugin with your key information, which means three things:
@@ -15,12 +12,21 @@ These items must be supplied as the values of the signing.keyId, signing.secretK
 
 Given the personal and private nature of these values, a good practice is to store them in the gradle.properties file in the user’s Gradle home directory.
 
+```
 signing.keyId=24875D73
 signing.password=secret
 signing.secretKeyRingFile=/Users/me/.gnupg/secring.gpg
+```
+
+# Credentials
+Additionally you need to configure your **ossrh** credentials to deploy artifacts to Maven Central.
+```
+ossrhUsername=username
+ossrhPassword=secret
+```
 
 # Uploading to nexus
-`./gradlew uploadArchives`
+`./gradlew publish`
 
 - is it was snapshot version it will go to snapshot repo
 - otherwise to nexus staging
