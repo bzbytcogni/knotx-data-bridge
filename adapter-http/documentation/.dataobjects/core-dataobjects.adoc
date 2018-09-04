@@ -20,7 +20,7 @@ Sets the Vert.x Web Client options of the Web client.
 +++
 |[[customHttpHeader]]`customHttpHeader`|`link:cheatsheets.adoc#CustomHttpHeader[CustomHttpHeader]`|
 +++
-Sets the header (name & value) to be sent in every request to the services.
+Sets the header (name &amp; value) to be sent in every request to the services.
  If not set, it sends <code>Server-User-Agent=Knot.x</code> header
 +++
 |[[services]]`services`|`Array of link:cheatsheets.adoc#HttpDataSourceSettings[HttpDataSourceSettings]`|

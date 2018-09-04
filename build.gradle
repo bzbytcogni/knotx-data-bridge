@@ -89,6 +89,10 @@ subprojects {
     }
   }
 
+  clean.doFirst {
+    file('src/main/generated').deleteDir()
+  }
+
   task annotationProcessing(type: JavaCompile, group: 'build') { // codegen
     source = sourceSets.main.java
     classpath = configurations.compile + configurations.compileOnly
@@ -114,11 +118,12 @@ subprojects {
         'vertx.logger-delegate-factory-class-name': 'io.vertx.core.logging.SLF4JLogDelegateFactory'
     ]
   }
-
+  
   publishing {
     publications {
       mavenJava(MavenPublication) {
         from components.java
+        configurations.archives
       }
     }
     repositories {
@@ -137,6 +142,20 @@ subprojects {
   signing {
     useGpgCmd()
     sign configurations.archives
+  }
+
+  task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+  }
+
+  task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+  }
+
+  artifacts {
+    archives javadocJar, sourcesJar
   }
 
 }

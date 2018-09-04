@@ -115,6 +115,8 @@ public class HttpDataSourceAdapterOptions {
 
   /**
    * Sets the Vert.x Web Client options of the Web client.
+   * @param clientOptions clientOptions
+   * @return a reference to this, so the API can be used fluently
    */
   public HttpDataSourceAdapterOptions setClientOptions(WebClientOptions clientOptions) {
     this.clientOptions = clientOptions;
@@ -149,10 +151,10 @@ public class HttpDataSourceAdapterOptions {
   }
 
   /**
-   * Sets the header (name & value) to be sent in every request to the services.
+   * Sets the header (name &amp; value) to be sent in every request to the services.
    * If not set, it sends {@code Server-User-Agent=Knot.x} header
    *
-   * @param customHttpHeader the header name & value
+   * @param customHttpHeader the header name &amp; value
    * @return a reference to this, so the API can be used fluently
    */
   public HttpDataSourceAdapterOptions setCustomHttpHeader(
