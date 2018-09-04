@@ -15,10 +15,9 @@
  */
 package io.knotx.databridge.http.common.placeholders;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.List;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class UriTransformerPlaceholderTest {
 
@@ -26,6 +25,6 @@ public class UriTransformerPlaceholderTest {
   public void getPlaceholders_whenGivenUrlWithPlaceholders_expectPlaceholdersExtractedInArray() {
     List<String> placeholders =
         UriTransformer.getPlaceholders("/dssds/{first.aa}/dsu/{second}");
-    Assert.assertArrayEquals(placeholders.toArray(), new String[]{"first.aa", "second"});
+    Assertions.assertArrayEquals(placeholders.toArray(), new String[]{"first.aa", "second"});
   }
 }

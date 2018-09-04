@@ -19,11 +19,11 @@ package io.knotx.databridge.core.datasource;
 import io.knotx.databridge.core.DataBridgeKnotOptions;
 import io.knotx.databridge.core.attribute.DataSourceAttribute;
 import io.knotx.databridge.core.attribute.DataSourceAttribute.AtributeType;
-import io.knotx.junit.util.FileReader;
+import io.knotx.junit5.KnotxTestUtils;
 import io.vertx.core.json.JsonObject;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class DataSourceEntryTest {
 
@@ -33,13 +33,13 @@ public class DataSourceEntryTest {
 
   private static DataBridgeKnotOptions CONFIG_NO_DEFAULT_PARAMS;
 
-  @BeforeClass
+  @BeforeAll
   public static void setUp() throws Exception {
     CONFIG_WITH_DEFAULT_PARAMS = new DataBridgeKnotOptions(
-        new JsonObject(FileReader.readText("service-correct.json"))
+        new JsonObject(KnotxTestUtils.readText("service-correct.json"))
     );
     CONFIG_NO_DEFAULT_PARAMS = new DataBridgeKnotOptions(
-        new JsonObject(FileReader.readText("service-correct-no-params.json"))
+        new JsonObject(KnotxTestUtils.readText("service-correct-no-params.json"))
     );
   }
 
@@ -52,7 +52,7 @@ public class DataSourceEntryTest {
             .withValue("{\"path\":\"first-service\"}"));
     serviceEntry
         .mergeParams(CONFIG_WITH_DEFAULT_PARAMS.getDataDefinitions().iterator().next().getParams());
-    Assert.assertEquals("first-service", serviceEntry.getParams().getString("path"));
+    Assertions.assertEquals("first-service", serviceEntry.getParams().getString("path"));
   }
 
   @Test
@@ -63,7 +63,7 @@ public class DataSourceEntryTest {
         DataSourceAttribute.of(AtributeType.PARAMS).withNamespace(NAMESPACE).withValue("{}"));
     serviceEntry
         .mergeParams(CONFIG_WITH_DEFAULT_PARAMS.getDataDefinitions().iterator().next().getParams());
-    Assert.assertEquals("/service/mock/first.json", serviceEntry.getParams().getString("path"));
+    Assertions.assertEquals("/service/mock/first.json", serviceEntry.getParams().getString("path"));
   }
 
   @Test
@@ -75,8 +75,8 @@ public class DataSourceEntryTest {
             .withValue("{\"name\":\"first-service-name\"}"));
     serviceEntry
         .mergeParams(CONFIG_WITH_DEFAULT_PARAMS.getDataDefinitions().iterator().next().getParams());
-    Assert.assertEquals("/service/mock/first.json", serviceEntry.getParams().getString("path"));
-    Assert.assertEquals("first-service-name", serviceEntry.getParams().getString("name"));
+    Assertions.assertEquals("/service/mock/first.json", serviceEntry.getParams().getString("path"));
+    Assertions.assertEquals("first-service-name", serviceEntry.getParams().getString("name"));
   }
 
   @Test
@@ -88,6 +88,6 @@ public class DataSourceEntryTest {
             .withValue("{\"path\":\"some-other-service.json\"}"));
     serviceEntry
         .mergeParams(CONFIG_NO_DEFAULT_PARAMS.getDataDefinitions().iterator().next().getParams());
-    Assert.assertEquals("some-other-service.json", serviceEntry.getParams().getString("path"));
+    Assertions.assertEquals("some-other-service.json", serviceEntry.getParams().getString("path"));
   }
 }

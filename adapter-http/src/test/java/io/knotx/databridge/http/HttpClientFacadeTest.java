@@ -23,33 +23,27 @@ import io.knotx.databridge.http.common.exception.UnsupportedDataSourceException;
 import io.knotx.databridge.http.common.http.HttpClientFacade;
 import io.knotx.dataobjects.ClientRequest;
 import io.knotx.dataobjects.ClientResponse;
-import io.knotx.junit.rule.KnotxConfiguration;
-import io.knotx.junit.rule.TestVertxDeployer;
-import io.knotx.junit.util.FileReader;
+import io.knotx.junit5.KnotxApplyConfiguration;
+import io.knotx.junit5.KnotxExtension;
+import io.knotx.junit5.KnotxTestUtils;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.RunTestOnContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.client.WebClient;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.RuleChain;
-import org.junit.runner.RunWith;
-import org.mockito.Matchers;
-import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(KnotxExtension.class)
 public class HttpClientFacadeTest {
 
   // Configuration
@@ -67,23 +61,16 @@ public class HttpClientFacadeTest {
   private static final List<Pattern> PATTERNS = Collections
       .singletonList(Pattern.compile("X-test*"));
 
-  private RunTestOnContext vertx = new RunTestOnContext();
-
-  private TestVertxDeployer knotx = new TestVertxDeployer(vertx);
-
-  @Rule
-  public RuleChain chain = RuleChain.outerRule(vertx).around(knotx);
 
   @Test
-  @KnotxConfiguration("knotx-datasource-http-test.json")
+  @KnotxApplyConfiguration("knotx-datasource-http-test.json")
   public void whenSupportedStaticPathServiceRequested_expectRequestExecutedAndResponseOKWithBody(
-      TestContext context) throws Exception {
-    Async async = context.async();
+      VertxTestContext context, Vertx vertx) throws Exception {
     // given
-    final WebClient mockedWebClient = PowerMockito.spy(webClient());
+    final WebClient mockedWebClient = Mockito.spy(webClient(vertx));
     HttpClientFacade clientFacade = new HttpClientFacade(mockedWebClient,
         getConfiguration());
-    final JsonObject expectedResponse = new JsonObject(FileReader.readText("first-response.json"));
+    final JsonObject expectedResponse = new JsonObject(KnotxTestUtils.readText("first-response.json"));
 
     // when
     Single<ClientResponse> result = clientFacade
@@ -92,27 +79,26 @@ public class HttpClientFacadeTest {
     // then
     result
         .doOnSuccess(response -> {
-          context.assertEquals(HttpResponseStatus.OK.code(), response.getStatusCode());
-          context.assertEquals(expectedResponse, response.getBody().toJsonObject());
+          Assertions.assertEquals(HttpResponseStatus.OK.code(), response.getStatusCode());
+          Assertions.assertEquals(expectedResponse, response.getBody().toJsonObject());
           Mockito.verify(mockedWebClient, Mockito.times(1))
               .request(HttpMethod.GET, PORT, DOMAIN, REQUEST_PATH);
         })
         .subscribe(
-            response -> async.complete(),
-            error -> context.fail(error.getMessage())
+            response -> context.completeNow(),
+            context::failNow
         );
   }
 
   @Test
-  @KnotxConfiguration("knotx-datasource-http-test.json")
+  @KnotxApplyConfiguration("knotx-datasource-http-test.json")
   public void whenSupportedDynamicPathServiceRequested_expectRequestExecutedAndResponseOKWithBody(
-      TestContext context) throws Exception {
-    Async async = context.async();
+      VertxTestContext context, Vertx vertx) throws Exception {
     // given
-    final WebClient mockedWebClient = PowerMockito.spy(webClient());
+    final WebClient mockedWebClient = Mockito.spy(webClient(vertx));
     HttpClientFacade clientFacade = new HttpClientFacade(mockedWebClient,
         getConfiguration());
-    final JsonObject expectedResponse = new JsonObject(FileReader.readText("first-response.json"));
+    final JsonObject expectedResponse = new JsonObject(KnotxTestUtils.readText("first-response.json"));
     final ClientRequest request = new ClientRequest()
         .setParams(MultiMap.caseInsensitiveMultiMap().add("dynamicValue", "first"));
 
@@ -124,24 +110,23 @@ public class HttpClientFacadeTest {
     // then
     result
         .doOnSuccess(response -> {
-          context.assertEquals(HttpResponseStatus.OK.code(), response.getStatusCode());
-          context.assertEquals(expectedResponse, response.getBody().toJsonObject());
+          Assertions.assertEquals(HttpResponseStatus.OK.code(), response.getStatusCode());
+          Assertions.assertEquals(expectedResponse, response.getBody().toJsonObject());
           Mockito.verify(mockedWebClient, Mockito.times(1))
               .request(HttpMethod.GET, PORT, DOMAIN, REQUEST_PATH);
         })
         .subscribe(
-            response -> async.complete(),
-            error -> context.fail(error.getMessage())
+            response -> context.completeNow(),
+            context::failNow
         );
   }
 
   @Test
-  @KnotxConfiguration("knotx-datasource-http-test.json")
+  @KnotxApplyConfiguration("knotx-datasource-http-test.json")
   public void whenServiceRequestedWithoutPathParam_expectNoServiceRequestAndBadRequest(
-      TestContext context) throws Exception {
-    Async async = context.async();
+      VertxTestContext context, Vertx vertx) {
     // given
-    final WebClient mockedWebClient = PowerMockito.spy(webClient());
+    final WebClient mockedWebClient = Mockito.spy(webClient(vertx));
     HttpClientFacade clientFacade = new HttpClientFacade(mockedWebClient,
         getConfiguration());
 
@@ -151,24 +136,23 @@ public class HttpClientFacadeTest {
     // then
     result
         .doOnError(error -> {
-          context.assertEquals(error.getClass().getSimpleName(),
+          Assertions.assertEquals(error.getClass().getSimpleName(),
               IllegalArgumentException.class.getSimpleName());
           Mockito.verify(mockedWebClient, Mockito.times(0))
-              .request(Matchers.any(), Matchers.anyInt(), Matchers.anyString(),
-                  Matchers.anyString());
+              .request(ArgumentMatchers.any(), ArgumentMatchers.anyInt(), ArgumentMatchers.anyString(),
+                  ArgumentMatchers.anyString());
         })
         .subscribe(
-            response -> context.fail("Error should occur!"),
-            error -> async.complete());
+            response -> context.failNow(new Exception("Error should occur!")),
+            error -> context.completeNow());
   }
 
   @Test
-  @KnotxConfiguration("knotx-datasource-http-test.json")
+  @KnotxApplyConfiguration("knotx-datasource-http-test.json")
   public void whenUnsupportedPathServiceRequested_expectNoServiceRequestAndBadRequest(
-      TestContext context) throws Exception {
-    Async async = context.async();
+      VertxTestContext context, Vertx vertx) {
     // given
-    final WebClient mockedWebClient = PowerMockito.spy(webClient());
+    final WebClient mockedWebClient = Mockito.spy(webClient(vertx));
     HttpClientFacade clientFacade = new HttpClientFacade(mockedWebClient,
         getConfiguration());
 
@@ -180,24 +164,23 @@ public class HttpClientFacadeTest {
     // then
     result
         .doOnError(error -> {
-          context.assertEquals(UnsupportedDataSourceException.class, error.getClass());
+          Assertions.assertEquals(UnsupportedDataSourceException.class, error.getClass());
           Mockito.verify(mockedWebClient, Mockito.times(0))
-              .request(Matchers.any(), Matchers.anyInt(), Matchers.anyString(),
-                  Matchers.anyString());
+              .request(ArgumentMatchers.any(), ArgumentMatchers.anyInt(), ArgumentMatchers.anyString(),
+                  ArgumentMatchers.anyString());
         })
         .subscribe(
-            response -> context.fail("Error should occur!"),
-            error -> async.complete()
+            response -> context.failNow(new Exception("Error should occur!")),
+            error -> context.completeNow()
         );
   }
 
   @Test
-  @KnotxConfiguration("knotx-datasource-http-test.json")
+  @KnotxApplyConfiguration("knotx-datasource-http-test.json")
   public void whenServiceEmptyResponse_expectNoFailure(
-      TestContext context) throws Exception {
-    Async async = context.async();
+      VertxTestContext context, Vertx vertx) {
     // given
-    final WebClient mockedWebClient = PowerMockito.spy(webClient());
+    final WebClient mockedWebClient = Mockito.spy(webClient(vertx));
     HttpClientFacade clientFacade = new HttpClientFacade(mockedWebClient,
         getConfiguration());
 
@@ -208,19 +191,19 @@ public class HttpClientFacadeTest {
     // then
     result
         .doOnSuccess(response -> {
-          context.assertEquals(HttpResponseStatus.OK.code(), response.getStatusCode());
-          context.assertEquals(0, Integer.valueOf(response.getHeaders().get("Content-Length")));
+          Assertions.assertEquals(HttpResponseStatus.OK.code(), response.getStatusCode());
+          Assertions.assertEquals((Integer) 0, Integer.valueOf(response.getHeaders().get("Content-Length")));
           Mockito.verify(mockedWebClient, Mockito.times(1))
               .request(HttpMethod.GET, PORT, DOMAIN, "/services/mock/empty.json");
         })
         .subscribe(
-            response -> async.complete(),
-            error -> context.fail(error.getMessage())
+            response -> context.completeNow(),
+            context::failNow
         );
   }
 
-  private WebClient webClient() {
-    return WebClient.create(Vertx.newInstance(vertx.vertx()));
+  private WebClient webClient(Vertx vertx) {
+    return WebClient.create(vertx);
   }
 
   private DataSourceAdapterRequest payloadMessage(String servicePath, ClientRequest request) {

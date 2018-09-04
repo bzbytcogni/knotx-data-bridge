@@ -15,12 +15,13 @@
  */
 package io.knotx.databridge.http.common.post;
 
-import io.vertx.reactivex.core.MultiMap;
-import org.apache.commons.lang3.StringUtils;
-import org.junit.Test;
-
+import static io.knotx.databridge.http.common.post.UrlEncodedBodyBuilder.encodeBody;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+
+import io.vertx.reactivex.core.MultiMap;
+import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.Test;
 
 public class UrlEncodedBodyBuilderTest {
 
@@ -35,24 +36,24 @@ public class UrlEncodedBodyBuilderTest {
 
   @Test
   public void whenEmptyMultiMap_expectEmptyBodyString() {
-    assertThat(UrlEncodedBodyBuilder.encodeBody(null), equalTo(StringUtils.EMPTY));
-    assertThat(UrlEncodedBodyBuilder.encodeBody(MultiMap.caseInsensitiveMultiMap()),
+    assertThat(encodeBody(null), equalTo(StringUtils.EMPTY));
+    assertThat(encodeBody(MultiMap.caseInsensitiveMultiMap()),
         equalTo(StringUtils.EMPTY));
   }
 
   @Test
   public void whenOneField_expectBodyStringWithOnePair() {
-    assertThat(UrlEncodedBodyBuilder.encodeBody(oneField), equalTo("field1=value%201"));
+    assertThat(encodeBody(oneField), equalTo("field1=value%201"));
   }
 
   @Test
   public void whenTwoFields_expectBodyStringWithTwoPairs() {
-    assertThat(UrlEncodedBodyBuilder.encodeBody(twoFields), equalTo("field1=value1&field2=value%20two"));
+    assertThat(encodeBody(twoFields), equalTo("field1=value1&field2=value%20two"));
   }
 
   @Test
   public void whenThreeFields_expectBodyStringWithThreePairs() {
-    assertThat(UrlEncodedBodyBuilder.encodeBody(threeFields),
+    assertThat(encodeBody(threeFields),
         equalTo("field1=value1&field2=value2&field%20three=value%20three"));
   }
 }
