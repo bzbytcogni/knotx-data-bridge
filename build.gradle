@@ -14,26 +14,25 @@
  * limitations under the License.
  */
 plugins {
-  id "io.spring.dependency-management" version "1.0.5.RELEASE" apply false
+  id 'io.spring.dependency-management' version '1.0.5.RELEASE' apply false
 }
 
 allprojects {
   repositories {
     jcenter()
-    maven { url "https://plugins.gradle.org/m2/" }
-    maven { url "https://oss.sonatype.org/content/groups/staging/" }
+    maven { url 'https://plugins.gradle.org/m2/' }
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
   }
 }
 
 defaultTasks = ['build']
 
 subprojects {
-  group = 'io.knotx.databridge'
+  group = 'io.knotx'
 
-  apply plugin: 'java'
-  apply plugin: 'eclipse'
-  apply plugin: 'idea'
-  apply plugin: 'maven'
+  apply plugin: 'java-library'
+  apply plugin: 'maven-publish'
+  apply plugin: 'signing'
   apply plugin: 'io.spring.dependency-management'
 
   sourceCompatibility = 1.8
@@ -114,6 +113,30 @@ subprojects {
     systemProperties = [
         'vertx.logger-delegate-factory-class-name': 'io.vertx.core.logging.SLF4JLogDelegateFactory'
     ]
+  }
+
+  publishing {
+    publications {
+      mavenJava(MavenPublication) {
+        from components.java
+      }
+    }
+    repositories {
+      maven {
+        def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+        def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots'
+        url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+        credentials {
+          username "${ossrhUsername}"
+          password "${ossrhPassword}"
+        }
+      }
+    }
+  }
+
+  signing {
+    useGpgCmd()
+    sign configurations.archives
   }
 
 }
