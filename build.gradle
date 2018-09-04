@@ -31,9 +31,7 @@ subprojects { subproject ->
   group = 'io.knotx'
 
   apply plugin: 'java-library'
-
   apply plugin: 'io.spring.dependency-management'
-
 
   sourceCompatibility = 1.8
   targetCompatibility = 1.8
@@ -119,6 +117,9 @@ subprojects { subproject ->
     ]
   }
 
+  if (subproject.name != 'knotx-databridge-it-test') {
+    apply from: "${rootProject.projectDir}/release.gradle"
+  }
 }
 
-apply from: "${rootProject.projectDir}/release.gradle"
+
