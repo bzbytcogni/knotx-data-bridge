@@ -1,0 +1,123 @@
+// Maven Central release configuration
+
+subprojects { subproject ->
+
+  apply plugin: 'maven-publish'
+  apply plugin: 'signing'
+
+  task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+  }
+
+  task javadocJar(type: Jar) {
+    from javadoc.destinationDir
+    classifier = 'javadoc'
+  }
+
+  // add configuration for pom signing
+  configurations {
+    pom
+  }
+
+  artifacts {
+    archives jar
+    archives sourcesJar
+    archives javadocJar
+  }
+
+  // sign all artifacts
+  task signJars(type: Sign, dependsOn: [jar, javadocJar, sourcesJar]) {
+    sign configurations.archives
+  }
+
+  // sign pom
+  task signPom(type: Sign) {
+    sign configurations.pom
+  }
+
+  task preparePublication(dependsOn: signJars)
+
+  def getSignatureFiles = {
+    def allFiles = project.tasks.signJars.signatureFiles.collect { it }
+    def signedSources = allFiles.find { it.name.contains('-sources') }
+    def signedJavadoc = allFiles.find { it.name.contains('-javadoc') }
+    def signedJar = (allFiles - [signedSources, signedJavadoc])[0]
+    return [
+        [archive: signedSources, classifier: 'sources', extension: 'jar.asc'],
+        [archive: signedJavadoc, classifier: 'javadoc', extension: 'jar.asc'],
+        [archive: signedJar, classifier: null, extension: 'jar.asc']
+    ]
+  }
+  if (subproject.name != 'knotx-databridge-it-test') {
+    publishing {
+      publications {
+        gpgJars(MavenPublication) {
+          getSignatureFiles().each { signature ->
+            artifact(signature.archive) {
+              classifier = signature.classifier
+              extension = signature.extension
+            }
+          }
+        }
+        jar(MavenPublication) {
+          from components.java
+          pom.withXml {
+            asNode().children().last() + {
+              resolveStrategy = Closure.DELEGATE_FIRST
+              name 'Knot.x Data Bridge'
+              description 'Knot.x Data Bridge module.'
+              url 'http://knotx.io'
+              scm {
+                connection 'scm:git:git://github.com/Knotx/knotx-data-bridge.git'
+                developerConnection 'scm:git:git://github.com/Knotx/knotx-data-bridge.git'
+                url 'http://github.com/Knotx/knotx-data-bridge/tree/master'
+              }
+              licenses {
+                license {
+                  name 'The Apache Software License, Version 2.0'
+                  url 'http://www.apache.org/license/LICENSE-2.0.txt'
+                  distribution 'repo'
+                }
+              }
+              developers {
+                developer {
+                  name 'Maciej Laskowski'
+                  url 'https://github.com/Skejven'
+                }
+                developer {
+                  name 'Marcin Czeczko'
+                  url 'https://github.com/marcinczeczko'
+                }
+                developer {
+                  name 'Tomasz Michalak'
+                  url 'https://github.com/tomaszmichalak'
+                }
+              }
+            }
+          }
+        }
+      }
+      repositories {
+        maven {
+          def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+          def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots'
+          url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+          credentials {
+            username project.findProperty('ossrhUsername') ? "${ossrhUsername}" : "NOT_CONFIGURED"
+            password project.findProperty('ossrhPassword') ? "${ossrhPassword}" : "NOT_CONFIGURED"
+
+            println "Connecting with user: ${username}"
+          }
+        }
+      }
+    }
+  }
+
+  javadoc {
+    if (JavaVersion.current().isJava9Compatible()) {
+      options.addBooleanOption('html4', true)
+    }
+  }
+
+}

@@ -31,9 +31,9 @@ subprojects { subproject ->
   group = 'io.knotx'
 
   apply plugin: 'java-library'
-  apply plugin: 'maven-publish'
-  apply plugin: 'signing'
+
   apply plugin: 'io.spring.dependency-management'
+
 
   sourceCompatibility = 1.8
   targetCompatibility = 1.8
@@ -119,51 +119,6 @@ subprojects { subproject ->
     ]
   }
 
-  // RELEASE
-
-  task sourcesJar(type: Jar) {
-    from sourceSets.main.allSource
-    classifier = 'sources'
-  }
-
-  task javadocJar(type: Jar) {
-    from javadoc
-    classifier = 'javadoc'
-  }
-
-  if (subproject.name != 'knotx-databridge-it-test') {
-    publishing {
-      publications {
-        mavenJava(MavenPublication) {
-          from components.java
-          artifact sourcesJar
-          artifact javadocJar
-        }
-      }
-      repositories {
-        maven {
-          def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
-          def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots'
-          url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-          credentials {
-            username project.findProperty('ossrhUsername') ? "${ossrhUsername}" : "NOT_CONFIGURED"
-            password project.findProperty('ossrhPassword') ? "${ossrhPassword}" : "NOT_CONFIGURED"
-
-            println "Connecting with user: ${username}"
-          }
-        }
-      }
-    }
-
-    signing {
-      sign publishing.publications.mavenJava
-    }
-  }
-
-  javadoc {
-    if (JavaVersion.current().isJava9Compatible()) {
-      options.addBooleanOption('html4', true)
-    }
-  }
-
 }
+
+apply from: "${rootProject.projectDir}/release.gradle"
