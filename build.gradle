@@ -14,26 +14,23 @@
  * limitations under the License.
  */
 plugins {
-  id "io.spring.dependency-management" version "1.0.5.RELEASE" apply false
+  id 'io.spring.dependency-management' version '1.0.5.RELEASE' apply false
 }
 
 allprojects {
   repositories {
     jcenter()
-    maven { url "https://plugins.gradle.org/m2/" }
-    maven { url "https://oss.sonatype.org/content/groups/staging/" }
+    maven { url 'https://plugins.gradle.org/m2/' }
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
   }
 }
 
 defaultTasks = ['build']
 
-subprojects {
-  group = 'io.knotx.databridge'
+subprojects { subproject ->
+  group = 'io.knotx'
 
-  apply plugin: 'java'
-  apply plugin: 'eclipse'
-  apply plugin: 'idea'
-  apply plugin: 'maven'
+  apply plugin: 'java-library'
   apply plugin: 'io.spring.dependency-management'
 
   sourceCompatibility = 1.8
@@ -90,6 +87,10 @@ subprojects {
     }
   }
 
+  clean.doFirst {
+    file('src/main/generated').deleteDir()
+  }
+
   task annotationProcessing(type: JavaCompile, group: 'build') { // codegen
     source = sourceSets.main.java
     classpath = configurations.compile + configurations.compileOnly
@@ -116,4 +117,9 @@ subprojects {
     ]
   }
 
+  if (subproject.name != 'knotx-databridge-it-test') {
+    apply from: "${rootProject.projectDir}/release.gradle"
+  }
 }
+
+
