@@ -19,6 +19,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static io.knotx.junit5.util.RequestUtil.subscribeToResult_shouldSucceed;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.knotx.dataobjects.ClientRequest;
@@ -28,6 +29,7 @@ import io.knotx.junit5.KnotxApplyConfiguration;
 import io.knotx.junit5.KnotxExtension;
 import io.knotx.junit5.wiremock.KnotxWiremock;
 import io.knotx.reactivex.proxy.KnotProxy;
+import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.Vertx;
@@ -69,23 +71,23 @@ public class DataBridgeIntegrationTest {
           Assertions.assertEquals(
               knotContext.getFragments().iterator().next().context().getJsonObject("_result")
                   .getString(MOCK_SERVICE_JSON_RESULT_KEY), MOCK_SERVICE_JSON_RESULT_VALUE);
-        },
-        context::failNow);
+        });
   }
 
   private void callWithAssertions(
       VertxTestContext context, Vertx vertx, String fragmentPath,
-      Consumer<KnotContext> onSuccess,
-      Consumer<Throwable> onError) throws IOException, URISyntaxException {
+      Consumer<KnotContext> onSuccess) throws IOException, URISyntaxException {
     KnotContext message = payloadMessage(fragmentPath);
 
+    rxProcessWithAssertions(context, vertx, onSuccess, message);
+  }
+
+  private void rxProcessWithAssertions(VertxTestContext context, Vertx vertx,
+      Consumer<KnotContext> onSuccess, KnotContext payload) {
     KnotProxy service = KnotProxy.createProxy(vertx, CORE_MODULE_EB_ADDRESS);
-    service.rxProcess(message)
-        .doOnSuccess(onSuccess)
-        .subscribe(
-            success -> context.completeNow(),
-            onError
-        );
+    Single<KnotContext> knotContextSingle = service.rxProcess(payload);
+
+    subscribeToResult_shouldSucceed(context, knotContextSingle, onSuccess);
   }
 
   private KnotContext payloadMessage(String fragmentPath) throws IOException, URISyntaxException {

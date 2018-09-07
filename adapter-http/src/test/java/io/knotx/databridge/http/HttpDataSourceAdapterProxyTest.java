@@ -15,14 +15,17 @@
  */
 package io.knotx.databridge.http;
 
+import static io.knotx.junit5.util.RequestUtil.subscribeToResult_shouldSucceed;
+
 import io.knotx.dataobjects.AdapterRequest;
 import io.knotx.dataobjects.AdapterResponse;
 import io.knotx.dataobjects.ClientRequest;
 import io.knotx.junit5.KnotxApplyConfiguration;
 import io.knotx.junit5.KnotxExtension;
-import io.knotx.junit5.KnotxTestUtils;
+import io.knotx.junit5.util.FileReader;
 import io.knotx.reactivex.proxy.AdapterProxy;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxTestContext;
@@ -42,51 +45,44 @@ public class HttpDataSourceAdapterProxyTest {
       VertxTestContext context, Vertx vertx) {
     callAdapterServiceWithAssertions(context, vertx, "not/existing/service/address",
         adapterResponse -> {
-          context
-              .verify(() -> Assertions.assertEquals(adapterResponse.getResponse().getStatusCode(),
-                  HttpResponseStatus.INTERNAL_SERVER_ERROR.code()));
-        },
-        context::failNow);
+          Assertions.assertEquals(adapterResponse.getResponse().getStatusCode(),
+              HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+        }
+    );
   }
 
   @Test
   @KnotxApplyConfiguration("knotx-datasource-http-test.json")
   public void callExistingService_expectOKResponseWithServiceDataProvidedByService1(
       VertxTestContext context, Vertx vertx) throws Exception {
-    final String expected = KnotxTestUtils.readText("first-response.json");
+    final String expected = FileReader.readText("first-response.json");
 
     callAdapterServiceWithAssertions(context, vertx, "/service/mock/first.json",
         adapterResponse -> {
-          context.verify(() -> {
-            Assertions.assertEquals(adapterResponse.getResponse().getStatusCode(),
-                HttpResponseStatus.OK.code());
+          Assertions.assertEquals(adapterResponse.getResponse().getStatusCode(),
+              HttpResponseStatus.OK.code());
 
-            JsonObject serviceResponse = new JsonObject(
-                adapterResponse.getResponse().getBody().toString());
-            JsonObject expectedResponse = new JsonObject(expected);
+          JsonObject serviceResponse = new JsonObject(
+              adapterResponse.getResponse().getBody().toString());
+          JsonObject expectedResponse = new JsonObject(expected);
 
-            Assertions.assertEquals(serviceResponse, expectedResponse);
-          });
-        },
-        context::failNow);
+          Assertions.assertEquals(serviceResponse, expectedResponse);
+        }
+    );
   }
 
   private void callAdapterServiceWithAssertions(
       VertxTestContext context,
       Vertx vertx,
       String servicePath,
-      Consumer<AdapterResponse> onSuccess,
-      Consumer<Throwable> onError) {
+      Consumer<AdapterResponse> onSuccess) {
     AdapterRequest message = payloadMessage(servicePath);
 
     AdapterProxy service = AdapterProxy.createProxy(vertx, ADAPTER_ADDRESS);
 
-    service.rxProcess(message)
-        .doOnSuccess(onSuccess)
-        .subscribe(
-            success -> context.completeNow(),
-            onError
-        );
+    Single<AdapterResponse> adapterResponseSingle = service.rxProcess(message);
+
+    subscribeToResult_shouldSucceed(context, adapterResponseSingle, onSuccess);
   }
 
   private AdapterRequest payloadMessage(String servicePath) {

@@ -19,7 +19,7 @@ package io.knotx.databridge.core.datasource;
 import io.knotx.databridge.core.DataBridgeKnotOptions;
 import io.knotx.databridge.core.attribute.DataSourceAttribute;
 import io.knotx.databridge.core.attribute.DataSourceAttribute.AtributeType;
-import io.knotx.junit5.KnotxTestUtils;
+import io.knotx.junit5.util.FileReader;
 import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -36,10 +36,10 @@ public class DataSourceEntryTest {
   @BeforeAll
   public static void setUp() throws Exception {
     CONFIG_WITH_DEFAULT_PARAMS = new DataBridgeKnotOptions(
-        new JsonObject(KnotxTestUtils.readText("service-correct.json"))
+        new JsonObject(FileReader.readText("service-correct.json"))
     );
     CONFIG_NO_DEFAULT_PARAMS = new DataBridgeKnotOptions(
-        new JsonObject(KnotxTestUtils.readText("service-correct-no-params.json"))
+        new JsonObject(FileReader.readText("service-correct-no-params.json"))
     );
   }
 
