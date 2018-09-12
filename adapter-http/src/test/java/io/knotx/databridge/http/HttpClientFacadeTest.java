@@ -15,6 +15,9 @@
  */
 package io.knotx.databridge.http;
 
+import static io.knotx.junit5.util.RequestUtil.subscribeToResult_shouldFail;
+import static io.knotx.junit5.util.RequestUtil.subscribeToResult_shouldSucceed;
+
 import com.google.common.collect.Lists;
 import io.knotx.databridge.api.DataSourceAdapterRequest;
 import io.knotx.databridge.http.common.configuration.HttpDataSourceAdapterOptions;
@@ -25,7 +28,7 @@ import io.knotx.dataobjects.ClientRequest;
 import io.knotx.dataobjects.ClientResponse;
 import io.knotx.junit5.KnotxApplyConfiguration;
 import io.knotx.junit5.KnotxExtension;
-import io.knotx.junit5.KnotxTestUtils;
+import io.knotx.junit5.util.FileReader;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
@@ -70,24 +73,20 @@ public class HttpClientFacadeTest {
     final WebClient mockedWebClient = Mockito.spy(webClient(vertx));
     HttpClientFacade clientFacade = new HttpClientFacade(mockedWebClient,
         getConfiguration());
-    final JsonObject expectedResponse = new JsonObject(KnotxTestUtils.readText("first-response.json"));
+    final JsonObject expectedResponse = new JsonObject(
+        FileReader.readText("first-response.json"));
 
     // when
     Single<ClientResponse> result = clientFacade
         .process(payloadMessage(REQUEST_PATH, new ClientRequest()), HttpMethod.GET);
 
     // then
-    result
-        .doOnSuccess(response -> {
-          Assertions.assertEquals(HttpResponseStatus.OK.code(), response.getStatusCode());
-          Assertions.assertEquals(expectedResponse, response.getBody().toJsonObject());
-          Mockito.verify(mockedWebClient, Mockito.times(1))
-              .request(HttpMethod.GET, PORT, DOMAIN, REQUEST_PATH);
-        })
-        .subscribe(
-            response -> context.completeNow(),
-            context::failNow
-        );
+    subscribeToResult_shouldSucceed(context, result, response -> {
+      Assertions.assertEquals(HttpResponseStatus.OK.code(), response.getStatusCode());
+      Assertions.assertEquals(expectedResponse, response.getBody().toJsonObject());
+      Mockito.verify(mockedWebClient, Mockito.times(1))
+          .request(HttpMethod.GET, PORT, DOMAIN, REQUEST_PATH);
+    });
   }
 
   @Test
@@ -98,7 +97,8 @@ public class HttpClientFacadeTest {
     final WebClient mockedWebClient = Mockito.spy(webClient(vertx));
     HttpClientFacade clientFacade = new HttpClientFacade(mockedWebClient,
         getConfiguration());
-    final JsonObject expectedResponse = new JsonObject(KnotxTestUtils.readText("first-response.json"));
+    final JsonObject expectedResponse = new JsonObject(
+        FileReader.readText("first-response.json"));
     final ClientRequest request = new ClientRequest()
         .setParams(MultiMap.caseInsensitiveMultiMap().add("dynamicValue", "first"));
 
@@ -108,17 +108,12 @@ public class HttpClientFacadeTest {
             HttpMethod.GET);
 
     // then
-    result
-        .doOnSuccess(response -> {
-          Assertions.assertEquals(HttpResponseStatus.OK.code(), response.getStatusCode());
-          Assertions.assertEquals(expectedResponse, response.getBody().toJsonObject());
-          Mockito.verify(mockedWebClient, Mockito.times(1))
-              .request(HttpMethod.GET, PORT, DOMAIN, REQUEST_PATH);
-        })
-        .subscribe(
-            response -> context.completeNow(),
-            context::failNow
-        );
+    subscribeToResult_shouldSucceed(context, result, response -> {
+      Assertions.assertEquals(HttpResponseStatus.OK.code(), response.getStatusCode());
+      Assertions.assertEquals(expectedResponse, response.getBody().toJsonObject());
+      Mockito.verify(mockedWebClient, Mockito.times(1))
+          .request(HttpMethod.GET, PORT, DOMAIN, REQUEST_PATH);
+    });
   }
 
   @Test
@@ -131,20 +126,17 @@ public class HttpClientFacadeTest {
         getConfiguration());
 
     // when
-    Single<ClientResponse> result = clientFacade.process(new DataSourceAdapterRequest(), HttpMethod.GET);
+    Single<ClientResponse> result = clientFacade
+        .process(new DataSourceAdapterRequest(), HttpMethod.GET);
 
     // then
-    result
-        .doOnError(error -> {
-          Assertions.assertEquals(error.getClass().getSimpleName(),
-              IllegalArgumentException.class.getSimpleName());
-          Mockito.verify(mockedWebClient, Mockito.times(0))
-              .request(ArgumentMatchers.any(), ArgumentMatchers.anyInt(), ArgumentMatchers.anyString(),
-                  ArgumentMatchers.anyString());
-        })
-        .subscribe(
-            response -> context.failNow(new Exception("Error should occur!")),
-            error -> context.completeNow());
+    subscribeToResult_shouldFail(context, result, error -> {
+      Assertions.assertEquals(error.getClass().getSimpleName(),
+          IllegalArgumentException.class.getSimpleName());
+      Mockito.verify(mockedWebClient, Mockito.times(0))
+          .request(ArgumentMatchers.any(), ArgumentMatchers.anyInt(), ArgumentMatchers.anyString(),
+              ArgumentMatchers.anyString());
+    });
   }
 
   @Test
@@ -162,17 +154,12 @@ public class HttpClientFacadeTest {
             .process(payloadMessage("/not/supported/path", new ClientRequest()), HttpMethod.GET);
 
     // then
-    result
-        .doOnError(error -> {
-          Assertions.assertEquals(UnsupportedDataSourceException.class, error.getClass());
-          Mockito.verify(mockedWebClient, Mockito.times(0))
-              .request(ArgumentMatchers.any(), ArgumentMatchers.anyInt(), ArgumentMatchers.anyString(),
-                  ArgumentMatchers.anyString());
-        })
-        .subscribe(
-            response -> context.failNow(new Exception("Error should occur!")),
-            error -> context.completeNow()
-        );
+    subscribeToResult_shouldFail(context, result, error -> {
+      Assertions.assertEquals(UnsupportedDataSourceException.class, error.getClass());
+      Mockito.verify(mockedWebClient, Mockito.times(0))
+          .request(ArgumentMatchers.any(), ArgumentMatchers.anyInt(), ArgumentMatchers.anyString(),
+              ArgumentMatchers.anyString());
+    });
   }
 
   @Test
@@ -189,17 +176,13 @@ public class HttpClientFacadeTest {
         .process(payloadMessage("/services/mock/empty.json", new ClientRequest()), HttpMethod.GET);
 
     // then
-    result
-        .doOnSuccess(response -> {
-          Assertions.assertEquals(HttpResponseStatus.OK.code(), response.getStatusCode());
-          Assertions.assertEquals((Integer) 0, Integer.valueOf(response.getHeaders().get("Content-Length")));
-          Mockito.verify(mockedWebClient, Mockito.times(1))
-              .request(HttpMethod.GET, PORT, DOMAIN, "/services/mock/empty.json");
-        })
-        .subscribe(
-            response -> context.completeNow(),
-            context::failNow
-        );
+    subscribeToResult_shouldSucceed(context, result, response -> {
+      Assertions.assertEquals(HttpResponseStatus.OK.code(), response.getStatusCode());
+      Assertions.assertEquals((Integer) 0,
+          Integer.valueOf(response.getHeaders().get("Content-Length")));
+      Mockito.verify(mockedWebClient, Mockito.times(1))
+          .request(HttpMethod.GET, PORT, DOMAIN, "/services/mock/empty.json");
+    });
   }
 
   private WebClient webClient(Vertx vertx) {

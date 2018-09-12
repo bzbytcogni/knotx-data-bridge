@@ -19,7 +19,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-import io.knotx.junit5.KnotxTestUtils;
+import io.knotx.junit5.util.FileReader;
 import io.vertx.core.json.JsonObject;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +32,7 @@ public class ServiceCorrectConfigurationTest {
 
   @BeforeEach
   public void setUp() throws Exception {
-    JsonObject config = new JsonObject(KnotxTestUtils.readText("service-correct.json"));
+    JsonObject config = new JsonObject(FileReader.readText("service-correct.json"));
     correctConfig = new DataBridgeKnotOptions(config);
     expectedService = createMockedService("first-service", "knotx.core-adapter",
         "{\"path\":\"/service/mock/first.json\"}", "first");
