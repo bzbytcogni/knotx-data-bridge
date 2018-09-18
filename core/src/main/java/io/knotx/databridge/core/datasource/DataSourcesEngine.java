@@ -15,24 +15,23 @@
  */
 package io.knotx.databridge.core.datasource;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 
-import org.apache.commons.lang3.StringUtils;
-
+import io.knotx.databridge.api.DataSourceAdapterRequest;
+import io.knotx.databridge.api.DataSourceAdapterResponse;
 import io.knotx.databridge.core.DataBridgeKnotOptions;
 import io.knotx.databridge.core.DataSourceDefinition;
-import io.knotx.dataobjects.AdapterRequest;
-import io.knotx.dataobjects.AdapterResponse;
 import io.knotx.dataobjects.KnotContext;
-import io.knotx.reactivex.proxy.AdapterProxy;
+import io.knotx.reactivex.databridge.api.DataSourceAdapterProxy;
 import io.reactivex.Single;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.reactivex.core.Vertx;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import org.apache.commons.lang3.StringUtils;
 
 public class DataSourcesEngine {
 
@@ -43,14 +42,14 @@ public class DataSourcesEngine {
 
   private final DataBridgeKnotOptions options;
 
-  private final Map<String, AdapterProxy> adapters;
+  private final Map<String, DataSourceAdapterProxy> adapters;
 
   public DataSourcesEngine(Vertx vertx, DataBridgeKnotOptions options) {
     this.options = options;
     this.adapters = new HashMap<>();
     this.options.getDataDefinitions().stream().forEach(
         service -> adapters.put(service.getAdapter(),
-            AdapterProxy.createProxyWithOptions(
+            DataSourceAdapterProxy.createProxyWithOptions(
                 vertx,
                 service.getAdapter(),
                 this.options.getDeliveryOptions())
@@ -59,7 +58,7 @@ public class DataSourcesEngine {
   }
 
   public Single<JsonObject> doServiceCall(DataSourceEntry serviceEntry, KnotContext knotContext) {
-    AdapterRequest adapterRequest = new AdapterRequest()
+    DataSourceAdapterRequest adapterRequest = new DataSourceAdapterRequest()
         .setRequest(knotContext.getClientRequest())
         .setParams(serviceEntry.getParams());
 
@@ -85,8 +84,8 @@ public class DataSourcesEngine {
         });
   }
 
-  private JsonObject buildResultObject(AdapterRequest adapterRequest,
-      AdapterResponse adapterResponse) {
+  private JsonObject buildResultObject(DataSourceAdapterRequest adapterRequest,
+      DataSourceAdapterResponse adapterResponse) {
     JsonObject object = new JsonObject();
 
     String rawData = adapterResponse.getResponse().getBody().toString().trim();
