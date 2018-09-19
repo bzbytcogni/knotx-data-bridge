@@ -19,14 +19,11 @@ import static io.knotx.junit5.util.RequestUtil.subscribeToResult_shouldSucceed;
 
 import io.knotx.databridge.api.DataSourceAdapterRequest;
 import io.knotx.databridge.api.DataSourceAdapterResponse;
-import io.knotx.dataobjects.AdapterRequest;
-import io.knotx.dataobjects.AdapterResponse;
 import io.knotx.dataobjects.ClientRequest;
 import io.knotx.junit5.KnotxApplyConfiguration;
 import io.knotx.junit5.KnotxExtension;
 import io.knotx.junit5.util.FileReader;
 import io.knotx.reactivex.databridge.api.DataSourceAdapterProxy;
-import io.knotx.reactivex.proxy.AdapterProxy;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
