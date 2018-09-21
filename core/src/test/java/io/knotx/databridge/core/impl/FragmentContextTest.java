@@ -51,7 +51,8 @@ public class FragmentContextTest {
       "snippet_one_service_one_param.txt;1",
       "snippet_one_service_many_params.txt;1",
       "snippet_two_services.txt;2",
-      "snippet_five_services.txt;5"
+      "snippet_five_services.txt;5",
+      "snippet_five_services_custom_prefix;5"
   }, delimiter = ';')
   public void from_whenFragmentContainsServices_expectFragmentContextWithProperNumberOfServicesExtracted(
       @ConvertWith(KnotxArgumentConverter.class) Fragment fragment,
