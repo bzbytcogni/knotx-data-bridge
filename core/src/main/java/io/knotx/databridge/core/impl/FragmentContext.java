@@ -31,8 +31,8 @@ import org.jsoup.nodes.Element;
 
 public class FragmentContext {
 
-  private static final String DATA_SERVICE = "data-knotx-databridge-name.*";
-  private static final String DATA_PARAMS = "data-knotx-databridge-params.*";
+  private static final String DATA_SERVICE = ".*databridge-name.*";
+  private static final String DATA_PARAMS = ".*databridge-params.*";
 
   private Fragment fragment;
   List<DataSourceEntry> services;

@@ -1,0 +1,10 @@
+<script
+  knots="databridge"
+  databridge-name-a="a-service"
+  databridge-name-b="b-service"
+  databridge-name-c="c-service"
+  databridge-name-d="d-service"
+  databridge-name-e="e-service"
+  type="text/knotx-snippet">
+  <h2>{{_result.message}}</h2>
+</script>
