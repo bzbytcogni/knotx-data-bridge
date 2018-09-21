@@ -22,7 +22,8 @@ configurations {
 }
 
 dependencies {
-    testResources sourceSets.test.output
+  compile project(':knotx-databridge-api')
+  testResources sourceSets.test.output
 }
 
 

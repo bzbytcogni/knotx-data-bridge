@@ -17,13 +17,13 @@ package io.knotx.databridge.http;
 
 import static io.knotx.junit5.util.RequestUtil.subscribeToResult_shouldSucceed;
 
-import io.knotx.dataobjects.AdapterRequest;
-import io.knotx.dataobjects.AdapterResponse;
+import io.knotx.databridge.api.DataSourceAdapterRequest;
+import io.knotx.databridge.api.DataSourceAdapterResponse;
 import io.knotx.dataobjects.ClientRequest;
 import io.knotx.junit5.KnotxApplyConfiguration;
 import io.knotx.junit5.KnotxExtension;
 import io.knotx.junit5.util.FileReader;
-import io.knotx.reactivex.proxy.AdapterProxy;
+import io.knotx.reactivex.databridge.api.DataSourceAdapterProxy;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
@@ -75,18 +75,18 @@ public class HttpDataSourceAdapterProxyTest {
       VertxTestContext context,
       Vertx vertx,
       String servicePath,
-      Consumer<AdapterResponse> onSuccess) {
-    AdapterRequest message = payloadMessage(servicePath);
+      Consumer<DataSourceAdapterResponse> onSuccess) {
+    DataSourceAdapterRequest message = payloadMessage(servicePath);
 
-    AdapterProxy service = AdapterProxy.createProxy(vertx, ADAPTER_ADDRESS);
+    DataSourceAdapterProxy service = DataSourceAdapterProxy.createProxy(vertx, ADAPTER_ADDRESS);
 
-    Single<AdapterResponse> adapterResponseSingle = service.rxProcess(message);
+    Single<DataSourceAdapterResponse> adapterResponseSingle = service.rxProcess(message);
 
     subscribeToResult_shouldSucceed(context, adapterResponseSingle, onSuccess);
   }
 
-  private AdapterRequest payloadMessage(String servicePath) {
-    return new AdapterRequest().setRequest(new ClientRequest())
+  private DataSourceAdapterRequest payloadMessage(String servicePath) {
+    return new DataSourceAdapterRequest().setRequest(new ClientRequest())
         .setParams(new JsonObject().put("path", servicePath));
   }
 

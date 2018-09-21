@@ -30,7 +30,7 @@ import io.vertx.core.logging.LoggerFactory;
 
 public abstract class AbstractDataSourceAdapterProxy implements DataSourceAdapterProxy {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(io.knotx.adapter.AbstractAdapterProxy.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(AbstractDataSourceAdapterProxy.class);
 
   protected abstract Single<DataSourceAdapterResponse> processRequest(DataSourceAdapterRequest message);
 
