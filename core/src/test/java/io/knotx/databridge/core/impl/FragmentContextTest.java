@@ -21,6 +21,7 @@ import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 
 import io.knotx.databridge.core.datasource.DataSourceEntry;
 import io.knotx.dataobjects.Fragment;
+import io.knotx.junit.converter.FragmentArgumentConverter;
 import io.knotx.junit5.KnotxArgumentConverter;
 import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -37,7 +38,7 @@ public class FragmentContextTest {
       "snippet_one_service_many_params.txt;{\"path\":\"/overridden/path\",\"anotherParam\":\"someValue\"}"
   }, delimiter = ';')
   public void from_whenFragmentContainsOneService_expectFragmentContextWithExtractedParamsParams(
-      @ConvertWith(KnotxArgumentConverter.class) Fragment fragment,
+      @ConvertWith(FragmentArgumentConverter.class) Fragment fragment,
       String expectedParameters) throws Exception {
 
     final FragmentContext fragmentContext = FragmentContext.from(fragment);
@@ -55,7 +56,7 @@ public class FragmentContextTest {
       "snippet_five_services_custom_prefix;5"
   }, delimiter = ';')
   public void from_whenFragmentContainsServices_expectFragmentContextWithProperNumberOfServicesExtracted(
-      @ConvertWith(KnotxArgumentConverter.class) Fragment fragment,
+      @ConvertWith(FragmentArgumentConverter.class) Fragment fragment,
       int numberOfExpectedServices) throws Exception {
 
     final FragmentContext fragmentContext = FragmentContext.from(fragment);
@@ -68,7 +69,7 @@ public class FragmentContextTest {
       "snippet_four_services_with_params_and_extra_param.txt;{\"a\":{\"a\":\"a\"},\"b\":{\"b\":\"b\"},\"c\":{\"c\":\"c\"},\"d\":{\"d\":\"d\"}}"
   }, delimiter = ';')
   public void from_whenFragmentContainsServices_expectProperlyAssignedParams(
-      @ConvertWith(KnotxArgumentConverter.class) Fragment fragment,
+      @ConvertWith(FragmentArgumentConverter.class) Fragment fragment,
       @ConvertWith(KnotxArgumentConverter.class) JsonObject parameters) throws Exception {
 
     final FragmentContext fragmentContext = FragmentContext.from(fragment);
