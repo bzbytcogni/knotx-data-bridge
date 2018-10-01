@@ -108,6 +108,7 @@ public class HttpDataSourceSettings {
   /**
    * Set the {@code domain} of the external service
    *
+   * @param domain - domain of the external service
    * @return a reference to this, so the API can be used fluently
    */
   public HttpDataSourceSettings setDomain(String domain) {
@@ -164,6 +165,7 @@ public class HttpDataSourceSettings {
   /**
    * Set the additional request query parameters to be send in each request
    *
+   * @param queryParams - JSON Object specifying query param
    * @return a reference to this, so the API can be used fluently
    */
   public HttpDataSourceSettings setQueryParams(JsonObject queryParams) {
@@ -181,6 +183,7 @@ public class HttpDataSourceSettings {
   /**
    * Set the additional request headers (and values) to be send in each request
    *
+   * @param additionalHeaders - JSON Object specifying additional header
    * @return a reference to this, so the API can be used fluently
    */
   public HttpDataSourceSettings setAdditionalHeaders(JsonObject additionalHeaders) {
