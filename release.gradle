@@ -21,6 +21,40 @@ publishing {
       artifact sourcesJar
       artifact javadocJar
     }
+
+    pom {
+      name = 'Knot.x Data Bridge'
+      description = 'Knot.x Data Bridge'
+      url = 'http://knotx.io/'
+      licenses {
+        license {
+          name = 'The Apache License, Version 2.0'
+          url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+        }
+      }
+      developers {
+        developer {
+          id = 'marcinczeczko'
+          name = 'Marcin Czeczko'
+          url = 'https://github.com/marcinczeczko'
+        }
+        developer {
+          id = 'skejven'
+          name = 'Maciej Laskowski'
+          url = 'https://github.com/Skejven'
+        }
+        developer {
+          id = 'tomaszmichalak'
+          name = 'Tomasz Michalak'
+          url = 'https://github.com/tomaszmichalak'
+        }
+      }
+      scm {
+        connection = 'scm:git:git://github.com/Knotx/knotx-data-bridge.git'
+        developerConnection = 'scm:git:ssh://github.com:Knotx/knotx-data-bridge.git'
+        url = 'http://github.com/Knotx/knotx-data-bridge/tree/master'
+      }
+    }
   }
   repositories {
     maven {
