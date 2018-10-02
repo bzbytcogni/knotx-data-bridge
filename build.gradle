@@ -47,7 +47,7 @@ subprojects { subproject ->
 
   dependencyManagement {
     imports {
-      mavenBom 'io.knotx:knotx-dependencies:1.4.0-SNAPSHOT'
+      mavenBom "io.knotx:knotx-dependencies:${project.version}"
     }
   }
 

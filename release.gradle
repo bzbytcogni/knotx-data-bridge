@@ -1,6 +1,5 @@
 // Maven Central release configuration
 
-
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
