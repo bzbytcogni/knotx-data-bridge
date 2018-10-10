@@ -86,6 +86,7 @@ publishing {
 }
 
 signing {
+  required { gradle.taskGraph.hasTask(tasks.publish) || gradle.taskGraph.hasTask(tasks.publishMavenJavaPublicationToMavenRepository) }
   sign publishing.publications.mavenJava
 }
 
