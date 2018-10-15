@@ -17,6 +17,7 @@ package io.knotx.databridge.core.impl;
 
 import com.google.common.base.MoreObjects;
 import io.knotx.databridge.core.attribute.DataSourceAttribute;
+import io.knotx.databridge.core.attribute.DataSourceAttribute.AtributeType;
 import io.knotx.databridge.core.datasource.DataSourceEntry;
 import io.knotx.dataobjects.Fragment;
 import io.reactivex.Observable;
@@ -31,8 +32,12 @@ import org.jsoup.nodes.Element;
 
 public class FragmentContext {
 
-  private static final String DATA_SERVICE = ".*databridge-name.*";
-  private static final String DATA_PARAMS = ".*databridge-params.*";
+  private static final String DATA_SERVICE =
+      ".*" + DataSourceAttribute.ATTRIBUTE_SELECTOR + DataSourceAttribute.ATTRIBUTE_SEPARATOR
+          + AtributeType.NAME + ".*";
+  private static final String DATA_PARAMS =
+      ".*" + DataSourceAttribute.ATTRIBUTE_SELECTOR + DataSourceAttribute.ATTRIBUTE_SEPARATOR
+          + AtributeType.PARAMS + ".*";
 
   private Fragment fragment;
   List<DataSourceEntry> services;
