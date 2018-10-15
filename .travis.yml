@@ -4,4 +4,4 @@ jdk:
 before_script:
   - chmod +x ./gradlew
 script:
-  - ./gradlew
+  - ./gradlew clean test
