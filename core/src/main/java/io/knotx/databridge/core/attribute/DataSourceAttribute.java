@@ -17,12 +17,14 @@ package io.knotx.databridge.core.attribute;
 
 import java.util.Arrays;
 import java.util.List;
-import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Attribute;
 
 public class DataSourceAttribute {
 
-  public static final String DATA_BRIDGE_ATTR_PREFIX = "data-knotx-databridge";
+  public static final String ATTRIBUTE_SELECTOR = "databridge";
+  public static final String ATTRIBUTE_SEPARATOR = "-";
+  private static final int ATTRIBUTE_DATA_OFFSET = (ATTRIBUTE_SELECTOR + ATTRIBUTE_SEPARATOR)
+      .length();
 
   private String namespace;
 
@@ -37,11 +39,14 @@ public class DataSourceAttribute {
   }
 
   public static DataSourceAttribute from(Attribute attr) {
-    String[] attrParts = attr.getKey().split("-");
+    String key = attr.getKey();
+    String keyPostfix = key
+        .substring(key.indexOf(ATTRIBUTE_SELECTOR + ATTRIBUTE_SEPARATOR) + ATTRIBUTE_DATA_OFFSET);
+    String[] attrParts = keyPostfix.split(ATTRIBUTE_SEPARATOR);
 
-    DataSourceAttribute builder = DataSourceAttribute.of(AtributeType.from(attrParts[3]));
-    if (attrParts.length == 5) {
-      builder.namespace = attrParts[4];
+    DataSourceAttribute builder = DataSourceAttribute.of(AtributeType.from(attrParts[0]));
+    if (attrParts.length == 2) {
+      builder.namespace = attrParts[1];
     }
     builder.value = attr.getValue();
     return builder;
@@ -68,17 +73,6 @@ public class DataSourceAttribute {
 
   public String getValue() {
     return value;
-  }
-
-  public String build() {
-    String result = DATA_BRIDGE_ATTR_PREFIX + "-" + type.name;
-    if (StringUtils.isNotBlank(namespace)) {
-      result += "-" + namespace;
-    }
-    if (StringUtils.isNotBlank(value)) {
-      result += "=" + value;
-    }
-    return result;
   }
 
   public enum AtributeType {

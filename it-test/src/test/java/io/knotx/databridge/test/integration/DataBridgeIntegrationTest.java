@@ -17,8 +17,7 @@ package io.knotx.databridge.test.integration;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static io.knotx.junit5.util.RequestUtil.subscribeToResult_shouldSucceed;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -28,6 +27,7 @@ import io.knotx.dataobjects.KnotContext;
 import io.knotx.junit5.KnotxApplyConfiguration;
 import io.knotx.junit5.KnotxExtension;
 import io.knotx.junit5.wiremock.KnotxWiremock;
+import io.knotx.junit5.wiremock.KnotxWiremockExtension;
 import io.knotx.reactivex.proxy.KnotProxy;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
@@ -39,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -46,23 +47,24 @@ import org.junit.jupiter.api.extension.ExtendWith;
 public class DataBridgeIntegrationTest {
 
   private final static String CORE_MODULE_EB_ADDRESS = "knotx.knot.databridge";
-  private static final String MOCK_SERVICE_JSON_RESULT_KEY = "result";
-  private static final String MOCK_SERVICE_JSON_RESULT_VALUE = "success";
-  private static final int MOCK_SERVICE_PORT_NUMBER = 3000;
+
+  @KnotxWiremock
+  protected WireMockServer mockService;
+
+  @BeforeEach
+  public void before() {
+    KnotxWiremockExtension
+        .stubForServer(mockService, get(urlMatching("/dataSource/http/.*"))
+            .willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "application/json")));
+  }
 
   @Test
   @KnotxApplyConfiguration("bridgeStack.conf")
   public void callDataBridge_validKnotContextResult(
-      VertxTestContext context, Vertx vertx,
-      @KnotxWiremock(port = MOCK_SERVICE_PORT_NUMBER) WireMockServer server)
+      VertxTestContext context, Vertx vertx)
       throws IOException, URISyntaxException {
-    server.addStubMapping(stubFor(get(urlEqualTo("/dataSource/http/path/resource.json"))
-        .willReturn(aResponse()
-            .withStatus(200)
-            .withHeader("Content-Type", "application/json")
-            .withBody(String
-                .format("{\"%s\":\"%s\"}", MOCK_SERVICE_JSON_RESULT_KEY,
-                    MOCK_SERVICE_JSON_RESULT_VALUE)))));
 
     callWithAssertions(context, vertx, "template-engine/one-snippet-fragment/fragment1.txt",
         knotContext -> {
@@ -70,7 +72,7 @@ public class DataBridgeIntegrationTest {
               knotContext.getFragments().iterator().next().context().containsKey("_result"));
           Assertions.assertEquals(
               knotContext.getFragments().iterator().next().context().getJsonObject("_result")
-                  .getString(MOCK_SERVICE_JSON_RESULT_KEY), MOCK_SERVICE_JSON_RESULT_VALUE);
+                  .getString("result"), "success");
         });
   }
 
