@@ -97,7 +97,7 @@ public class DataBridgeKnotOptions {
   }
 
   /**
-   * Sets the EB address of the verticle. Default is 'knotx.core.service'
+   * Sets the EB address of the verticle. Default is 'knotx.knot.databridge'
    *
    * @param address EB address of the verticle
    * @return a reference to this, so the API can be used fluently
