@@ -73,20 +73,20 @@ The `adapter` entry whose value is `rest-http-adapter` specifies the event bus a
 module capable of calling the HTTP service listens.
 
 Now let's see how the `employees-rest-service` data source in the HTML markup is configured. The
-`script` definition (Fragment) looks like:
+`<knotx:snippet>` definition (Fragment) looks like:
 
 ```html
-<script data-knotx-knots="databridge,handlebars"
-  data-knotx-databridge-name="employees-rest-service" data-knotx-databridge-params='{"path":"/overridden/path"}'
-  data-knotx-databridge-name-mysalaries="salaries-db-source"
+<knotx:snippet knots="databridge"
+  databridge-name="employees-rest-service" databridge-params='{"path":"/overridden/path"}'
+  databridge-name-mysalaries="salaries-db-source"
   type="text/knotx-snippet">
   ...
-</script>
+</knotx:snippet>
 ```
 
-Data Bridge filters Fragments containing the `databridge` entry in the `data-knotx-knots` attribute
+Data Bridge filters Fragments containing the `databridge` entry in the `knots` attribute
 (the list of Knots). Then for all filtered fragments it collects responses from data sources specified in
-`data-knotx-databridge-name-{NAMESPACE}`=[data source definition name] attributes through subsequent
+`databridge-name-{NAMESPACE}`=[data source definition name] attributes through subsequent
 asynchronous Adapters calls. All collected JSONs (see Data Source Adapter contract) are saved
 in the [Fragment Context](https://github.com/Cognifide/knotx/wiki/Splitter#fragment).
 The `NAMESPACE` is optional and specifies the key under which the response from the data
@@ -101,7 +101,7 @@ The final Fragment Context for our example looks like:
 ```
 
 The data source parameters can be also configured in Fragment and merged with default ones using
-the `data-knotx-params-{NAMESPACE}={JSON DATA}` attribute. The attribute is matched with the data
+the `databridge-params-{NAMESPACE}={JSON DATA}` attribute. The attribute is matched with the data
 source definition based on a namespace.
 
 ## Data Source Caching
