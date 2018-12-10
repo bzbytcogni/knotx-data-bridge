@@ -15,6 +15,9 @@
  */
 package io.knotx.databridge.core.impl;
 
+import io.knotx.databridge.core.DataBridgeKnotProxy;
+import io.knotx.dataobjects.Fragment;
+import io.knotx.dataobjects.KnotTaskStatus;
 import java.util.concurrent.ExecutionException;
 
 import io.knotx.databridge.core.DataBridgeKnotOptions;
@@ -39,7 +42,7 @@ public class FragmentProcessor {
   }
 
   public Single<FragmentContext> processSnippet(final FragmentContext fragmentContext,
-      KnotContext request) {
+                                                KnotContext request) {
     if (LOGGER.isTraceEnabled()) {
       LOGGER.trace("Processing Handlebars snippet {}", fragmentContext.fragment());
     }
@@ -49,9 +52,23 @@ public class FragmentProcessor {
         .doOnNext(this::traceService)
         .flatMap(serviceEntry ->
             fetchServiceData(serviceEntry, request).toObservable()
-                .map(serviceEntry::getResultWithNamespaceAsKey))
+                .map(serviceEntry::getResultWithNamespaceAsKey)
+                .doOnError(e -> storeErrorInFragment(fragmentContext.fragment(), e, serviceEntry.getName()))
+        )
         .reduce(new JsonObject(), JsonObject::mergeIn)
-        .map(results -> applyData(fragmentContext, results));
+        .map(results -> applyData(fragmentContext, results))
+        .onErrorReturn(e -> {
+          LOGGER.error("Fragment processing failed. Cause:{}\nRequest:\n{}\nFragmentContext:\n{}\n", e.getMessage(), request.getClientRequest(), fragmentContext);
+          fragmentContext.fragment().failure(DataBridgeKnotProxy.SUPPORTED_FRAGMENT_ID, e);
+          if (!fragmentContext.fragment().fallback().isPresent()) {
+            if (e instanceof RuntimeException) {
+              throw (RuntimeException) e;
+            } else {
+              throw new IllegalStateException(e);
+            }
+          }
+          return fragmentContext;
+        });
   }
 
   private Single<JsonObject> fetchServiceData(DataSourceEntry service, KnotContext request) {
@@ -81,6 +98,11 @@ public class FragmentProcessor {
       LOGGER.debug("Found service call definition: {} {}", serviceEntry.getAddress(),
           serviceEntry.getParams());
     }
+  }
+
+  private void storeErrorInFragment(Fragment fragment, Throwable e, String name) {
+    LOGGER.error("Data Bridge service {} failed. Cause: {}", name, e.getMessage());
+    fragment.failure(DataBridgeKnotProxy.SUPPORTED_FRAGMENT_ID, e);
   }
 
 }

@@ -36,7 +36,7 @@ public class DataBridgeKnotProxy extends AbstractKnotProxy {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DataBridgeKnotProxy.class);
 
-  private static final String SUPPORTED_FRAGMENT_ID = "databridge";
+  public static final String SUPPORTED_FRAGMENT_ID = "databridge";
 
   private FragmentProcessor snippetProcessor;
 
@@ -49,7 +49,7 @@ public class DataBridgeKnotProxy extends AbstractKnotProxy {
     return Optional.ofNullable(knotContext.getFragments())
         .map(fragments ->
             Observable.fromIterable(fragments)
-                .filter(fragment -> fragment.knots().contains(SUPPORTED_FRAGMENT_ID))
+                .filter(this::shouldProcess)
                 .doOnNext(this::traceFragment)
                 .map(FragmentContext::from)
                 .flatMapSingle(
