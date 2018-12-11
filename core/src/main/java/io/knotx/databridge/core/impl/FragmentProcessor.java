@@ -17,8 +17,7 @@ package io.knotx.databridge.core.impl;
 
 import io.knotx.databridge.core.DataBridgeKnotProxy;
 import io.knotx.dataobjects.Fragment;
-import io.knotx.dataobjects.KnotTaskStatus;
-import io.knotx.exceptions.FragmentExecutionException;
+import io.knotx.exceptions.FragmentProcessingException;
 import java.util.concurrent.ExecutionException;
 
 import io.knotx.databridge.core.DataBridgeKnotOptions;
@@ -101,7 +100,7 @@ public class FragmentProcessor {
     if (fragmentContext.fragment().fallback().isPresent()) {
       return fragmentContext;
     } else {
-      throw new FragmentExecutionException(String.format("Fragment processing failed in %s", DataBridgeKnotProxy.SUPPORTED_FRAGMENT_ID), t);
+      throw new FragmentProcessingException(String.format("Fragment processing failed in %s", DataBridgeKnotProxy.SUPPORTED_FRAGMENT_ID), t);
     }
   }
 
