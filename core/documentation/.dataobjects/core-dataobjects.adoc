@@ -12,7 +12,7 @@
 ^|Name | Type ^| Description
 |[[address]]`address`|`String`|
 +++
-Sets the EB address of the verticle. Default is 'knotx.core.service'
+Sets the EB address of the verticle. Default is 'knotx.knot.databridge'
 +++
 |[[dataDefinitions]]`dataDefinitions`|`Array of link:cheatsheets.adoc#DataSourceDefinition[DataSourceDefinition]`|
 +++
