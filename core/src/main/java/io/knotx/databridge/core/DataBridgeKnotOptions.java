@@ -31,7 +31,7 @@ public class DataBridgeKnotOptions {
   /**
    * Default EB address of the verticle
    */
-  public final static String DEFAULT_ADDRESS = "knotx.core.service";
+  public final static String DEFAULT_ADDRESS = "knotx.knot.databridge";
 
   public final static List<DataSourceDefinition> DEFAULT_SERVICES_MOCK = Lists.newArrayList(
       new DataSourceDefinition()
@@ -97,7 +97,7 @@ public class DataBridgeKnotOptions {
   }
 
   /**
-   * Sets the EB address of the verticle. Default is 'knotx.core.service'
+   * Sets the EB address of the verticle. Default is 'knotx.knot.databridge'
    *
    * @param address EB address of the verticle
    * @return a reference to this, so the API can be used fluently
