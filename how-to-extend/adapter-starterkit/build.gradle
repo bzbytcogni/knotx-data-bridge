@@ -1,0 +1,76 @@
+plugins {
+  id 'io.spring.dependency-management' version '1.0.5.RELEASE'
+  id 'java'
+}
+repositories {
+  mavenLocal()
+  jcenter()
+  maven { url 'https://plugins.gradle.org/m2/' }
+  maven { url "https://oss.sonatype.org/content/groups/staging/" }
+  maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+}
+
+dependencyManagement {
+  imports {
+    mavenBom "io.knotx:knotx-dependencies:$knotxVersion"
+  }
+}
+
+description = 'Data Source Adapter Starter-kit'
+
+defaultTasks 'build'
+
+dependencies {
+  compileOnly "io.knotx:knotx-dependencies:$knotxVersion"
+
+  compileOnly 'io.knotx:knotx-core'
+  compileOnly 'io.knotx:knotx-databridge-api'
+  compileOnly 'io.vertx:vertx-core'
+  compileOnly 'io.vertx:vertx-rx-java2'
+  compileOnly 'io.vertx:vertx-codegen'
+
+  testCompileOnly 'io.knotx:knotx-databridge-api'
+  testCompileOnly 'io.knotx:knotx-junit5'
+  testCompileOnly 'io.vertx:vertx-junit5'
+  testCompileOnly 'io.vertx:vertx-unit'
+  testCompileOnly 'io.vertx:vertx-config'
+  testCompileOnly 'io.vertx:vertx-codegen'
+}
+sourceSets {
+  main {
+    java {
+      srcDirs += 'src/main/generated'
+    }
+  }
+  test {
+    resources {
+      srcDirs += 'src/test/resources'
+    }
+  }
+}
+
+clean.doFirst {
+  file('src/main/generated').deleteDir()
+}
+
+task annotationProcessing(type: JavaCompile, group: 'build') { // codegen
+  source = sourceSets.main.java
+  classpath = configurations.compile + configurations.compileOnly
+  destinationDir = project.file('src/main/generated')
+  options.compilerArgs = [
+      "-proc:only",
+      "-processor", "io.vertx.codegen.CodeGenProcessor",
+      "-Acodegen.output=${destinationDir.absolutePath}"
+  ]
+}
+
+task annotationProcessingCleanup() {
+  doLast {
+    delete "${project.projectDir}/src/main/generated"
+    println "Removing: ${project.projectDir}/src/main/generated"
+  }
+}
+
+annotationProcessing.dependsOn annotationProcessingCleanup
+
+compileJava.dependsOn annotationProcessing
