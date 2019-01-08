@@ -24,3 +24,5 @@ include 'knotx-databridge-adapter-http'
 project(":knotx-databridge-adapter-http").projectDir = file("adapter-http")
 include 'knotx-databridge-it-test'
 project(":knotx-databridge-it-test").projectDir = file("it-test")
+include 'adapter-starterkit'
+project(":adapter-starterkit").projectDir = file("how-to-extend/adapter-starterkit")
