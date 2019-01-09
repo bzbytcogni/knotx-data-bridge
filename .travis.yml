@@ -3,7 +3,7 @@ jdk:
   - oraclejdk8
 before_script:
   - chmod +x ./gradlew
-  - chmod +x ./how-to-extend\adapter-starterkit/gradlew
+  - chmod +x ./how-to-extend/adapter-starterkit/gradlew
 script:
   - ./gradlew clean test --info
-  - ./how-to-extend\adapter-starterkit/gradlew clean test --info
+  - ./how-to-extend/adapter-starterkit/gradlew clean test --info
