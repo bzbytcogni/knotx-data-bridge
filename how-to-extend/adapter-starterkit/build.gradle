@@ -13,13 +13,100 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+plugins {
+  id 'io.spring.dependency-management' version '1.0.5.RELEASE'
+  id 'java'
+}
+allprojects {
+  repositories {
+    mavenLocal()
+    jcenter()
+    maven { url 'https://plugins.gradle.org/m2/' }
+    maven { url "https://oss.sonatype.org/content/groups/staging/" }
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+  }
+}
 
+defaultTasks = ['build']
 description = 'Data Source Adapter Starter-kit'
 
-compileJava.dependsOn annotationProcessing
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+tasks.withType(JavaCompile) {
+  options.encoding = 'UTF-8'
+  options.compilerArgs << '-Xlint:deprecation'
+  options.incremental = true
+}
+
+dependencyManagement {
+  imports {
+    mavenBom "io.knotx:knotx-dependencies:${project.version}"
+  }
+}
+
 
 dependencies {
-  compile project(':knotx-databridge-api')
+  compileOnly "io.knotx:knotx-dependencies:${project.version}"
 
-  testCompile project(':knotx-databridge-api')
+  compileOnly 'io.knotx:knotx-databridge-api'
+  compileOnly 'io.vertx:vertx-codegen'
+
+  // Test dependencies
+  testCompile 'io.knotx:knotx-databridge-api'
+  testCompile 'io.knotx:knotx-junit5'
+
+  testCompileOnly 'io.vertx:vertx-codegen'
+  testCompile 'io.vertx:vertx-junit5'
+
+  testCompile 'org.junit.jupiter:junit-jupiter-api'
+  testCompile 'org.junit.jupiter:junit-jupiter-engine'
+
+
 }
+sourceSets {
+  main {
+    java {
+      srcDirs += 'src/main/generated'
+    }
+  }
+  test {
+    resources {
+      srcDirs += 'src/test/resources'
+    }
+  }
+}
+
+clean.doFirst {
+  file('src/main/generated').deleteDir()
+}
+
+task annotationProcessing(type: JavaCompile, group: 'build') { // codegen
+  source = sourceSets.main.java
+  classpath = configurations.compile + configurations.compileOnly
+  destinationDir = project.file('src/main/generated')
+  options.compilerArgs = [
+      "-proc:only",
+      "-processor", "io.vertx.codegen.CodeGenProcessor",
+      "-Acodegen.output=${destinationDir.absolutePath}"
+  ]
+}
+
+task annotationProcessingCleanup() {
+  doLast {
+    delete "${project.projectDir}/src/main/generated"
+    println "Removing: ${project.projectDir}/src/main/generated"
+  }
+}
+
+annotationProcessing.dependsOn annotationProcessingCleanup
+
+test {
+  useJUnitPlatform()
+
+  systemProperties = [
+      'vertx.logger-delegate-factory-class-name': 'io.vertx.core.logging.SLF4JLogDelegateFactory'
+  ]
+}
+
+compileJava.dependsOn annotationProcessing

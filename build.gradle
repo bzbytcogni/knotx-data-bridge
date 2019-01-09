@@ -125,7 +125,7 @@ subprojects { subproject ->
     ]
   }
 
-  def nonReleasableModules = ['knotx-databridge-it-test', 'adapter-starterkit']
+  def nonReleasableModules = ['knotx-databridge-it-test']
   if (!nonReleasableModules.contains(subproject.name)) {
     apply from: "${rootProject.projectDir}/release.gradle"
   }
