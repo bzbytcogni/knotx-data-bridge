@@ -6,4 +6,5 @@ before_script:
   - chmod +x ./how-to-extend/adapter-starterkit/gradlew
 script:
   - ./gradlew clean test --info
-  - ./how-to-extend/adapter-starterkit/gradlew clean test --info
+  - cd ./how-to-extend/adapter-starterkit
+  - ./gradlew clean test --info
