@@ -41,13 +41,13 @@ tasks.withType(JavaCompile) {
 
 dependencyManagement {
   imports {
-    mavenBom "io.knotx:knotx-dependencies:${project.version}"
+    mavenBom "io.knotx:knotx-dependencies:${knotxVersion}"
   }
 }
 
 
 dependencies {
-  compileOnly "io.knotx:knotx-dependencies:${project.version}"
+  compileOnly "io.knotx:knotx-dependencies:${knotxVersion}"
 
   compileOnly 'io.knotx:knotx-databridge-api'
   compileOnly 'io.vertx:vertx-codegen'
