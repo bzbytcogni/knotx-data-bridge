@@ -60,6 +60,7 @@ subprojects { subproject ->
     compile 'io.vertx:vertx-rx-java2'
 
     compileOnly 'io.vertx:vertx-codegen'
+    compileOnly 'io.vertx:vertx-rx-java2-gen'
 
     // Test dependencies
     testCompile 'org.junit.jupiter:junit-jupiter-api'
