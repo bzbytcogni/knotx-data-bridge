@@ -14,10 +14,6 @@ Set the request params
 +++
 Set the request params
 +++
-|[[request]]`request`|`link:cheatsheets.adoc#ClientRequest[ClientRequest]`|
-+++
-Set the client request
-+++
 |===
 [[DataSourceAdapterResponse]]
 == DataSourceAdapterResponse
@@ -27,6 +23,5 @@ Set the client request
 [frame="topbot"]
 |===
 ^|Name | Type ^| Description
-|[[response]]`response`|`link:cheatsheets.adoc#ClientResponse[ClientResponse]`|-
 |[[signal]]`signal`|`String`|-
 |===

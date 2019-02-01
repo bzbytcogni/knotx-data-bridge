@@ -1,0 +1,24 @@
+{
+  "configuration": {
+    "data-knotx-knots": "databridge",
+    "data-knotx-databridge-name-a": "a-service",
+    "data-knotx-databridge-params-a": {
+      "a": "a"
+    },
+    "data-knotx-databridge-name-b": "b-service",
+    "data-knotx-databridge-params-b": {
+      "b": "b"
+    },
+    "data-knotx-databridge-name-c": "c-service",
+    "data-knotx-databridge-params-c": {
+      "c": "c"
+    },
+    "data-knotx-databridge-name-d": "d-service",
+    "data-knotx-databridge-params-d": {
+      "d": "d"
+    },
+    "data-knotx-databridge-params-unbound": {
+      "e": "e"
+    }
+  }
+}

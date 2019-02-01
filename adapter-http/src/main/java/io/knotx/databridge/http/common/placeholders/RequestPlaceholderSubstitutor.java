@@ -15,10 +15,9 @@
  */
 package io.knotx.databridge.http.common.placeholders;
 
-import io.knotx.dataobjects.ClientRequest;
-import org.apache.commons.lang3.StringUtils;
-
+import io.knotx.server.api.context.ClientRequest;
 import java.util.Arrays;
+import org.apache.commons.lang3.StringUtils;
 
 public class RequestPlaceholderSubstitutor implements PlaceholderSubstitutor {
 

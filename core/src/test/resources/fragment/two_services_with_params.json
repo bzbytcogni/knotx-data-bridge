@@ -1,0 +1,13 @@
+{
+  "configuration": {
+    "data-knotx-knots": "databridge",
+    "data-knotx-databridge-name-first": "first-service",
+    "data-knotx-databridge-params-first": {
+      "first-service-key": "first-service-value"
+    },
+    "data-knotx-databridge-name-second": "second-service",
+    "data-knotx-databridge-params-second": {
+      "second-service-key": "second-service-value"
+    }
+  }
+}

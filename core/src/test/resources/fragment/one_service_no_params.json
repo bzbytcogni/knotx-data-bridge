@@ -1,0 +1,6 @@
+{
+  "configuration": {
+    "data-knotx-knots": "databridge",
+    "data-knotx-databridge-name": "first-service"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "configuration": {
+    "data-knotx-knots": "databridge",
+    "data-knotx-databridge-name-a": "a-service",
+    "data-knotx-databridge-name-b": "b-service",
+    "data-knotx-databridge-name-c": "c-service",
+    "data-knotx-databridge-name-d": "d-service",
+    "data-knotx-databridge-name-e": "e-service"
+  }
+}

@@ -15,12 +15,11 @@
  */
 package io.knotx.databridge.core.datasource;
 
-
 import io.knotx.databridge.api.DataSourceAdapterRequest;
 import io.knotx.databridge.api.DataSourceAdapterResponse;
 import io.knotx.databridge.core.DataBridgeKnotOptions;
 import io.knotx.databridge.core.DataSourceDefinition;
-import io.knotx.dataobjects.KnotContext;
+import io.knotx.knotengine.api.SnippetFragmentsContext;
 import io.knotx.reactivex.databridge.api.DataSourceAdapterProxy;
 import io.reactivex.Single;
 import io.vertx.core.json.JsonArray;
@@ -57,7 +56,7 @@ public class DataSourcesEngine {
     );
   }
 
-  public Single<JsonObject> doServiceCall(DataSourceEntry serviceEntry, KnotContext knotContext) {
+  public Single<JsonObject> doServiceCall(DataSourceEntry serviceEntry, SnippetFragmentsContext knotContext) {
     DataSourceAdapterRequest adapterRequest = new DataSourceAdapterRequest()
         .setRequest(knotContext.getClientRequest())
         .setParams(serviceEntry.getParams());

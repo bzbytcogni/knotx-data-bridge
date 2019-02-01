@@ -15,21 +15,21 @@
  */
 package io.knotx.databridge.core.impl;
 
-import io.knotx.databridge.core.DataBridgeKnotProxy;
-import io.knotx.dataobjects.Fragment;
-import io.knotx.exceptions.FragmentProcessingException;
-import java.util.concurrent.ExecutionException;
-
 import io.knotx.databridge.core.DataBridgeKnotOptions;
-import io.knotx.databridge.core.datasource.DataSourcesEngine;
+import io.knotx.databridge.core.DataBridgeKnotProxy;
 import io.knotx.databridge.core.datasource.DataSourceEntry;
-import io.knotx.dataobjects.KnotContext;
+import io.knotx.databridge.core.datasource.DataSourcesEngine;
+import io.knotx.fragment.HandlerLogEntry;
+import io.knotx.fragment.HanlderStatus;
+import io.knotx.knotengine.api.SnippetFragment;
+import io.knotx.knotengine.api.SnippetFragmentsContext;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.reactivex.core.Vertx;
+import java.util.concurrent.ExecutionException;
 
 public class FragmentProcessor {
 
@@ -41,33 +41,35 @@ public class FragmentProcessor {
     this.serviceEngine = new DataSourcesEngine(vertx, options);
   }
 
-  public Single<FragmentContext> processSnippet(final FragmentContext fragmentContext,
-                                                KnotContext request) {
+  public Single<DataBridgeFragmentContext> processSnippet(final DataBridgeFragmentContext dataBridgeFragmentContext,
+      SnippetFragmentsContext fragmentsContext) {
     if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("Processing Handlebars snippet {}", fragmentContext.fragment());
+      LOGGER.trace("Processing Handlebars snippet {}", dataBridgeFragmentContext.fragment());
     }
-    return Observable.just(fragmentContext)
-        .flatMap(FragmentContext::services)
+    return Observable.just(dataBridgeFragmentContext)
+        .flatMap(DataBridgeFragmentContext::services)
         .map(serviceEngine::mergeWithConfiguration)
         .doOnNext(this::traceService)
         .flatMap(serviceEntry ->
-            fetchServiceData(serviceEntry, request).toObservable()
+            fetchServiceData(serviceEntry, fragmentsContext).toObservable()
                 .map(serviceEntry::getResultWithNamespaceAsKey)
-                .doOnError(e -> storeErrorInFragment(fragmentContext.fragment(), e, serviceEntry.getName()))
+                .doOnError(e -> storeErrorInFragment(dataBridgeFragmentContext.fragment(), e,
+                    serviceEntry.getName()))
         )
         .reduce(new JsonObject(), JsonObject::mergeIn)
-        .map(results -> applyData(fragmentContext, results))
-        .onErrorReturn(e -> handleError(fragmentContext, request, e));
+        .map(results -> applyData(dataBridgeFragmentContext, results))
+        .onErrorReturn(e -> handleError(dataBridgeFragmentContext, fragmentsContext, e));
   }
 
-  private Single<JsonObject> fetchServiceData(DataSourceEntry service, KnotContext request) {
+  private Single<JsonObject> fetchServiceData(DataSourceEntry service,
+      SnippetFragmentsContext fragmentsContext) {
     LOGGER.debug("Fetching data from service {} {}", service.getAddress(), service.getParams());
     try {
-      return request.getCache()
+      return fragmentsContext.getCache()
           .get(service.getCacheKey(), () -> {
             LOGGER.debug("Requesting data from adapter {} with params {}", service.getAddress(),
                 service.getParams());
-            return serviceEngine.doServiceCall(service, request).cache();
+            return serviceEngine.doServiceCall(service, fragmentsContext).cache();
           });
     } catch (ExecutionException e) {
       LOGGER.fatal("Unable to get service data {}", e);
@@ -75,11 +77,11 @@ public class FragmentProcessor {
     }
   }
 
-  private FragmentContext applyData(final FragmentContext fragmentContext,
+  private DataBridgeFragmentContext applyData(final DataBridgeFragmentContext dataBridgeFragmentContext,
       JsonObject serviceResult) {
-    LOGGER.trace("Applying data to snippet {}", fragmentContext);
-    fragmentContext.fragment().context().mergeIn(serviceResult);
-    return fragmentContext;
+    LOGGER.trace("Applying data to snippet {}", dataBridgeFragmentContext);
+    dataBridgeFragmentContext.fragment().context().mergeIn(serviceResult);
+    return dataBridgeFragmentContext;
   }
 
   private void traceService(DataSourceEntry serviceEntry) {
@@ -89,19 +91,28 @@ public class FragmentProcessor {
     }
   }
 
-  private void storeErrorInFragment(Fragment fragment, Throwable e, String name) {
+  private void storeErrorInFragment(SnippetFragment fragment, Throwable e, String name) {
     LOGGER.error("Data Bridge service {} failed. Cause: {}", name, e.getMessage());
-    fragment.failure(DataBridgeKnotProxy.SUPPORTED_FRAGMENT_ID, e);
+
+    final HandlerLogEntry logEntry = new HandlerLogEntry(DataBridgeKnotProxy.SUPPORTED_FRAGMENT_ID);
+    logEntry.error(String.format("Data Bridge service %s failed", name), e.getMessage());
+    logEntry.setStatus(HanlderStatus.FAILURE);
+
+    fragment.getDelegate().appendLog(logEntry);
   }
 
-  private FragmentContext handleError(FragmentContext fragmentContext, KnotContext request, Throwable t) {
-    LOGGER.error("Fragment processing failed. Cause:{}\nRequest:\n{}\nFragmentContext:\n{}\n", t.getMessage(), request.getClientRequest(), fragmentContext);
-    fragmentContext.fragment().failure(DataBridgeKnotProxy.SUPPORTED_FRAGMENT_ID, t);
-    if (fragmentContext.fragment().fallback().isPresent()) {
-      return fragmentContext;
-    } else {
-      throw new FragmentProcessingException(String.format("Fragment processing failed in %s", DataBridgeKnotProxy.SUPPORTED_FRAGMENT_ID), t);
-    }
+  private DataBridgeFragmentContext handleError(DataBridgeFragmentContext dataBridgeFragmentContext,
+      SnippetFragmentsContext fragmentsContext, Throwable t) {
+    LOGGER.error("Fragment processing failed. Cause:{}\nRequest:\n{}\nDataBridgeFragmentContext:\n{}\n",
+        t.getMessage(), fragmentsContext.getClientRequest(), dataBridgeFragmentContext);
+    //FIXME
+//    dataBridgeFragmentContext.fragment().failure(DataBridgeKnotProxy.SUPPORTED_FRAGMENT_ID, t);
+//    if (dataBridgeFragmentContext.fragment().fallback().isPresent()) {
+//      return dataBridgeFragmentContext;
+//    } else {
+//      throw new FragmentProcessingException(String.format("Fragment processing failed in %s", DataBridgeKnotProxy.SUPPORTED_FRAGMENT_ID), t);
+//    }
+    return dataBridgeFragmentContext;
   }
 
 }

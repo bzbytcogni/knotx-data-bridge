@@ -15,22 +15,21 @@
  */
 package io.knotx.databridge.core;
 
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
-
-import io.knotx.databridge.core.impl.FragmentContext;
+import io.knotx.databridge.core.impl.DataBridgeFragmentContext;
 import io.knotx.databridge.core.impl.FragmentProcessor;
-import io.knotx.dataobjects.ClientResponse;
-import io.knotx.dataobjects.Fragment;
-import io.knotx.dataobjects.KnotContext;
-import io.knotx.knot.AbstractKnotProxy;
+import io.knotx.knotengine.api.AbstractKnotProxy;
+import io.knotx.knotengine.api.SnippetFragment;
+import io.knotx.knotengine.api.SnippetFragmentsContext;
+import io.knotx.server.api.context.ClientResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.reactivex.core.Vertx;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Set;
 
 public class DataBridgeKnotProxy extends AbstractKnotProxy {
 
@@ -45,15 +44,16 @@ public class DataBridgeKnotProxy extends AbstractKnotProxy {
   }
 
   @Override
-  protected Single<KnotContext> processRequest(KnotContext knotContext) {
+  protected Single<SnippetFragmentsContext> processRequest(SnippetFragmentsContext knotContext) {
     return Optional.ofNullable(knotContext.getFragments())
         .map(fragments ->
             Observable.fromIterable(fragments)
                 .filter(this::shouldProcess)
                 .doOnNext(this::traceFragment)
-                .map(FragmentContext::from)
+                .map(DataBridgeFragmentContext::from)
                 .flatMapSingle(
-                    fragmentContext -> snippetProcessor.processSnippet(fragmentContext, knotContext))
+                    dataBridgeFragmentContext -> snippetProcessor.processSnippet(
+                        dataBridgeFragmentContext, knotContext))
                 .toList()
         ).orElse(Single.just(Collections.emptyList()))
         .map(result -> createSuccessResponse(knotContext))
@@ -66,18 +66,19 @@ public class DataBridgeKnotProxy extends AbstractKnotProxy {
   }
 
   @Override
-  protected KnotContext processError(KnotContext knotContext, Throwable error) {
+  protected SnippetFragmentsContext processError(SnippetFragmentsContext inputContext,
+      Throwable error) {
     LOGGER.error("Error happened during Template processing", error);
     ClientResponse errorResponse = new ClientResponse()
         .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
 
-    return new KnotContext()
-        .setClientRequest(knotContext.getClientRequest())
+    return new SnippetFragmentsContext(inputContext.getDelegate())
+        .setClientRequest(inputContext.getClientRequest())
         .setClientResponse(errorResponse);
   }
 
-  private KnotContext createSuccessResponse(KnotContext inputContext) {
-    return new KnotContext()
+  private SnippetFragmentsContext createSuccessResponse(SnippetFragmentsContext inputContext) {
+    return new SnippetFragmentsContext(inputContext.getDelegate())
         .setClientRequest(inputContext.getClientRequest())
         .setClientResponse(inputContext.getClientResponse())
         .setFragments(
@@ -85,7 +86,7 @@ public class DataBridgeKnotProxy extends AbstractKnotProxy {
         .setTransition(DEFAULT_TRANSITION);
   }
 
-  private void traceFragment(Fragment fragment) {
+  private void traceFragment(SnippetFragment fragment) {
     if (LOGGER.isTraceEnabled()) {
       LOGGER.trace("Processing fragment {}", fragment.toJson().encodePrettily());
     }

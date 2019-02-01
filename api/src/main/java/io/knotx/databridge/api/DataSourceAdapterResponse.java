@@ -16,7 +16,7 @@
 package io.knotx.databridge.api;
 
 import com.google.common.base.Objects;
-import io.knotx.dataobjects.ClientResponse;
+import io.knotx.server.api.context.ClientResponse;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.builder.ToStringBuilder;

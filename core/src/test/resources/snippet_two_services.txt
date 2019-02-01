@@ -1,7 +1,0 @@
-<script
-  data-knotx-knots="databridge"
-  data-knotx-databridge-name="no-name-service"
-  data-knotx-databridge-name-named="named-service"
-  type="text/knotx-snippet">
-  <h2>{{_result.message}}</h2>
-</script>

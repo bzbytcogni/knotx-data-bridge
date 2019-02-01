@@ -24,11 +24,11 @@ import io.knotx.databridge.http.common.configuration.HttpDataSourceAdapterOption
 import io.knotx.databridge.http.common.configuration.HttpDataSourceSettings;
 import io.knotx.databridge.http.common.exception.UnsupportedDataSourceException;
 import io.knotx.databridge.http.common.http.HttpClientFacade;
-import io.knotx.dataobjects.ClientRequest;
-import io.knotx.dataobjects.ClientResponse;
 import io.knotx.junit5.KnotxApplyConfiguration;
 import io.knotx.junit5.KnotxExtension;
 import io.knotx.junit5.util.FileReader;
+import io.knotx.server.api.context.ClientRequest;
+import io.knotx.server.api.context.ClientResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;

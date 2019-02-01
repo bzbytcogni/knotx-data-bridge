@@ -18,7 +18,7 @@ package io.knotx.databridge.api.reactivex;
 import io.knotx.databridge.api.DataSourceAdapterProxy;
 import io.knotx.databridge.api.DataSourceAdapterRequest;
 import io.knotx.databridge.api.DataSourceAdapterResponse;
-import io.knotx.dataobjects.ClientResponse;
+import io.knotx.server.api.context.ClientResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.Single;
 import io.vertx.core.AsyncResult;

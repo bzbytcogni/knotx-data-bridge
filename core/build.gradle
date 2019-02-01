@@ -24,7 +24,7 @@ configurations {
 
 dependencies {
   compile project(':knotx-databridge-api')
-  testCompile group: 'io.knotx', name: 'knotx-core', version: "${project.version}", classifier: 'tests'
+  testCompile group: 'io.knotx', name: 'knotx-launcher', version: "${project.version}", classifier: 'tests'
   testResources sourceSets.test.output
 }
 

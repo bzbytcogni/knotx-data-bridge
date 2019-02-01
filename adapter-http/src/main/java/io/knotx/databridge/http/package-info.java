@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Knot.x Project
+ * Copyright (C) 2016 Cognifide Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.knotx.databridge.http.common.placeholders;
+@ModuleGen(name = "knotx-databridge-adapter-http", groupPackage = "io.knotx")
+package io.knotx.databridge.http;
 
-import io.knotx.server.api.context.ClientRequest;
-
-@FunctionalInterface
-public interface PlaceholderSubstitutor {
-
-  /**
-   * Get the replacement value from the supplied clientRequest and placeholder name
-   *
-   * @param request the supplied clientRequest
-   * @param placeholder the placeholder name
-   * @return the replacement value, or null if no replacement can be get
-   */
-  String getValue(ClientRequest request, String placeholder);
-
-}
+import io.vertx.codegen.annotations.ModuleGen;

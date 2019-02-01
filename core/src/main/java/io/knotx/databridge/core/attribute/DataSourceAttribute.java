@@ -17,7 +17,6 @@ package io.knotx.databridge.core.attribute;
 
 import java.util.Arrays;
 import java.util.List;
-import org.jsoup.nodes.Attribute;
 
 public class DataSourceAttribute {
 
@@ -38,8 +37,7 @@ public class DataSourceAttribute {
     return builder;
   }
 
-  public static DataSourceAttribute from(Attribute attr) {
-    String key = attr.getKey();
+  public static DataSourceAttribute from(String key, String value) {
     String keyPostfix = key
         .substring(key.indexOf(ATTRIBUTE_SELECTOR + ATTRIBUTE_SEPARATOR) + ATTRIBUTE_DATA_OFFSET);
     String[] attrParts = keyPostfix.split(ATTRIBUTE_SEPARATOR);
@@ -48,7 +46,7 @@ public class DataSourceAttribute {
     if (attrParts.length == 2) {
       builder.namespace = attrParts[1];
     }
-    builder.value = attr.getValue();
+    builder.value = value;
     return builder;
   }
 

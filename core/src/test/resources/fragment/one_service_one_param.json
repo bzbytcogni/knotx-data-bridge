@@ -1,0 +1,9 @@
+{
+  "configuration": {
+    "data-knotx-knots": "databridge",
+    "data-knotx-databridge-name": "first-service",
+    "data-knotx-databridge-params": {
+      "path": "/overridden/path"
+    }
+  }
+}

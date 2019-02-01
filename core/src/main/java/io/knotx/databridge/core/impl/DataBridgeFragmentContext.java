@@ -19,18 +19,15 @@ import com.google.common.base.MoreObjects;
 import io.knotx.databridge.core.attribute.DataSourceAttribute;
 import io.knotx.databridge.core.attribute.DataSourceAttribute.AtributeType;
 import io.knotx.databridge.core.datasource.DataSourceEntry;
-import io.knotx.dataobjects.Fragment;
+import io.knotx.fragment.Fragment;
+import io.knotx.knotengine.api.SnippetFragment;
 import io.reactivex.Observable;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Attribute;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 
-public class FragmentContext {
+public class DataBridgeFragmentContext {
 
   private static final String DATA_SERVICE =
       ".*" + DataSourceAttribute.ATTRIBUTE_SELECTOR + DataSourceAttribute.ATTRIBUTE_SEPARATOR
@@ -39,10 +36,10 @@ public class FragmentContext {
       ".*" + DataSourceAttribute.ATTRIBUTE_SELECTOR + DataSourceAttribute.ATTRIBUTE_SEPARATOR
           + AtributeType.PARAMS + ".*";
 
-  private Fragment fragment;
+  private SnippetFragment snippetFragment;
   List<DataSourceEntry> services;
 
-  private FragmentContext() {
+  private DataBridgeFragmentContext() {
     //hidden constructor
   }
 
@@ -50,37 +47,27 @@ public class FragmentContext {
    * Factory method that creates context from the {@link Fragment}. All services and params are
    * extracted to separate entries.
    *
-   * @param fragment - fragment from which the context will be created.
-   * @return a FragmentContext that wraps given fragment.
+   * @param snippetFragment - fragment from which the context will be created.
+   * @return a DataBridgeFragmentContext that wraps given fragment.
    */
-  public static FragmentContext from(Fragment fragment) {
-    Document document = Jsoup.parseBodyFragment(fragment.content());
-    Element scriptTag = document.body().child(0);
+  public static DataBridgeFragmentContext from(SnippetFragment snippetFragment) {
+    final Fragment fragment = snippetFragment.getDelegate();
+    List<DataSourceAttribute> dataSourceNameAttributes = fragment.getConfiguration().stream()
+        .filter(attr -> attr.getKey().matches(DATA_SERVICE))
+        .map(e -> DataSourceAttribute.from(e.getKey(), e.getValue().toString()))
+        .collect(Collectors.toList());
 
-    List<Attribute> attributes = scriptTag.attributes().asList();
-
-    Map<String, Attribute> dataSourceNameAttributes = attributes.stream()
-        .filter(attribute -> attribute.getKey().matches(DATA_SERVICE))
-        .collect(Collectors
-            .toMap(attribute -> DataSourceAttribute.from(attribute).getNamespace(),
-                Function.identity()));
-
-    Map<String, Attribute> dataSourceParamsAttributes = attributes.stream()
+    Map<String, DataSourceAttribute> dataSourceParamsAttributes = fragment.getConfiguration().stream()
         .filter(attribute -> attribute.getKey().matches(DATA_PARAMS))
-        .collect(Collectors
-            .toMap(attribute -> DataSourceAttribute.from(attribute).getNamespace(),
-                Function.identity()));
+        .map(e -> DataSourceAttribute.from(e.getKey(), e.getValue().toString()))
+        .collect(Collectors.toMap(DataSourceAttribute::getNamespace, Function.identity()));
 
-    return new FragmentContext()
-        .fragment(fragment)
+    return new DataBridgeFragmentContext()
+        .fragment(snippetFragment)
         .services(
-            dataSourceNameAttributes.entrySet().stream()
-                .map(entry -> {
-                  DataSourceAttribute nameAttr = DataSourceAttribute.from(entry.getValue());
-                  Attribute paramsAttr = dataSourceParamsAttributes.get(entry.getKey());
-                  return new DataSourceEntry(nameAttr,
-                      paramsAttr == null ? null : DataSourceAttribute.from(paramsAttr));
-                })
+            dataSourceNameAttributes.stream()
+                .map(dsName -> new DataSourceEntry(dsName,
+                    dataSourceParamsAttributes.get(dsName.getNamespace())))
                 .collect(Collectors.toList())
         );
   }
@@ -96,16 +83,16 @@ public class FragmentContext {
   /**
    * @return a fragment wrapped in this context.
    */
-  public Fragment fragment() {
-    return fragment;
+  public SnippetFragment fragment() {
+    return snippetFragment;
   }
 
-  private FragmentContext fragment(Fragment fragment) {
-    this.fragment = fragment;
+  private DataBridgeFragmentContext fragment(SnippetFragment snippetFragment) {
+    this.snippetFragment = snippetFragment;
     return this;
   }
 
-  private FragmentContext services(List<DataSourceEntry> services) {
+  private DataBridgeFragmentContext services(List<DataSourceEntry> services) {
     this.services = services;
     return this;
   }
@@ -113,7 +100,7 @@ public class FragmentContext {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("fragment", fragment)
+        .add("fragment", snippetFragment)
         .add("services", services)
         .toString();
   }
