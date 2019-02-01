@@ -63,7 +63,7 @@ public class HttpClientFacadeTest {
   private static final String PATH = "/services/mock.*";
 
   // Request payload
-  private static final String REQUEST_PATH = "/services/mock/first.json";
+  private static final String REQUEST_PATH = "/services/mock/response.json";
   private static final List<Pattern> PATTERNS = Collections
       .singletonList(Pattern.compile("X-test*"));
 
@@ -72,7 +72,7 @@ public class HttpClientFacadeTest {
       VertxTestContext context, Vertx vertx) throws Exception {
     // given
     final WebClient mockedWebClient = Mockito.spy(webClient(vertx));
-    final JsonObject expectedResponse = new JsonObject(FileReader.readText("first-response.json"));
+    final JsonObject expectedResponse = new JsonObject(FileReader.readText("service/mock/response.json"));
     final WireMockServer wireMockServer = mockEndpoint(HttpResponseStatus.OK.code(), REQUEST_PATH,
         expectedResponse.encode());
     HttpClientFacade clientFacade = new HttpClientFacade(mockedWebClient,
@@ -96,14 +96,14 @@ public class HttpClientFacadeTest {
   public void whenSupportedDynamicPathServiceRequested_expectRequestExecutedAndResponseOKWithBody(
       VertxTestContext context, Vertx vertx) throws Exception {
     // given
-    final JsonObject expectedResponse = new JsonObject(FileReader.readText("first-response.json"));
+    final JsonObject expectedResponse = new JsonObject(FileReader.readText("service/mock/response.json"));
     final WireMockServer wireMockServer = mockEndpoint(HttpResponseStatus.OK.code(), REQUEST_PATH,
         expectedResponse.encode());
     final WebClient mockedWebClient = Mockito.spy(webClient(vertx));
     HttpClientFacade clientFacade = new HttpClientFacade(mockedWebClient,
         getConfiguration(wireMockServer.port()));
     final ClientRequest request = new ClientRequest()
-        .setParams(MultiMap.caseInsensitiveMultiMap().add("dynamicValue", "first"));
+        .setParams(MultiMap.caseInsensitiveMultiMap().add("dynamicValue", "response"));
 
     // when
     Single<ClientResponse> result =
