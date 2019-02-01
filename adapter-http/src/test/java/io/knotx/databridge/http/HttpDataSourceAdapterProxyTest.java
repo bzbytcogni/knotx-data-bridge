@@ -71,15 +71,10 @@ public class HttpDataSourceAdapterProxyTest {
     );
   }
 
-  private void callAdapterServiceWithAssertions(
-      VertxTestContext context,
-      Vertx vertx,
-      String servicePath,
-      Consumer<DataSourceAdapterResponse> onSuccess) {
+  private void callAdapterServiceWithAssertions(VertxTestContext context, Vertx vertx,
+      String servicePath, Consumer<DataSourceAdapterResponse> onSuccess) {
     DataSourceAdapterRequest message = payloadMessage(servicePath);
-
     DataSourceAdapterProxy service = DataSourceAdapterProxy.createProxy(vertx, ADAPTER_ADDRESS);
-
     Single<DataSourceAdapterResponse> adapterResponseSingle = service.rxProcess(message);
 
     subscribeToResult_shouldSucceed(context, adapterResponseSingle, onSuccess);
