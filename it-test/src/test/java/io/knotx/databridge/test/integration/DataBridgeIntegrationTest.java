@@ -70,11 +70,11 @@ public class DataBridgeIntegrationTest {
       throws IOException, URISyntaxException {
 
     callWithAssertions(context, vertx, "template-engine/one-snippet-fragment/fragment1.txt",
-        SnippetFragmentsContext -> {
+        snippetFragmentsContext -> {
           Assertions.assertTrue(
-              SnippetFragmentsContext.getFragments().iterator().next().context().containsKey("_result"));
+              snippetFragmentsContext.getFragments().iterator().next().context().containsKey("_result"));
           Assertions.assertEquals(
-              SnippetFragmentsContext.getFragments().iterator().next().context().getJsonObject("_result")
+              snippetFragmentsContext.getFragments().iterator().next().context().getJsonObject("_result")
                   .getString("result"), "success");
         });
   }
