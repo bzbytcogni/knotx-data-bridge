@@ -15,7 +15,7 @@
  */
 package io.knotx.databridge.core;
 
-import io.knotx.databridge.core.impl.DataBridgeFragmentContext;
+import io.knotx.databridge.core.impl.DataBridgeSnippet;
 import io.knotx.databridge.core.impl.FragmentProcessor;
 import io.knotx.knotengine.api.AbstractKnotProxy;
 import io.knotx.knotengine.api.SnippetFragment;
@@ -50,7 +50,7 @@ public class DataBridgeKnotProxy extends AbstractKnotProxy {
             Observable.fromIterable(fragments)
                 .filter(this::shouldProcess)
                 .doOnNext(this::traceFragment)
-                .map(DataBridgeFragmentContext::from)
+                .map(DataBridgeSnippet::from)
                 .flatMapSingle(
                     dataBridgeFragmentContext -> snippetProcessor.processSnippet(
                         dataBridgeFragmentContext, knotContext))

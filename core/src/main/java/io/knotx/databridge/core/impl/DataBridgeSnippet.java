@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class DataBridgeFragmentContext {
+public class DataBridgeSnippet {
 
   private static final String DATA_SERVICE =
       ".*" + DataSourceAttribute.ATTRIBUTE_SELECTOR + DataSourceAttribute.ATTRIBUTE_SEPARATOR
@@ -39,7 +39,7 @@ public class DataBridgeFragmentContext {
   private SnippetFragment snippetFragment;
   List<DataSourceEntry> services;
 
-  private DataBridgeFragmentContext() {
+  private DataBridgeSnippet() {
     //hidden constructor
   }
 
@@ -48,9 +48,9 @@ public class DataBridgeFragmentContext {
    * extracted to separate entries.
    *
    * @param snippetFragment - fragment from which the context will be created.
-   * @return a DataBridgeFragmentContext that wraps given fragment.
+   * @return a DataBridgeSnippet that wraps given fragment.
    */
-  public static DataBridgeFragmentContext from(SnippetFragment snippetFragment) {
+  public static DataBridgeSnippet from(SnippetFragment snippetFragment) {
     final Fragment fragment = snippetFragment.getDelegate();
     List<DataSourceAttribute> dataSourceNameAttributes = fragment.getConfiguration().stream()
         .filter(attr -> attr.getKey().matches(DATA_SERVICE))
@@ -62,7 +62,7 @@ public class DataBridgeFragmentContext {
         .map(e -> DataSourceAttribute.from(e.getKey(), e.getValue().toString()))
         .collect(Collectors.toMap(DataSourceAttribute::getNamespace, Function.identity()));
 
-    return new DataBridgeFragmentContext()
+    return new DataBridgeSnippet()
         .fragment(snippetFragment)
         .services(
             dataSourceNameAttributes.stream()
@@ -87,12 +87,12 @@ public class DataBridgeFragmentContext {
     return snippetFragment;
   }
 
-  private DataBridgeFragmentContext fragment(SnippetFragment snippetFragment) {
+  private DataBridgeSnippet fragment(SnippetFragment snippetFragment) {
     this.snippetFragment = snippetFragment;
     return this;
   }
 
-  private DataBridgeFragmentContext services(List<DataSourceEntry> services) {
+  private DataBridgeSnippet services(List<DataSourceEntry> services) {
     this.services = services;
     return this;
   }

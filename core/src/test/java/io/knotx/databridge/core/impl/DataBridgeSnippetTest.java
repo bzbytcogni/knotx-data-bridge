@@ -30,7 +30,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
 
-public class DataBridgeFragmentContextTest {
+public class DataBridgeSnippetTest {
 
   @ParameterizedTest
   @CsvSource(value = {
@@ -44,7 +44,7 @@ public class DataBridgeFragmentContextTest {
       String expectedParameters) throws Exception {
 
     SnippetFragment fragment = fromJsonFile(fragmentContentFile);
-    final DataBridgeFragmentContext dataBridgeFragmentContext = DataBridgeFragmentContext.from(fragment);
+    final DataBridgeSnippet dataBridgeFragmentContext = DataBridgeSnippet.from(fragment);
     final DataSourceEntry serviceEntry = dataBridgeFragmentContext.services.get(0);
     assertThat(serviceEntry.getParams().toString(), sameJSONAs(expectedParameters));
   }
@@ -63,7 +63,7 @@ public class DataBridgeFragmentContextTest {
       int numberOfExpectedServices) throws Exception {
     SnippetFragment fragment = fromJsonFile(fragmentContentFile);
 
-    final DataBridgeFragmentContext dataBridgeFragmentContext = DataBridgeFragmentContext.from(fragment);
+    final DataBridgeSnippet dataBridgeFragmentContext = DataBridgeSnippet.from(fragment);
     assertThat(dataBridgeFragmentContext.services.size(), is(numberOfExpectedServices));
   }
 
@@ -77,7 +77,7 @@ public class DataBridgeFragmentContextTest {
       @ConvertWith(KnotxArgumentConverter.class) JsonObject parameters) throws Exception {
     SnippetFragment fragment = fromJsonFile(fragmentContentFile);
 
-    final DataBridgeFragmentContext dataBridgeFragmentContext = DataBridgeFragmentContext.from(fragment);
+    final DataBridgeSnippet dataBridgeFragmentContext = DataBridgeSnippet.from(fragment);
     dataBridgeFragmentContext.services.forEach(serviceEntry ->
         assertThat(serviceEntry.getParams().toString(),
             sameJSONAs(parameters.getJsonObject(serviceEntry.getNamespace()).toString())
