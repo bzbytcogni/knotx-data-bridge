@@ -20,10 +20,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 
 import io.knotx.databridge.core.datasource.DataSourceEntry;
+import io.knotx.engine.api.FragmentEvent;
 import io.knotx.fragment.Fragment;
 import io.knotx.junit5.KnotxArgumentConverter;
 import io.knotx.junit5.util.FileReader;
-import io.knotx.knotengine.api.SnippetFragment;
 import io.vertx.core.json.JsonObject;
 import java.io.IOException;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -43,7 +43,7 @@ public class DataBridgeSnippetTest {
       String fragmentContentFile,
       String expectedParameters) throws Exception {
 
-    SnippetFragment fragment = fromJsonFile(fragmentContentFile);
+    FragmentEvent fragment = fromJsonFile(fragmentContentFile);
     final DataBridgeSnippet dataBridgeFragmentContext = DataBridgeSnippet.from(fragment);
     final DataSourceEntry serviceEntry = dataBridgeFragmentContext.services.get(0);
     assertThat(serviceEntry.getParams().toString(), sameJSONAs(expectedParameters));
@@ -61,7 +61,7 @@ public class DataBridgeSnippetTest {
   public void from_whenFragmentContainsServices_expectFragmentContextWithProperNumberOfServicesExtracted(
       String fragmentContentFile,
       int numberOfExpectedServices) throws Exception {
-    SnippetFragment fragment = fromJsonFile(fragmentContentFile);
+    FragmentEvent fragment = fromJsonFile(fragmentContentFile);
 
     final DataBridgeSnippet dataBridgeFragmentContext = DataBridgeSnippet.from(fragment);
     assertThat(dataBridgeFragmentContext.services.size(), is(numberOfExpectedServices));
@@ -75,7 +75,7 @@ public class DataBridgeSnippetTest {
   public void from_whenFragmentContainsServices_expectProperlyAssignedParams(
       String fragmentContentFile,
       @ConvertWith(KnotxArgumentConverter.class) JsonObject parameters) throws Exception {
-    SnippetFragment fragment = fromJsonFile(fragmentContentFile);
+    FragmentEvent fragment = fromJsonFile(fragmentContentFile);
 
     final DataBridgeSnippet dataBridgeFragmentContext = DataBridgeSnippet.from(fragment);
     dataBridgeFragmentContext.services.forEach(serviceEntry ->
@@ -85,9 +85,9 @@ public class DataBridgeSnippetTest {
     );
   }
 
-  private SnippetFragment fromJsonFile(String fragmentContentFile) throws IOException {
+  private FragmentEvent fromJsonFile(String fragmentContentFile) throws IOException {
     final String fragment = FileReader.readText(fragmentContentFile);
-    return new SnippetFragment(new Fragment(new JsonObject(fragment)));
+    return new FragmentEvent(new Fragment(new JsonObject(fragment)), null);
   }
 
 }

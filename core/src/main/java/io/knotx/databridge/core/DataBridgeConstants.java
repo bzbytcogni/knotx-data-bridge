@@ -13,19 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.knotx.databridge.core;
 
-description = "Knot.x Data Bridge Core"
+public final class DataBridgeConstants {
 
-compileJava.dependsOn annotationProcessing
+  public static final String KNOT_IDENTIFIER = "dataBridge";
 
-configurations {
-    testResources
+  private DataBridgeConstants() {
+    // hidden
+  }
+
 }
-
-dependencies {
-  compile project(':knotx-databridge-api')
-  testCompile group: 'io.knotx', name: 'knotx-knot-engine-core', version: "${project.version}", classifier: 'tests'
-  testResources sourceSets.test.output
-}
-
-

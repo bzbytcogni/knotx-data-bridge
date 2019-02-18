@@ -15,7 +15,7 @@
  */
 package io.knotx.databridge.core;
 
-import io.knotx.knotengine.api.KnotProxy;
+import io.knotx.engine.api.KnotProxy;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.MessageConsumer;
