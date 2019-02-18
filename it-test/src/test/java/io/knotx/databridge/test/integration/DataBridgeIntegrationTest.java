@@ -21,6 +21,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static io.knotx.junit5.util.RequestUtil.subscribeToResult_shouldSucceed;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import io.knotx.databridge.core.DataBridgeKnot;
 import io.knotx.engine.api.FragmentEvent;
 import io.knotx.engine.api.FragmentEvent.Status;
 import io.knotx.engine.api.FragmentEventContext;
@@ -48,8 +49,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @ExtendWith(KnotxExtension.class)
 public class DataBridgeIntegrationTest {
 
-  private final static String CORE_MODULE_EB_ADDRESS = "knotx.knot.databridge";
-
   @KnotxWiremock
   protected WireMockServer mockService;
 
@@ -61,7 +60,7 @@ public class DataBridgeIntegrationTest {
     mockDataSource();
 
     callWithAssertions(context, vertx, "fragment/context_valid_ds.json",
-        new KnotFlow(CORE_MODULE_EB_ADDRESS, Collections.emptyMap()),
+        new KnotFlow(DataBridgeKnot.EB_ADDRESS, Collections.emptyMap()),
         eventResult -> {
           JsonObject payload = eventResult.getFragmentEvent().getFragment().getPayload();
           Assertions.assertEquals(Status.SUCCESS, eventResult.getFragmentEvent().getStatus());
@@ -80,7 +79,7 @@ public class DataBridgeIntegrationTest {
     mockFailingDataSource();
 
     callWithAssertions(context, vertx, "fragment/context_failing_ds.json",
-        new KnotFlow(CORE_MODULE_EB_ADDRESS, Collections.emptyMap()),
+        new KnotFlow(DataBridgeKnot.EB_ADDRESS, Collections.emptyMap()),
         eventResult -> {
           Assertions.assertEquals(Status.FAILURE, eventResult.getFragmentEvent().getStatus());
         });
@@ -111,7 +110,7 @@ public class DataBridgeIntegrationTest {
 
   private void rxProcessWithAssertions(VertxTestContext context, Vertx vertx,
       Consumer<FragmentEventResult> onSuccess, FragmentEventContext payload) {
-    KnotProxy service = KnotProxy.createProxy(vertx, CORE_MODULE_EB_ADDRESS);
+    KnotProxy service = KnotProxy.createProxy(vertx, DataBridgeKnot.EB_ADDRESS);
     Single<FragmentEventResult> SnippetFragmentsContextSingle = service.rxProcess(payload);
 
     subscribeToResult_shouldSucceed(context, SnippetFragmentsContextSingle, onSuccess);

@@ -16,9 +16,12 @@
 package io.knotx.databridge.core.datasource;
 
 
+import static io.knotx.databridge.core.attribute.DataSourceAttribute.ATTRIBUTE_SEPARATOR;
+import static io.knotx.databridge.core.attribute.DataSourceAttribute.DATA_PARAMS_KEY_PREFIX;
+import static io.knotx.databridge.core.attribute.DataSourceAttribute.DATA_SERVICE_KEY_PREFIX;
+
 import io.knotx.databridge.core.DataBridgeKnotOptions;
 import io.knotx.databridge.core.attribute.DataSourceAttribute;
-import io.knotx.databridge.core.attribute.DataSourceAttribute.AtributeType;
 import io.knotx.junit5.util.FileReader;
 import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.Assertions;
@@ -28,6 +31,11 @@ import org.junit.jupiter.api.Test;
 public class DataSourceEntryTest {
 
   private static final String NAMESPACE = "first";
+
+  private static final String DATA_SOURCE_NAME_KEY =
+      DATA_SERVICE_KEY_PREFIX + ATTRIBUTE_SEPARATOR + NAMESPACE;
+  private static final String DATA_SOURCE_PARAMS_KEY =
+      DATA_PARAMS_KEY_PREFIX + ATTRIBUTE_SEPARATOR + NAMESPACE;
 
   private static DataBridgeKnotOptions CONFIG_WITH_DEFAULT_PARAMS;
 
@@ -46,10 +54,8 @@ public class DataSourceEntryTest {
   @Test
   public void mergePayload_pathFromParamsAttribute() {
     DataSourceEntry serviceEntry = new DataSourceEntry(
-        DataSourceAttribute.of(AtributeType.NAME).withNamespace(NAMESPACE)
-            .withValue("first-service"),
-        DataSourceAttribute.of(AtributeType.PARAMS).withNamespace(NAMESPACE)
-            .withValue("{\"path\":\"first-service\"}"));
+        DataSourceAttribute.from(DATA_SOURCE_NAME_KEY, "first-service"),
+        DataSourceAttribute.from(DATA_SOURCE_PARAMS_KEY, "{\"path\":\"first-service\"}"));
     serviceEntry
         .mergeParams(CONFIG_WITH_DEFAULT_PARAMS.getDataDefinitions().iterator().next().getParams());
     Assertions.assertEquals("first-service", serviceEntry.getParams().getString("path"));
@@ -58,9 +64,8 @@ public class DataSourceEntryTest {
   @Test
   public void mergePayload_pathFromConfigAttribute() {
     DataSourceEntry serviceEntry = new DataSourceEntry(
-        DataSourceAttribute.of(AtributeType.NAME).withNamespace(NAMESPACE)
-            .withValue("first-service"),
-        DataSourceAttribute.of(AtributeType.PARAMS).withNamespace(NAMESPACE).withValue("{}"));
+        DataSourceAttribute.from(DATA_SOURCE_NAME_KEY, "first-service"),
+        DataSourceAttribute.from(DATA_SOURCE_PARAMS_KEY, "{}"));
     serviceEntry
         .mergeParams(CONFIG_WITH_DEFAULT_PARAMS.getDataDefinitions().iterator().next().getParams());
     Assertions.assertEquals("/service/mock/first.json", serviceEntry.getParams().getString("path"));
@@ -69,10 +74,8 @@ public class DataSourceEntryTest {
   @Test
   public void mergePayload_nameFromParamsAttribute() {
     DataSourceEntry serviceEntry = new DataSourceEntry(
-        DataSourceAttribute.of(AtributeType.NAME).withNamespace(NAMESPACE)
-            .withValue("first-service"),
-        DataSourceAttribute.of(AtributeType.PARAMS).withNamespace(NAMESPACE)
-            .withValue("{\"name\":\"first-service-name\"}"));
+        DataSourceAttribute.from(DATA_SOURCE_NAME_KEY, "first-service"),
+        DataSourceAttribute.from(DATA_SOURCE_PARAMS_KEY, "{\"name\":\"first-service-name\"}"));
     serviceEntry
         .mergeParams(CONFIG_WITH_DEFAULT_PARAMS.getDataDefinitions().iterator().next().getParams());
     Assertions.assertEquals("/service/mock/first.json", serviceEntry.getParams().getString("path"));
@@ -82,10 +85,8 @@ public class DataSourceEntryTest {
   @Test
   public void mergePayload_whenNoDefaultParams_expectDefinedParamsUsed() {
     DataSourceEntry serviceEntry = new DataSourceEntry(
-        DataSourceAttribute.of(AtributeType.NAME).withNamespace(NAMESPACE)
-            .withValue("first-service"),
-        DataSourceAttribute.of(AtributeType.PARAMS).withNamespace(NAMESPACE)
-            .withValue("{\"path\":\"some-other-service.json\"}"));
+        DataSourceAttribute.from(DATA_SOURCE_NAME_KEY, "first-service"),
+        DataSourceAttribute.from(DATA_SOURCE_PARAMS_KEY, "{\"path\":\"some-other-service.json\"}"));
     serviceEntry
         .mergeParams(CONFIG_NO_DEFAULT_PARAMS.getDataDefinitions().iterator().next().getParams());
     Assertions.assertEquals("some-other-service.json", serviceEntry.getParams().getString("path"));

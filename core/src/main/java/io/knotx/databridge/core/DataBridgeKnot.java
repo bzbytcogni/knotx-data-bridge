@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Knot.x Project
+ * Copyright (C) 2019 Knot.x Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,32 +28,30 @@ import io.vertx.serviceproxy.ServiceBinder;
 public class DataBridgeKnot extends AbstractVerticle {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DataBridgeKnot.class);
+  public static final String EB_ADDRESS = "databrige";
 
   private DataBridgeKnotOptions options;
-
-  private MessageConsumer<JsonObject> consumer;
-
+  private MessageConsumer<JsonObject> knotProxy;
   private ServiceBinder serviceBinder;
 
   @Override
   public void init(Vertx vertx, Context context) {
     super.init(vertx, context);
     this.options = new DataBridgeKnotOptions(config());
+    this.serviceBinder = new ServiceBinder(vertx);
   }
 
   @Override
   public void start() {
     LOGGER.info("Starting <{}>", this.getClass().getSimpleName());
-
-    //register the service proxy on event bus
-    serviceBinder = new ServiceBinder(getVertx());
-    consumer = serviceBinder
-        .setAddress(options.getAddress())
+    knotProxy = serviceBinder
+        .setAddress(EB_ADDRESS)
         .register(KnotProxy.class, new DataBridgeKnotProxy(vertx, options));
   }
 
   @Override
   public void stop() {
-    serviceBinder.unregister(consumer);
+    LOGGER.info("Stopping <{}>", this.getClass().getSimpleName());
+    serviceBinder.unregister(knotProxy);
   }
 }

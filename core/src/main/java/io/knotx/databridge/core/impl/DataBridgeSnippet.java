@@ -17,7 +17,6 @@ package io.knotx.databridge.core.impl;
 
 import com.google.common.base.MoreObjects;
 import io.knotx.databridge.core.attribute.DataSourceAttribute;
-import io.knotx.databridge.core.attribute.DataSourceAttribute.AtributeType;
 import io.knotx.databridge.core.datasource.DataSourceEntry;
 import io.knotx.engine.api.FragmentEvent;
 import io.knotx.fragment.Fragment;
@@ -27,14 +26,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class DataBridgeSnippet {
-
-  private static final String DATA_SERVICE =
-      ".*" + DataSourceAttribute.ATTRIBUTE_SELECTOR + DataSourceAttribute.ATTRIBUTE_SEPARATOR
-          + AtributeType.NAME + ".*";
-  private static final String DATA_PARAMS =
-      ".*" + DataSourceAttribute.ATTRIBUTE_SELECTOR + DataSourceAttribute.ATTRIBUTE_SEPARATOR
-          + AtributeType.PARAMS + ".*";
+class DataBridgeSnippet {
 
   private FragmentEvent fragmentEvent;
   List<DataSourceEntry> services;
@@ -53,12 +45,14 @@ public class DataBridgeSnippet {
   static DataBridgeSnippet from(FragmentEvent fragmentEvent) {
     final Fragment fragment = fragmentEvent.getFragment();
     List<DataSourceAttribute> dataSourceNameAttributes = fragment.getConfiguration().stream()
-        .filter(attr -> attr.getKey().matches(DATA_SERVICE))
+        .filter(attr -> attr.getKey().startsWith(DataSourceAttribute.DATA_SERVICE_KEY_PREFIX))
         .map(e -> DataSourceAttribute.from(e.getKey(), e.getValue().toString()))
         .collect(Collectors.toList());
 
-    Map<String, DataSourceAttribute> dataSourceParamsAttributes = fragment.getConfiguration().stream()
-        .filter(attribute -> attribute.getKey().matches(DATA_PARAMS))
+    Map<String, DataSourceAttribute> dataSourceParamsAttributes = fragment.getConfiguration()
+        .stream()
+        .filter(
+            attribute -> attribute.getKey().startsWith(DataSourceAttribute.DATA_PARAMS_KEY_PREFIX))
         .map(e -> DataSourceAttribute.from(e.getKey(), e.getValue().toString()))
         .collect(Collectors.toMap(DataSourceAttribute::getNamespace, Function.identity()));
 

@@ -34,11 +34,8 @@ public class DataBridgeKnotProxy extends TraceableKnotProxy {
 
   private FragmentProcessor snippetProcessor;
 
-  private DataBridgeKnotOptions options;
-
   public DataBridgeKnotProxy(Vertx vertx, DataBridgeKnotOptions options) {
     super(new TraceableKnotOptions());
-    this.options = options;
     this.snippetProcessor = new FragmentProcessor(vertx, options);
   }
 
@@ -53,7 +50,7 @@ public class DataBridgeKnotProxy extends TraceableKnotProxy {
 
   @Override
   protected String getAddress() {
-    return options.getAddress();
+    return DataBridgeKnot.EB_ADDRESS;
   }
 
   private FragmentEventResult createSuccessResult(FragmentEvent event) {

@@ -46,7 +46,7 @@ public class DataSourcesEngine {
   public DataSourcesEngine(Vertx vertx, DataBridgeKnotOptions options) {
     this.options = options;
     this.adapters = new HashMap<>();
-    this.options.getDataDefinitions().stream().forEach(
+    this.options.getDataDefinitions().forEach(
         service -> adapters.put(service.getAdapter(),
             DataSourceAdapterProxy.createProxyWithOptions(
                 vertx,
