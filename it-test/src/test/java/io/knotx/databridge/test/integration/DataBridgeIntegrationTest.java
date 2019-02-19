@@ -53,7 +53,7 @@ public class DataBridgeIntegrationTest {
   protected WireMockServer mockService;
 
   @Test
-  @KnotxApplyConfiguration("bridgeStack.conf")
+  @KnotxApplyConfiguration("dataBridgeStack.conf")
   public void callDataBridge_validSnippetFragmentsContextResult(VertxTestContext context,
       Vertx vertx) throws IOException {
 
@@ -72,7 +72,7 @@ public class DataBridgeIntegrationTest {
   }
 
   @Test
-  @KnotxApplyConfiguration("bridgeStack.conf")
+  @KnotxApplyConfiguration("dataBridgeStack.conf")
   public void callDataBridge_invalidSnippetFragmentsContextResult(
       VertxTestContext context, Vertx vertx) throws IOException {
 

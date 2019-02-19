@@ -75,7 +75,7 @@ public class FragmentProcessor {
 
   private FragmentEvent applyData(final FragmentEvent event, JsonObject serviceResult) {
     LOGGER.trace("Applying data to snippet {}", event);
-    event.getFragment().mergePayloadIn(serviceResult);
+    event.getFragment().mergeInPayload(serviceResult);
     return event;
   }
 
