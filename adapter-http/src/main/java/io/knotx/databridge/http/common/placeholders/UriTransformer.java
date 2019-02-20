@@ -15,11 +15,9 @@
  */
 package io.knotx.databridge.http.common.placeholders;
 
-import io.knotx.dataobjects.ClientRequest;
+import io.knotx.server.api.context.ClientRequest;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import org.apache.commons.lang3.StringUtils;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.UnsupportedCharsetException;
@@ -27,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 
 public final class UriTransformer {
 

@@ -23,6 +23,9 @@ dependencies {
   compile "io.vertx:vertx-web-client"
 
   testCompile project(path: ':knotx-databridge-core', configuration: 'testResources')
+
+  testCompile group: 'io.knotx', name: 'knotx-launcher', version: "${project.version}"
+  testCompile group: 'io.knotx', name: 'knotx-launcher', version: "${project.version}", classifier: 'tests'
 }
 
 sourceSets {

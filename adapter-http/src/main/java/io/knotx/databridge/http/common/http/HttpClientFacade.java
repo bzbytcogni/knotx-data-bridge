@@ -15,17 +15,17 @@
  */
 package io.knotx.databridge.http.common.http;
 
-import io.knotx.configuration.CustomHttpHeader;
 import io.knotx.databridge.api.DataSourceAdapterRequest;
 import io.knotx.databridge.http.common.configuration.HttpDataSourceAdapterOptions;
 import io.knotx.databridge.http.common.configuration.HttpDataSourceSettings;
 import io.knotx.databridge.http.common.exception.UnsupportedDataSourceException;
 import io.knotx.databridge.http.common.placeholders.UriTransformer;
-import io.knotx.dataobjects.ClientRequest;
-import io.knotx.dataobjects.ClientResponse;
-import io.knotx.http.AllowedHeadersFilter;
-import io.knotx.http.MultiMapCollector;
-import io.knotx.util.DataObjectsUtil;
+import io.knotx.server.api.context.ClientRequest;
+import io.knotx.server.api.context.ClientResponse;
+import io.knotx.server.api.header.CustomHttpHeader;
+import io.knotx.server.util.AllowedHeadersFilter;
+import io.knotx.server.util.DataObjectsUtil;
+import io.knotx.server.util.MultiMapCollector;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
@@ -36,11 +36,10 @@ import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.client.HttpRequest;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class HttpClientFacade {
 

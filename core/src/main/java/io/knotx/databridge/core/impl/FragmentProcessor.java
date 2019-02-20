@@ -15,21 +15,19 @@
  */
 package io.knotx.databridge.core.impl;
 
-import static io.knotx.databridge.core.DataBridgeKnotProxy.SUPPORTED_FRAGMENT_ID;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 
 import io.knotx.databridge.core.DataBridgeKnotOptions;
 import io.knotx.databridge.core.datasource.DataSourceEntry;
 import io.knotx.databridge.core.datasource.DataSourcesEngine;
-import io.knotx.dataobjects.KnotContext;
-import io.knotx.exceptions.FragmentProcessingException;
+import io.knotx.engine.api.FragmentEvent;
+import io.knotx.engine.api.FragmentEventContext;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.reactivex.core.Vertx;
-import java.util.concurrent.ExecutionException;
 
 public class FragmentProcessor {
 
@@ -41,85 +39,50 @@ public class FragmentProcessor {
     this.serviceEngine = new DataSourcesEngine(vertx, options);
   }
 
-  public Single<FragmentContext> processSnippet(final FragmentContext fragmentContext,
-                                                KnotContext request) {
-    if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("Processing Handlebars snippet {}", fragmentContext.fragment());
-    }
-    return Observable.just(fragmentContext)
-        .flatMap(FragmentContext::services)
+  public Single<FragmentEvent> processSnippet(FragmentEventContext context) {
+    return Observable.just(context.getFragmentEvent())
+        .map(DataBridgeSnippet::from)
+        .flatMap(DataBridgeSnippet::services)
         .map(serviceEngine::mergeWithConfiguration)
         .doOnNext(this::traceService)
-        .flatMap(serviceEntry -> fetchServiceData(fragmentContext, request, serviceEntry))
+        .flatMap(serviceEntry -> fetchServiceData(context, serviceEntry))
         .reduce(new JsonObject(), JsonObject::mergeIn)
-        .map(results -> applyData(fragmentContext, results))
-        .onErrorReturn(e -> handleError(fragmentContext, request, e));
+        .map(results -> applyData(context.getFragmentEvent(), results));
   }
 
 
-  private Observable<JsonObject> fetchServiceData(FragmentContext fragmentContext,
-      KnotContext request, DataSourceEntry serviceEntry) {
-    return fetchServiceData(request, serviceEntry)
-        .toObservable()
+  private Observable<JsonObject> fetchServiceData(FragmentEventContext fragmentContext,
+      DataSourceEntry serviceEntry) {
+    return serviceEngine.doServiceCall(serviceEntry, fragmentContext)
         .map(serviceEntry::getResultWithNamespaceAsKey)
-        .doOnNext(serviceResult -> processStatusCode(serviceResult, fragmentContext, serviceEntry))
-        .doOnError(e -> storeErrorInFragmentForService(fragmentContext, serviceEntry.getName(), e));
+        .doOnSuccess(
+            serviceResult -> processStatusCode(serviceResult, serviceEntry))
+        .toObservable();
   }
 
-  private void processStatusCode(JsonObject serviceResult, FragmentContext fragmentContext, DataSourceEntry serviceEntry){
+  private void processStatusCode(JsonObject serviceResult, DataSourceEntry serviceEntry) {
     int statusCode = serviceEngine.retrieveStatusCode(serviceResult);
-    if(isInvalid(statusCode)){
-      storeErrorInFragment(fragmentContext, new IllegalStateException(String.format("%s data-source error. Status code returned by adapter is %d", serviceEntry.getName(), statusCode)));
+    if (isInvalid(statusCode)) {
+      throw new IllegalStateException(String
+          .format("%s data-source error. Status code returned by adapter is %d",
+              serviceEntry.getName(), statusCode));
     }
   }
-  private boolean isInvalid(int statusCode){
+
+  private boolean isInvalid(int statusCode) {
     return statusCode >= INTERNAL_SERVER_ERROR.code();
   }
-  private Single<JsonObject> fetchServiceData(KnotContext request, DataSourceEntry service) {
-    LOGGER.debug("Fetching data from service {} {}", service.getAddress(), service.getParams());
-    try {
-      return request.getCache()
-          .get(service.getCacheKey(), () -> {
-            LOGGER.debug("Requesting data from adapter {} with params {}", service.getAddress(),
-                service.getParams());
-            return serviceEngine.doServiceCall(service, request).cache();
-          });
-    } catch (ExecutionException e) {
-      LOGGER.fatal("Unable to get service data {}", e);
-      return Single.error(e);
-    }
-  }
 
-  private FragmentContext applyData(final FragmentContext fragmentContext,
-      JsonObject serviceResult) {
-    LOGGER.trace("Applying data to snippet {}", fragmentContext);
-    fragmentContext.fragment().context().mergeIn(serviceResult);
-    return fragmentContext;
+  private FragmentEvent applyData(final FragmentEvent event, JsonObject serviceResult) {
+    LOGGER.trace("Applying data to snippet {}", event);
+    event.getFragment().mergeInPayload(serviceResult);
+    return event;
   }
 
   private void traceService(DataSourceEntry serviceEntry) {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Found service call definition: {} {}", serviceEntry.getAddress(),
           serviceEntry.getParams());
-    }
-  }
-
-  private void storeErrorInFragmentForService(FragmentContext fragmentContext, String serviceName, Throwable e) {
-    LOGGER.error("Data Bridge service {} failed. Cause: {}", serviceName, e.getMessage());
-    storeErrorInFragment(fragmentContext, e);
-  }
-
-  private void storeErrorInFragment(FragmentContext fragmentContext, Throwable e) {
-    fragmentContext.fragment().failure(SUPPORTED_FRAGMENT_ID, e);
-  }
-
-  private FragmentContext handleError(FragmentContext fragmentContext, KnotContext request, Throwable t) {
-    LOGGER.error("Fragment processing failed. Cause:{}\nRequest:\n{}\nFragmentContext:\n{}\n", t.getMessage(), request.getClientRequest(), fragmentContext);
-    storeErrorInFragment(fragmentContext, t);
-    if (fragmentContext.fragment().fallback().isPresent()) {
-      return fragmentContext;
-    } else {
-      throw new FragmentProcessingException(String.format("Fragment processing failed in %s", SUPPORTED_FRAGMENT_ID), t);
     }
   }
 

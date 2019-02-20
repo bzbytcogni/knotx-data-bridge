@@ -1,0 +1,6 @@
+{
+  "configuration": {
+    "flow": "knotx.knot.databridge",
+    "databridge-name": "first-service"
+  }
+}

@@ -15,7 +15,7 @@
  */
 package io.knotx.databridge.http.common.configuration;
 
-import io.knotx.configuration.CustomHttpHeader;
+import io.knotx.server.api.header.CustomHttpHeader;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClientOptions;

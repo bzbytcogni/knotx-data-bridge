@@ -1,0 +1,24 @@
+{
+  "configuration": {
+    "flow": "knotx.knot.databridge",
+    "databridge-name-a": "a-service",
+    "databridge-params-a": {
+      "a": "a"
+    },
+    "databridge-name-b": "b-service",
+    "databridge-params-b": {
+      "b": "b"
+    },
+    "databridge-name-c": "c-service",
+    "databridge-params-c": {
+      "c": "c"
+    },
+    "databridge-name-d": "d-service",
+    "databridge-params-d": {
+      "d": "d"
+    },
+    "databridge-params-unbound": {
+      "e": "e"
+    }
+  }
+}

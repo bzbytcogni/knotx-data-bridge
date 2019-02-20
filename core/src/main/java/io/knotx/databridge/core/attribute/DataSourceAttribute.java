@@ -15,86 +15,40 @@
  */
 package io.knotx.databridge.core.attribute;
 
-import java.util.Arrays;
-import java.util.List;
-import org.jsoup.nodes.Attribute;
-
 public class DataSourceAttribute {
 
-  public static final String ATTRIBUTE_SELECTOR = "databridge";
+  private static final String ATTRIBUTE_SELECTOR = "databridge";
   public static final String ATTRIBUTE_SEPARATOR = "-";
+  public static final String DATA_SERVICE_KEY_PREFIX = ATTRIBUTE_SELECTOR + ATTRIBUTE_SEPARATOR
+      + "name";
+  public static final String DATA_PARAMS_KEY_PREFIX = ATTRIBUTE_SELECTOR + ATTRIBUTE_SEPARATOR
+      + "params";
   private static final int ATTRIBUTE_DATA_OFFSET = (ATTRIBUTE_SELECTOR + ATTRIBUTE_SEPARATOR)
       .length();
 
   private String namespace;
 
-  private AtributeType type;
-
   private String value;
 
-  public static DataSourceAttribute of(AtributeType type) {
-    DataSourceAttribute builder = new DataSourceAttribute();
-    builder.type = type;
-    return builder;
-  }
-
-  public static DataSourceAttribute from(Attribute attr) {
-    String key = attr.getKey();
+  public static DataSourceAttribute from(String key, String value) {
     String keyPostfix = key
         .substring(key.indexOf(ATTRIBUTE_SELECTOR + ATTRIBUTE_SEPARATOR) + ATTRIBUTE_DATA_OFFSET);
     String[] attrParts = keyPostfix.split(ATTRIBUTE_SEPARATOR);
 
-    DataSourceAttribute builder = DataSourceAttribute.of(AtributeType.from(attrParts[0]));
+    DataSourceAttribute builder = new DataSourceAttribute();
     if (attrParts.length == 2) {
       builder.namespace = attrParts[1];
     }
-    builder.value = attr.getValue();
+    builder.value = value;
     return builder;
-  }
-
-
-  public DataSourceAttribute withNamespace(String namespace) {
-    this.namespace = namespace;
-    return this;
-  }
-
-  public DataSourceAttribute withValue(String value) {
-    this.value = value;
-    return this;
   }
 
   public String getNamespace() {
     return namespace;
   }
 
-  public AtributeType getType() {
-    return type;
-  }
-
   public String getValue() {
     return value;
-  }
-
-  public enum AtributeType {
-    NAME("name"), PARAMS("params");
-
-    private String name;
-
-    AtributeType(String name) {
-      this.name = name;
-    }
-
-    public static AtributeType from(String value) {
-      List<AtributeType> list = Arrays.asList(AtributeType.values());
-      return list.stream().filter(m -> m.name.equals(value)).findAny()
-          .orElseThrow(IllegalArgumentException::new);
-    }
-
-    @Override
-    public String toString() {
-      return name;
-    }
-
   }
 
 }

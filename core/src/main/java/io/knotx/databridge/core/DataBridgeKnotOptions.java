@@ -15,11 +15,11 @@
  */
 package io.knotx.databridge.core;
 
-import com.google.common.collect.Lists;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.json.JsonObject;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -28,19 +28,6 @@ import java.util.List;
 @DataObject(generateConverter = true, publicConverter = false)
 public class DataBridgeKnotOptions {
 
-  /**
-   * Default EB address of the verticle
-   */
-  public final static String DEFAULT_ADDRESS = "knotx.knot.databridge";
-
-  public final static List<DataSourceDefinition> DEFAULT_SERVICES_MOCK = Lists.newArrayList(
-      new DataSourceDefinition()
-          .setAdapter("mock-service-adapter")
-          .setName("mock")
-          .setParams(new JsonObject().put("path", "/service/mock/.*"))
-  );
-
-  private String address;
   private List<DataSourceDefinition> dataDefinitions;
   private DeliveryOptions deliveryOptions;
 
@@ -57,7 +44,6 @@ public class DataBridgeKnotOptions {
    * @param other the instance to copy
    */
   public DataBridgeKnotOptions(DataBridgeKnotOptions other) {
-    this.address = other.address;
     this.dataDefinitions = new ArrayList<>(other.dataDefinitions);
     this.deliveryOptions = new DeliveryOptions(other.deliveryOptions);
   }
@@ -84,27 +70,8 @@ public class DataBridgeKnotOptions {
   }
 
   private void init() {
-    address = DEFAULT_ADDRESS;
-    dataDefinitions = DEFAULT_SERVICES_MOCK;
+    dataDefinitions = Collections.emptyList();
     deliveryOptions = new DeliveryOptions();
-  }
-
-  /**
-   * @return EB address
-   */
-  public String getAddress() {
-    return address;
-  }
-
-  /**
-   * Sets the EB address of the verticle. Default is 'knotx.knot.databridge'
-   *
-   * @param address EB address of the verticle
-   * @return a reference to this, so the API can be used fluently
-   */
-  public DataBridgeKnotOptions setAddress(String address) {
-    this.address = address;
-    return this;
   }
 
   /**

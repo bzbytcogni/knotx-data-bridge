@@ -15,12 +15,11 @@
  */
 package io.knotx.databridge.core.datasource;
 
-
 import io.knotx.databridge.api.DataSourceAdapterRequest;
 import io.knotx.databridge.api.DataSourceAdapterResponse;
 import io.knotx.databridge.core.DataBridgeKnotOptions;
 import io.knotx.databridge.core.DataSourceDefinition;
-import io.knotx.dataobjects.KnotContext;
+import io.knotx.engine.api.FragmentEventContext;
 import io.knotx.reactivex.databridge.api.DataSourceAdapterProxy;
 import io.reactivex.Single;
 import io.vertx.core.json.JsonArray;
@@ -47,7 +46,7 @@ public class DataSourcesEngine {
   public DataSourcesEngine(Vertx vertx, DataBridgeKnotOptions options) {
     this.options = options;
     this.adapters = new HashMap<>();
-    this.options.getDataDefinitions().stream().forEach(
+    this.options.getDataDefinitions().forEach(
         service -> adapters.put(service.getAdapter(),
             DataSourceAdapterProxy.createProxyWithOptions(
                 vertx,
@@ -57,9 +56,10 @@ public class DataSourcesEngine {
     );
   }
 
-  public Single<JsonObject> doServiceCall(DataSourceEntry serviceEntry, KnotContext knotContext) {
+  public Single<JsonObject> doServiceCall(DataSourceEntry serviceEntry,
+      FragmentEventContext fragmentContext) {
     DataSourceAdapterRequest adapterRequest = new DataSourceAdapterRequest()
-        .setRequest(knotContext.getClientRequest())
+        .setRequest(fragmentContext.getClientRequest())
         .setParams(serviceEntry.getParams());
 
     return adapters.get(serviceEntry.getAddress()).rxProcess(adapterRequest)
@@ -84,9 +84,9 @@ public class DataSourcesEngine {
         });
   }
 
-  public int retrieveStatusCode(JsonObject serviceResult){
+  public int retrieveStatusCode(JsonObject serviceResult) {
     return Integer.parseInt(serviceResult.getJsonObject(RESPONSE_NAMESPACE_KEY)
-                                         .getString("statusCode"));
+        .getString("statusCode"));
   }
 
   private JsonObject buildResultObject(DataSourceAdapterRequest adapterRequest,

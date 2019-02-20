@@ -15,9 +15,9 @@
  */
 package io.knotx.databridge.http.common.placeholders;
 
+import io.knotx.server.api.context.ClientRequest;
 import java.util.stream.Stream;
 
-import io.knotx.dataobjects.ClientRequest;
 import io.vertx.reactivex.core.MultiMap;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;

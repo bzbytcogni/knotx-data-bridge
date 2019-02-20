@@ -38,7 +38,6 @@ public class DataSourceDefinition {
     init();
   }
 
-
   /**
    * Copy constructor
    *

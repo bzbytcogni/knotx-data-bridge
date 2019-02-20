@@ -1,0 +1,9 @@
+{
+  "configuration": {
+    "flow": "knotx.knot.databridge",
+    "databridge-name-first": "first-service",
+    "databridge-params": {
+      "path": "/overridden/path"
+    }
+  }
+}

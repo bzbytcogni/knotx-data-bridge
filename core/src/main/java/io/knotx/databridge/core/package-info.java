@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Knot.x Project
+ * Copyright (C) 2016 Cognifide Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@ModuleGen(name = "knotx-databirdge-core", groupPackage = "io.knotx")
+package io.knotx.databridge.core;
 
-description = "Knot.x Data Source Http"
-
-compileJava.dependsOn annotationProcessing
-
-dependencies {
-    compile project(':knotx-databridge-api')
-    compile "io.vertx:vertx-web-client"
-
-    testCompile group: 'io.knotx', name: 'knotx-launcher', version: "${project.version}"
-    testCompile group: 'io.knotx', name: 'knotx-launcher', version: "${project.version}", classifier: 'tests'
-}
+import io.vertx.codegen.annotations.ModuleGen;

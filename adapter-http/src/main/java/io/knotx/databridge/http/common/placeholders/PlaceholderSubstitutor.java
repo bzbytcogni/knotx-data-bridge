@@ -15,7 +15,7 @@
  */
 package io.knotx.databridge.http.common.placeholders;
 
-import io.knotx.dataobjects.ClientRequest;
+import io.knotx.server.api.context.ClientRequest;
 
 @FunctionalInterface
 public interface PlaceholderSubstitutor {
