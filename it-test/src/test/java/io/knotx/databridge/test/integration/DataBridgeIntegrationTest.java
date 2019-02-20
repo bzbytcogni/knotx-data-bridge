@@ -21,17 +21,20 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static io.knotx.junit5.util.RequestUtil.subscribeToResult_shouldSucceed;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import io.knotx.databridge.core.DataBridgeKnot;
+import io.knotx.engine.api.FragmentEvent;
+import io.knotx.engine.api.FragmentEvent.Status;
+import io.knotx.engine.api.FragmentEventContext;
+import io.knotx.engine.api.FragmentEventResult;
+import io.knotx.engine.api.KnotFlow;
+import io.knotx.engine.reactivex.api.KnotProxy;
 import io.knotx.fragment.Fragment;
 import io.knotx.junit5.KnotxApplyConfiguration;
 import io.knotx.junit5.KnotxExtension;
 import io.knotx.junit5.util.FileReader;
 import io.knotx.junit5.wiremock.KnotxWiremock;
 import io.knotx.junit5.wiremock.KnotxWiremockExtension;
-import io.knotx.knotengine.api.SnippetFragment;
-import io.knotx.knotengine.api.SnippetFragmentsContext;
-import io.knotx.reactivex.knotengine.api.KnotProxy;
 import io.knotx.server.api.context.ClientRequest;
-import io.knotx.server.api.context.FragmentsContext;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.vertx.core.json.JsonObject;
@@ -46,40 +49,39 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @ExtendWith(KnotxExtension.class)
 public class DataBridgeIntegrationTest {
 
-  private final static String CORE_MODULE_EB_ADDRESS = "knotx.knot.databridge";
-
   @KnotxWiremock
   protected WireMockServer mockService;
 
   @Test
-  @KnotxApplyConfiguration("bridgeStack.conf")
+  @KnotxApplyConfiguration("dataBridgeStack.conf")
   public void callDataBridge_validSnippetFragmentsContextResult(VertxTestContext context,
       Vertx vertx) throws IOException {
 
     mockDataSource();
 
     callWithAssertions(context, vertx, "fragment/context_valid_ds.json",
-        snippetFragmentsContext -> {
-          final SnippetFragment testedFragment = snippetFragmentsContext.getFragments().iterator()
-              .next();
-          Assertions.assertFalse(testedFragment.failed());
-          Assertions.assertTrue(testedFragment.context().containsKey("_result"));
+        new KnotFlow(DataBridgeKnot.EB_ADDRESS, Collections.emptyMap()),
+        eventResult -> {
+          JsonObject payload = eventResult.getFragmentEvent().getFragment().getPayload();
+          Assertions.assertEquals(Status.SUCCESS, eventResult.getFragmentEvent().getStatus());
+          Assertions.assertTrue(payload.containsKey("_result"));
           Assertions
-              .assertEquals(testedFragment.context().getJsonObject("_result").getString("status"),
+              .assertEquals(payload.getJsonObject("_result").getString("status"),
                   "success");
         });
   }
 
   @Test
-  @KnotxApplyConfiguration("bridgeStack.conf")
+  @KnotxApplyConfiguration("dataBridgeStack.conf")
   public void callDataBridge_invalidSnippetFragmentsContextResult(
       VertxTestContext context, Vertx vertx) throws IOException {
 
     mockFailingDataSource();
 
     callWithAssertions(context, vertx, "fragment/context_failing_ds.json",
-        snippetFragmentsContext -> {
-          Assertions.assertTrue(snippetFragmentsContext.getFragments().iterator().next().failed());
+        new KnotFlow(DataBridgeKnot.EB_ADDRESS, Collections.emptyMap()),
+        eventResult -> {
+          Assertions.assertEquals(Status.FAILURE, eventResult.getFragmentEvent().getStatus());
         });
   }
 
@@ -98,25 +100,27 @@ public class DataBridgeIntegrationTest {
                 .withHeader("Content-Type", "application/json")));
   }
 
-  private void callWithAssertions(VertxTestContext context, Vertx vertx, String fragmentContextPath,
-      Consumer<SnippetFragmentsContext> onSuccess) throws IOException {
-    SnippetFragmentsContext message = payloadMessage(fragmentContextPath);
+  private void callWithAssertions(VertxTestContext context, Vertx vertx,
+      String fragmentConfigurationPath, KnotFlow flow,
+      Consumer<FragmentEventResult> onSuccess) throws IOException {
+    FragmentEventContext message = payloadMessage(fragmentConfigurationPath, flow);
 
     rxProcessWithAssertions(context, vertx, onSuccess, message);
   }
 
   private void rxProcessWithAssertions(VertxTestContext context, Vertx vertx,
-      Consumer<SnippetFragmentsContext> onSuccess, SnippetFragmentsContext payload) {
-    KnotProxy service = KnotProxy.createProxy(vertx, CORE_MODULE_EB_ADDRESS);
-    Single<SnippetFragmentsContext> SnippetFragmentsContextSingle = service.rxProcess(payload);
+      Consumer<FragmentEventResult> onSuccess, FragmentEventContext payload) {
+    KnotProxy service = KnotProxy.createProxy(vertx, DataBridgeKnot.EB_ADDRESS);
+    Single<FragmentEventResult> SnippetFragmentsContextSingle = service.rxProcess(payload);
 
     subscribeToResult_shouldSucceed(context, SnippetFragmentsContextSingle, onSuccess);
   }
 
-  private SnippetFragmentsContext payloadMessage(String fragmentContextPath) throws IOException {
-    return new SnippetFragmentsContext(new FragmentsContext()
-        .setClientRequest(new ClientRequest())
-        .setFragments(Collections.singletonList(fromJsonFile(fragmentContextPath))));
+  private FragmentEventContext payloadMessage(String fragmentContextPath, KnotFlow flow)
+      throws IOException {
+    return new FragmentEventContext(new FragmentEvent(fromJsonFile(fragmentContextPath), flow),
+        new ClientRequest(), 0);
+
   }
 
   private Fragment fromJsonFile(String fragmentContentFile) throws IOException {

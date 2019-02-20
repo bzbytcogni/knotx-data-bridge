@@ -17,26 +17,18 @@ package io.knotx.databridge.core.impl;
 
 import com.google.common.base.MoreObjects;
 import io.knotx.databridge.core.attribute.DataSourceAttribute;
-import io.knotx.databridge.core.attribute.DataSourceAttribute.AtributeType;
 import io.knotx.databridge.core.datasource.DataSourceEntry;
+import io.knotx.engine.api.FragmentEvent;
 import io.knotx.fragment.Fragment;
-import io.knotx.knotengine.api.SnippetFragment;
 import io.reactivex.Observable;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class DataBridgeSnippet {
+class DataBridgeSnippet {
 
-  private static final String DATA_SERVICE =
-      ".*" + DataSourceAttribute.ATTRIBUTE_SELECTOR + DataSourceAttribute.ATTRIBUTE_SEPARATOR
-          + AtributeType.NAME + ".*";
-  private static final String DATA_PARAMS =
-      ".*" + DataSourceAttribute.ATTRIBUTE_SELECTOR + DataSourceAttribute.ATTRIBUTE_SEPARATOR
-          + AtributeType.PARAMS + ".*";
-
-  private SnippetFragment snippetFragment;
+  private FragmentEvent fragmentEvent;
   List<DataSourceEntry> services;
 
   private DataBridgeSnippet() {
@@ -47,23 +39,25 @@ public class DataBridgeSnippet {
    * Factory method that creates context from the {@link Fragment}. All services and params are
    * extracted to separate entries.
    *
-   * @param snippetFragment - fragment from which the context will be created.
+   * @param fragmentEvent - fragment from which the context will be created.
    * @return a DataBridgeSnippet that wraps given fragment.
    */
-  public static DataBridgeSnippet from(SnippetFragment snippetFragment) {
-    final Fragment fragment = snippetFragment.getDelegate();
+  static DataBridgeSnippet from(FragmentEvent fragmentEvent) {
+    final Fragment fragment = fragmentEvent.getFragment();
     List<DataSourceAttribute> dataSourceNameAttributes = fragment.getConfiguration().stream()
-        .filter(attr -> attr.getKey().matches(DATA_SERVICE))
+        .filter(attr -> attr.getKey().startsWith(DataSourceAttribute.DATA_SERVICE_KEY_PREFIX))
         .map(e -> DataSourceAttribute.from(e.getKey(), e.getValue().toString()))
         .collect(Collectors.toList());
 
-    Map<String, DataSourceAttribute> dataSourceParamsAttributes = fragment.getConfiguration().stream()
-        .filter(attribute -> attribute.getKey().matches(DATA_PARAMS))
+    Map<String, DataSourceAttribute> dataSourceParamsAttributes = fragment.getConfiguration()
+        .stream()
+        .filter(
+            attribute -> attribute.getKey().startsWith(DataSourceAttribute.DATA_PARAMS_KEY_PREFIX))
         .map(e -> DataSourceAttribute.from(e.getKey(), e.getValue().toString()))
         .collect(Collectors.toMap(DataSourceAttribute::getNamespace, Function.identity()));
 
     return new DataBridgeSnippet()
-        .fragment(snippetFragment)
+        .fragmentEvent(fragmentEvent)
         .services(
             dataSourceNameAttributes.stream()
                 .map(dsName -> new DataSourceEntry(dsName,
@@ -83,12 +77,16 @@ public class DataBridgeSnippet {
   /**
    * @return a fragment wrapped in this context.
    */
-  public SnippetFragment fragment() {
-    return snippetFragment;
+  public Fragment fragment() {
+    return fragmentEvent.getFragment();
   }
 
-  private DataBridgeSnippet fragment(SnippetFragment snippetFragment) {
-    this.snippetFragment = snippetFragment;
+  public FragmentEvent event() {
+    return fragmentEvent;
+  }
+
+  private DataBridgeSnippet fragmentEvent(FragmentEvent fragmentEvent) {
+    this.fragmentEvent = fragmentEvent;
     return this;
   }
 
@@ -100,7 +98,7 @@ public class DataBridgeSnippet {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("fragment", snippetFragment)
+        .add("fragmentEvent", fragmentEvent)
         .add("services", services)
         .toString();
   }

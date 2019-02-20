@@ -18,19 +18,16 @@ package io.knotx.databridge.core.impl;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 
 import io.knotx.databridge.core.DataBridgeKnotOptions;
-import io.knotx.databridge.core.DataBridgeKnotProxy;
 import io.knotx.databridge.core.datasource.DataSourceEntry;
 import io.knotx.databridge.core.datasource.DataSourcesEngine;
-import io.knotx.fragment.HandlerLogEntry;
-import io.knotx.fragment.HanlderStatus;
-import io.knotx.knotengine.api.SnippetFragmentsContext;
+import io.knotx.engine.api.FragmentEvent;
+import io.knotx.engine.api.FragmentEventContext;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.reactivex.core.Vertx;
-import java.util.concurrent.ExecutionException;
 
 public class FragmentProcessor {
 
@@ -42,39 +39,33 @@ public class FragmentProcessor {
     this.serviceEngine = new DataSourcesEngine(vertx, options);
   }
 
-  public Single<DataBridgeSnippet> processSnippet(
-      final DataBridgeSnippet snippet, SnippetFragmentsContext fragmentsContext) {
-    if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("Processing Handlebars snippet {}", snippet.fragment());
-    }
-    return Observable.just(snippet)
+  public Single<FragmentEvent> processSnippet(FragmentEventContext context) {
+    return Observable.just(context.getFragmentEvent())
+        .map(DataBridgeSnippet::from)
         .flatMap(DataBridgeSnippet::services)
         .map(serviceEngine::mergeWithConfiguration)
         .doOnNext(this::traceService)
-        .flatMap(serviceEntry -> fetchServiceData(snippet, fragmentsContext, serviceEntry))
+        .flatMap(serviceEntry -> fetchServiceData(context, serviceEntry))
         .reduce(new JsonObject(), JsonObject::mergeIn)
-        .map(results -> applyData(snippet, results))
-        .onErrorReturn(e -> handleError(snippet, fragmentsContext, e));
+        .map(results -> applyData(context.getFragmentEvent(), results));
   }
 
 
-  private Observable<JsonObject> fetchServiceData(DataBridgeSnippet snippet,
-      SnippetFragmentsContext fragmentsContext, DataSourceEntry serviceEntry) {
-    return fetchServiceData(fragmentsContext, serviceEntry)
-        .toObservable()
+  private Observable<JsonObject> fetchServiceData(FragmentEventContext fragmentContext,
+      DataSourceEntry serviceEntry) {
+    return serviceEngine.doServiceCall(serviceEntry, fragmentContext)
         .map(serviceEntry::getResultWithNamespaceAsKey)
-        .doOnNext(serviceResult -> processStatusCode(serviceResult, snippet, serviceEntry))
-        .doOnError(e -> storeErrorInFragmentForService(snippet, serviceEntry.getName(), e));
+        .doOnSuccess(
+            serviceResult -> processStatusCode(serviceResult, serviceEntry))
+        .toObservable();
   }
 
-  private void processStatusCode(JsonObject serviceResult,
-      DataBridgeSnippet snippet, DataSourceEntry serviceEntry) {
+  private void processStatusCode(JsonObject serviceResult, DataSourceEntry serviceEntry) {
     int statusCode = serviceEngine.retrieveStatusCode(serviceResult);
     if (isInvalid(statusCode)) {
-      storeErrorInFragmentForService(snippet, serviceEntry.getName(),
-          new IllegalStateException(String
-              .format("%s data-source error. Status code returned by adapter is %d",
-                  serviceEntry.getName(), statusCode)));
+      throw new IllegalStateException(String
+          .format("%s data-source error. Status code returned by adapter is %d",
+              serviceEntry.getName(), statusCode));
     }
   }
 
@@ -82,28 +73,10 @@ public class FragmentProcessor {
     return statusCode >= INTERNAL_SERVER_ERROR.code();
   }
 
-  private Single<JsonObject> fetchServiceData(SnippetFragmentsContext fragmentsContext,
-      DataSourceEntry service) {
-    LOGGER.debug("Fetching data from service {} {}", service.getAddress(), service.getParams());
-    try {
-      return fragmentsContext.getCache()
-          .get(service.getCacheKey(), () -> {
-            LOGGER.debug("Requesting data from adapter {} with params {}", service.getAddress(),
-                service.getParams());
-            return serviceEngine.doServiceCall(service, fragmentsContext).cache();
-          });
-    } catch (ExecutionException e) {
-      LOGGER.fatal("Unable to get service data {}", e);
-      return Single.error(e);
-    }
-  }
-
-  private DataBridgeSnippet applyData(
-      final DataBridgeSnippet snippet,
-      JsonObject serviceResult) {
-    LOGGER.trace("Applying data to snippet {}", snippet);
-    snippet.fragment().context().mergeIn(serviceResult);
-    return snippet;
+  private FragmentEvent applyData(final FragmentEvent event, JsonObject serviceResult) {
+    LOGGER.trace("Applying data to snippet {}", event);
+    event.getFragment().mergeInPayload(serviceResult);
+    return event;
   }
 
   private void traceService(DataSourceEntry serviceEntry) {
@@ -111,26 +84,6 @@ public class FragmentProcessor {
       LOGGER.debug("Found service call definition: {} {}", serviceEntry.getAddress(),
           serviceEntry.getParams());
     }
-  }
-
-  private void storeErrorInFragmentForService(DataBridgeSnippet snippet, String name,
-      Throwable e) {
-    LOGGER.error("Data Bridge service {} failed. Cause: {}", name, e.getMessage());
-
-    final HandlerLogEntry logEntry = new HandlerLogEntry(DataBridgeKnotProxy.SUPPORTED_FRAGMENT_ID);
-    logEntry.error(String.format("Data Bridge service %s failed", name), e.getMessage());
-    logEntry.setStatus(HanlderStatus.FAILURE);
-
-    snippet.fragment().getDelegate().appendLog(logEntry);
-  }
-
-  private DataBridgeSnippet handleError(DataBridgeSnippet snippet,
-      SnippetFragmentsContext fragmentsContext, Throwable t) {
-    LOGGER.error(
-        "Fragment processing failed. Cause:{}\nRequest:\n{}\nDataBridgeSnippet:\n{}\n",
-        t.getMessage(), fragmentsContext.getClientRequest(), snippet);
-    storeErrorInFragmentForService(snippet, "databridge", t);
-    return snippet;
   }
 
 }
