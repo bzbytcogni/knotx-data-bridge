@@ -28,7 +28,7 @@ import io.vertx.serviceproxy.ServiceBinder;
 public class DataBridgeKnot extends AbstractVerticle {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DataBridgeKnot.class);
-  public static final String EB_ADDRESS = "databrige";
+  public static final String EB_ADDRESS = "knotx.knot.databridge";
 
   private DataBridgeKnotOptions options;
   private MessageConsumer<JsonObject> knotProxy;
