@@ -55,8 +55,7 @@ public class DataBridgeSnippetTest {
       "fragment/one_service_one_param.json;1",
       "fragment/one_service_many_params.json;1",
       "fragment/two_services.json;2",
-      "fragment/five_services.json;5",
-      "fragment/five_services_custom_prefix.json;5"
+      "fragment/five_services.json;5"
   }, delimiter = ';')
   public void from_whenFragmentContainsServices_expectFragmentContextWithProperNumberOfServicesExtracted(
       String fragmentContentFile,
