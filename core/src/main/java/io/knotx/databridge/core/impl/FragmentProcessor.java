@@ -55,22 +55,7 @@ public class FragmentProcessor {
       DataSourceEntry serviceEntry) {
     return serviceEngine.doServiceCall(serviceEntry, fragmentContext)
         .map(serviceEntry::getResultWithNamespaceAsKey)
-        .doOnSuccess(
-            serviceResult -> processStatusCode(serviceResult, serviceEntry))
         .toObservable();
-  }
-
-  private void processStatusCode(JsonObject serviceResult, DataSourceEntry serviceEntry) {
-    int statusCode = serviceEngine.retrieveStatusCode(serviceResult);
-    if (isInvalid(statusCode)) {
-      throw new IllegalStateException(String
-          .format("%s data-source error. Status code returned by adapter is %d",
-              serviceEntry.getName(), statusCode));
-    }
-  }
-
-  private boolean isInvalid(int statusCode) {
-    return statusCode >= INTERNAL_SERVER_ERROR.code();
   }
 
   private FragmentEvent applyData(final FragmentEvent event, JsonObject serviceResult) {

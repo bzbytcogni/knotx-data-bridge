@@ -43,6 +43,7 @@ import io.vertx.reactivex.core.Vertx;
 import java.io.IOException;
 import java.util.Collections;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -53,6 +54,7 @@ public class DataBridgeIntegrationTest {
   protected WireMockServer mockService;
 
   @Test
+  @DisplayName("Expect a success status when HTTP service responds with HTTP 200.")
   @KnotxApplyConfiguration("dataBridgeStack.conf")
   public void callDataBridge_validSnippetFragmentsContextResult(VertxTestContext context,
       Vertx vertx) throws IOException {
@@ -72,6 +74,26 @@ public class DataBridgeIntegrationTest {
   }
 
   @Test
+  @DisplayName("Expect a response in the namespace when HTTP service responds with HTTP 200.")
+  @KnotxApplyConfiguration("dataBridgeStack.conf")
+  public void callDataBridgeWithNamespacedValidDS(VertxTestContext context,
+      Vertx vertx) throws IOException {
+
+    mockDataSource();
+
+    callWithAssertions(context, vertx, "fragment/context_valid_ds_with_namespace.json",
+        new KnotFlow(DataBridgeKnot.EB_ADDRESS, Collections.emptyMap()),
+        eventResult -> {
+          JsonObject payload = eventResult.getFragmentEvent().getFragment().getPayload();
+          Assertions.assertEquals(Status.SUCCESS, eventResult.getFragmentEvent().getStatus());
+          Assertions.assertTrue(payload.containsKey("namespace"));
+          JsonObject namespaceNode = payload.getJsonObject("namespace");
+          Assertions.assertTrue(namespaceNode.containsKey("_result"));
+        });
+  }
+
+  @Test
+  @DisplayName("Expect an error when HTTP service responds with error.")
   @KnotxApplyConfiguration("dataBridgeStack.conf")
   public void callDataBridge_invalidSnippetFragmentsContextResult(
       VertxTestContext context, Vertx vertx) throws IOException {
@@ -80,9 +102,8 @@ public class DataBridgeIntegrationTest {
 
     callWithAssertions(context, vertx, "fragment/context_failing_ds.json",
         new KnotFlow(DataBridgeKnot.EB_ADDRESS, Collections.emptyMap()),
-        eventResult -> {
-          Assertions.assertEquals(Status.FAILURE, eventResult.getFragmentEvent().getStatus());
-        });
+        eventResult -> Assertions
+            .assertEquals(Status.FAILURE, eventResult.getFragmentEvent().getStatus()));
   }
 
   private void mockFailingDataSource() {

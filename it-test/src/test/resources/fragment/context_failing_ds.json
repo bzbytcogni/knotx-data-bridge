@@ -1,4 +1,4 @@
 {
-  "knots": "databridge",
+  "flow": "databridge",
   "databridge-name": "failing-endpoint"
 }
