@@ -15,14 +15,13 @@
  */
 package io.knotx.databridge.core.datasource;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
-
 import io.knotx.databridge.api.DataSourceAdapterRequest;
 import io.knotx.databridge.api.DataSourceAdapterResponse;
 import io.knotx.databridge.core.DataBridgeKnotOptions;
 import io.knotx.databridge.core.DataSourceDefinition;
 import io.knotx.engine.api.FragmentEventContext;
 import io.knotx.reactivex.databridge.api.DataSourceAdapterProxy;
+import io.netty.handler.codec.http.HttpStatusClass;
 import io.reactivex.Single;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -92,7 +91,7 @@ public class DataSourcesEngine {
   private void validateStatusCode(DataSourceAdapterResponse response,
       DataSourceEntry serviceEntry) {
     int statusCode = response.getResponse().getStatusCode();
-    if (statusCode >= INTERNAL_SERVER_ERROR.code()) {
+    if (HttpStatusClass.valueOf(statusCode) == HttpStatusClass.SERVER_ERROR) {
       throw new IllegalStateException(String
           .format("%s data-source error. Status code returned by adapter is %d",
               serviceEntry.getName(), statusCode));
