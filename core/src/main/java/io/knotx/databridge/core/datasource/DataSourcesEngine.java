@@ -21,6 +21,7 @@ import io.knotx.databridge.core.DataBridgeKnotOptions;
 import io.knotx.databridge.core.DataSourceDefinition;
 import io.knotx.engine.api.FragmentEventContext;
 import io.knotx.reactivex.databridge.api.DataSourceAdapterProxy;
+import io.netty.handler.codec.http.HttpStatusClass;
 import io.reactivex.Single;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -32,6 +33,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
+// TODO define unit tests
 public class DataSourcesEngine {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DataSourcesEngine.class);
@@ -62,8 +64,10 @@ public class DataSourcesEngine {
         .setRequest(fragmentContext.getClientRequest())
         .setParams(serviceEntry.getParams());
 
-    return adapters.get(serviceEntry.getAddress()).rxProcess(adapterRequest)
-        .map(adapterResponse -> buildResultObject(adapterRequest, adapterResponse));
+    return adapters.get(serviceEntry.getAddress())
+        .rxProcess(adapterRequest)
+        .doOnSuccess(response -> validateStatusCode(response, serviceEntry))
+        .map(response -> buildResultObject(adapterRequest, response));
   }
 
   public DataSourceEntry mergeWithConfiguration(final DataSourceEntry serviceEntry) {
@@ -84,9 +88,14 @@ public class DataSourcesEngine {
         });
   }
 
-  public int retrieveStatusCode(JsonObject serviceResult) {
-    return Integer.parseInt(serviceResult.getJsonObject(RESPONSE_NAMESPACE_KEY)
-        .getString("statusCode"));
+  private void validateStatusCode(DataSourceAdapterResponse response,
+      DataSourceEntry serviceEntry) {
+    int statusCode = response.getResponse().getStatusCode();
+    if (HttpStatusClass.valueOf(statusCode) == HttpStatusClass.SERVER_ERROR) {
+      throw new IllegalStateException(String
+          .format("%s data-source error. Status code returned by adapter is %d",
+              serviceEntry.getName(), statusCode));
+    }
   }
 
   private JsonObject buildResultObject(DataSourceAdapterRequest adapterRequest,
