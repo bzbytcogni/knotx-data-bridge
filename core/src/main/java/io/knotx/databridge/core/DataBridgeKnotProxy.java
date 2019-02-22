@@ -44,6 +44,7 @@ public class DataBridgeKnotProxy extends TraceableKnotProxy {
     return Single.just(fragmentContext)
         .doOnSuccess(this::traceFragmentContext)
         .flatMap(eventCtx -> snippetProcessor.processSnippet(eventCtx))
+        .doOnError(error -> traceError(fragmentContext, error))
         .map(this::createSuccessResult)
         .toMaybe();
   }
@@ -62,5 +63,9 @@ public class DataBridgeKnotProxy extends TraceableKnotProxy {
       LOGGER.trace("Processing fragment {}",
           ctx.getFragmentEvent().getFragment().toJson().encodePrettily());
     }
+  }
+
+  private void traceError(FragmentEventContext fragmentContext, Throwable error) {
+    LOGGER.warn("Could not process the fragment []!", fragmentContext.getFragmentEvent(), error);
   }
 }
