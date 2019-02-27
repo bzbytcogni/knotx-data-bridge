@@ -58,7 +58,7 @@ class HttpDataSourceAdapterProxyTest {
   @Test
   @KnotxApplyConfiguration("httpAdapterStack.conf")
   void callExistingService_expectOKResponseWithServiceDataProvidedByService1(
-      @ClasspathResourcesMockServer(port = 3000) WireMockServer mockService,
+      @ClasspathResourcesMockServer WireMockServer mockService,
       VertxTestContext context, Vertx vertx)
       throws Exception {
     final String expected = FileReader.readText("service/mock/response.json");

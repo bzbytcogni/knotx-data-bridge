@@ -56,7 +56,7 @@ import org.mockito.quality.Strictness;
 @ExtendWith(VertxExtension.class)
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.WARN)
-public class HttpClientFacadeTest {
+class HttpClientFacadeTest {
 
   // Configuration
   private static final String DOMAIN = "localhost";
@@ -68,7 +68,7 @@ public class HttpClientFacadeTest {
       .singletonList(Pattern.compile("X-test*"));
 
   @Test
-  public void whenSupportedStaticPathServiceRequested_expectRequestExecutedAndResponseOKWithBody(
+  void whenSupportedStaticPathServiceRequested_expectRequestExecutedAndResponseOKWithBody(
       VertxTestContext context, Vertx vertx) throws Exception {
     // given
     final WebClient mockedWebClient = Mockito.spy(webClient(vertx));
@@ -93,7 +93,7 @@ public class HttpClientFacadeTest {
   }
 
   @Test
-  public void whenSupportedDynamicPathServiceRequested_expectRequestExecutedAndResponseOKWithBody(
+  void whenSupportedDynamicPathServiceRequested_expectRequestExecutedAndResponseOKWithBody(
       VertxTestContext context, Vertx vertx) throws Exception {
     // given
     final JsonObject expectedResponse = new JsonObject(FileReader.readText("service/mock/response.json"));
@@ -121,7 +121,7 @@ public class HttpClientFacadeTest {
   }
 
   @Test
-  public void whenServiceRequestedWithoutPathParam_expectNoServiceRequestAndBadRequest(
+  void whenServiceRequestedWithoutPathParam_expectNoServiceRequestAndBadRequest(
       VertxTestContext context, Vertx vertx) {
     // given
     final WebClient mockedWebClient = Mockito.spy(webClient(vertx));
@@ -143,7 +143,7 @@ public class HttpClientFacadeTest {
   }
 
   @Test
-  public void whenUnsupportedPathServiceRequested_expectNoServiceRequestAndBadRequest(
+  void whenUnsupportedPathServiceRequested_expectNoServiceRequestAndBadRequest(
       VertxTestContext context, Vertx vertx) {
     // given
     final WebClient mockedWebClient = Mockito.spy(webClient(vertx));
@@ -165,7 +165,7 @@ public class HttpClientFacadeTest {
   }
 
   @Test
-  public void whenServiceEmptyResponse_expectNoFailure(VertxTestContext context, Vertx vertx) {
+  void whenServiceEmptyResponse_expectNoFailure(VertxTestContext context, Vertx vertx) {
     // given
     final WireMockServer wireMockServer = mockEndpoint(HttpResponseStatus.OK.code(),
         "/services/mock/empty.json", "");

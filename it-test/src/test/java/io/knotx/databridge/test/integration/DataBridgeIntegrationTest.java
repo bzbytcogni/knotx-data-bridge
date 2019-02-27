@@ -51,7 +51,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 class DataBridgeIntegrationTest {
 
   @ClasspathResourcesMockServer
-  protected WireMockServer mockService;
+  private WireMockServer mockService;
 
   @Test
   @DisplayName("Expect a success status when HTTP service responds with HTTP 200.")
