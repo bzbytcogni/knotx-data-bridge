@@ -22,15 +22,13 @@ import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 import io.knotx.databridge.core.datasource.DataSourceEntry;
 import io.knotx.engine.api.FragmentEvent;
 import io.knotx.fragment.Fragment;
-import io.knotx.junit5.KnotxArgumentConverter;
 import io.knotx.junit5.util.FileReader;
 import io.vertx.core.json.JsonObject;
 import java.io.IOException;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
 
-public class DataBridgeSnippetTest {
+class DataBridgeSnippetTest {
 
   @ParameterizedTest
   @CsvSource(value = {
@@ -39,7 +37,7 @@ public class DataBridgeSnippetTest {
       "fragment/one_service_one_param.json;{\"path\":\"/overridden/path\"}",
       "fragment/one_service_many_params.json;{\"path\":\"/overridden/path\",\"anotherParam\":\"someValue\"}"
   }, delimiter = ';')
-  public void from_whenFragmentContainsOneService_expectFragmentContextWithExtractedParams(
+  void from_whenFragmentContainsOneService_expectFragmentContextWithExtractedParams(
       String fragmentContentFile,
       String expectedParameters) throws Exception {
 
@@ -57,7 +55,7 @@ public class DataBridgeSnippetTest {
       "fragment/two_services.json;2",
       "fragment/five_services.json;5"
   }, delimiter = ';')
-  public void from_whenFragmentContainsServices_expectFragmentContextWithProperNumberOfServicesExtracted(
+  void from_whenFragmentContainsServices_expectFragmentContextWithProperNumberOfServicesExtracted(
       String fragmentContentFile,
       int numberOfExpectedServices) throws Exception {
     FragmentEvent fragment = fromJsonFile(fragmentContentFile);
@@ -71,15 +69,16 @@ public class DataBridgeSnippetTest {
       "fragment/two_services_with_params.json;{\"first\":{\"first-service-key\":\"first-service-value\"},\"second\":{\"second-service-key\":\"second-service-value\"}}",
       "fragment/four_services_with_params_and_extra_param.json;{\"a\":{\"a\":\"a\"},\"b\":{\"b\":\"b\"},\"c\":{\"c\":\"c\"},\"d\":{\"d\":\"d\"}}"
   }, delimiter = ';')
-  public void from_whenFragmentContainsServices_expectProperlyAssignedParams(
+  void from_whenFragmentContainsServices_expectProperlyAssignedParams(
       String fragmentContentFile,
-      @ConvertWith(KnotxArgumentConverter.class) JsonObject parameters) throws Exception {
+      String parameters) throws Exception {
     FragmentEvent fragment = fromJsonFile(fragmentContentFile);
 
     final DataBridgeSnippet dataBridgeFragmentContext = DataBridgeSnippet.from(fragment);
     dataBridgeFragmentContext.services.forEach(serviceEntry ->
         assertThat(serviceEntry.getParams().toString(),
-            sameJSONAs(parameters.getJsonObject(serviceEntry.getNamespace()).toString())
+            sameJSONAs(
+                new JsonObject(parameters).getJsonObject(serviceEntry.getNamespace()).toString())
         )
     );
   }

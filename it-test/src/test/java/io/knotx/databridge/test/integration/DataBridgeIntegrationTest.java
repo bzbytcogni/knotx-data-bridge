@@ -32,7 +32,7 @@ import io.knotx.fragment.Fragment;
 import io.knotx.junit5.KnotxApplyConfiguration;
 import io.knotx.junit5.KnotxExtension;
 import io.knotx.junit5.util.FileReader;
-import io.knotx.junit5.wiremock.KnotxWiremock;
+import io.knotx.junit5.wiremock.ClasspathResourcesMockServer;
 import io.knotx.junit5.wiremock.KnotxWiremockExtension;
 import io.knotx.server.api.context.ClientRequest;
 import io.reactivex.Single;
@@ -48,15 +48,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(KnotxExtension.class)
-public class DataBridgeIntegrationTest {
+class DataBridgeIntegrationTest {
 
-  @KnotxWiremock
+  @ClasspathResourcesMockServer
   protected WireMockServer mockService;
 
   @Test
   @DisplayName("Expect a success status when HTTP service responds with HTTP 200.")
   @KnotxApplyConfiguration("dataBridgeStack.conf")
-  public void callDataBridge_validSnippetFragmentsContextResult(VertxTestContext context,
+  void callDataBridge_validSnippetFragmentsContextResult(VertxTestContext context,
       Vertx vertx) throws IOException {
 
     mockDataSource();
@@ -76,7 +76,7 @@ public class DataBridgeIntegrationTest {
   @Test
   @DisplayName("Expect a response in the namespace when HTTP service responds with HTTP 200.")
   @KnotxApplyConfiguration("dataBridgeStack.conf")
-  public void callDataBridgeWithNamespacedValidDS(VertxTestContext context,
+  void callDataBridgeWithNamespacedValidDS(VertxTestContext context,
       Vertx vertx) throws IOException {
 
     mockDataSource();
@@ -95,7 +95,7 @@ public class DataBridgeIntegrationTest {
   @Test
   @DisplayName("Expect an error when HTTP service responds with error.")
   @KnotxApplyConfiguration("dataBridgeStack.conf")
-  public void callDataBridge_invalidSnippetFragmentsContextResult(
+  void callDataBridge_invalidSnippetFragmentsContextResult(
       VertxTestContext context, Vertx vertx) throws IOException {
 
     mockFailingDataSource();

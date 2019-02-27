@@ -26,7 +26,7 @@ import io.knotx.databridge.api.DataSourceAdapterResponse;
 import io.knotx.junit5.KnotxApplyConfiguration;
 import io.knotx.junit5.KnotxExtension;
 import io.knotx.junit5.util.FileReader;
-import io.knotx.junit5.wiremock.KnotxWiremock;
+import io.knotx.junit5.wiremock.ClasspathResourcesMockServer;
 import io.knotx.junit5.wiremock.KnotxWiremockExtension;
 import io.knotx.reactivex.databridge.api.DataSourceAdapterProxy;
 import io.knotx.server.api.context.ClientRequest;
@@ -41,26 +41,25 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(KnotxExtension.class)
-public class HttpDataSourceAdapterProxyTest {
+class HttpDataSourceAdapterProxyTest {
 
   private final static String ADAPTER_ADDRESS = "knotx.bridge.datasource.http";
 
   @Test
   @KnotxApplyConfiguration("httpAdapterStack.conf")
-  public void callNonExistingService_expectBadRequestResponse(VertxTestContext context,
+  void callNonExistingService_expectBadRequestResponse(VertxTestContext context,
       Vertx vertx) {
     callAdapterServiceWithAssertions(context, vertx, "not/existing/service/address",
-        adapterResponse -> {
-          Assertions.assertEquals(adapterResponse.getResponse().getStatusCode(),
-              HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
-        }
+        adapterResponse -> Assertions.assertEquals(adapterResponse.getResponse().getStatusCode(),
+            HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
     );
   }
 
   @Test
   @KnotxApplyConfiguration("httpAdapterStack.conf")
-  public void callExistingService_expectOKResponseWithServiceDataProvidedByService1(
-      @KnotxWiremock(port = 3000) WireMockServer mockService, VertxTestContext context, Vertx vertx)
+  void callExistingService_expectOKResponseWithServiceDataProvidedByService1(
+      @ClasspathResourcesMockServer(port = 3000) WireMockServer mockService,
+      VertxTestContext context, Vertx vertx)
       throws Exception {
     final String expected = FileReader.readText("service/mock/response.json");
 
@@ -72,7 +71,8 @@ public class HttpDataSourceAdapterProxyTest {
 
     callAdapterServiceWithAssertions(context, vertx, "/service/mock/response.json",
         adapterResponse -> {
-          Assertions.assertEquals(HttpResponseStatus.OK.code(), adapterResponse.getResponse().getStatusCode());
+          Assertions.assertEquals(HttpResponseStatus.OK.code(),
+              adapterResponse.getResponse().getStatusCode());
 
           JsonObject serviceResponse = new JsonObject(
               adapterResponse.getResponse().getBody().toString());
