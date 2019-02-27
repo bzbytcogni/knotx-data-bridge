@@ -237,14 +237,6 @@ When found a placeholder within the `path` parameter it will be replaced with a 
 Space character is substituted by %20 instead of +.
 Slash character / remains as it is.
 
-## Building
-To build this module use gradle with following settings:
-```gradle
- org.gradle.daemon=false
- org.gradle.parallel=false
-```
-This is temporary and will be changed as soon as tests that runs on the same ports will be fixed.
-
 ## Community
 Knot.x gives one communication channel that is described [here](https://github.com/Cognifide/knotx#community).
 
