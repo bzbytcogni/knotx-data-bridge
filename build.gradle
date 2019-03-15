@@ -35,6 +35,7 @@ subprojects { subproject ->
 
   apply plugin: 'java-library'
   apply plugin: 'io.spring.dependency-management'
+  apply plugin: 'maven'
 
   sourceCompatibility = '1.8'
 
