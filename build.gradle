@@ -24,7 +24,6 @@ allprojects {
     mavenLocal()
     jcenter()
     maven { url 'https://plugins.gradle.org/m2/' }
-    maven { url "https://oss.sonatype.org/content/groups/staging/" }
     maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
   }
 }
@@ -37,8 +36,26 @@ subprojects { subproject ->
   apply plugin: 'java-library'
   apply plugin: 'io.spring.dependency-management'
 
-  sourceCompatibility = 1.8
-  targetCompatibility = 1.8
+  sourceCompatibility = '1.8'
+
+  switch (JavaVersion.current()) {
+    case JavaVersion.VERSION_1_8:
+      targetCompatibility = '1.8'
+      break
+    case JavaVersion.VERSION_1_9:
+      targetCompatibility = '9'
+      break
+    case JavaVersion.VERSION_1_10:
+      targetCompatibility = '10'
+      break
+    case JavaVersion.VERSION_11:
+      targetCompatibility = '11'
+      break
+    default:
+      throw new GradleException("This build must be run with java 8,9,10 or 11")
+      break
+  }
+  println 'Compilation target is JDK '+ targetCompatibility
 
   tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
