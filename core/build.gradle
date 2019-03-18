@@ -23,8 +23,8 @@ configurations {
 }
 
 dependencies {
-  compileOnly project(':knotx-databridge-api')
-  testCompileOnly group: 'io.knotx', name: 'knotx-core', version: "${project.version}", classifier: 'tests'
+  compile project(':knotx-databridge-api')
+  testCompile group: 'io.knotx', name: 'knotx-core', version: "${project.version}", classifier: 'tests'
   testResources sourceSets.test.output
 }
 
