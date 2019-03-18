@@ -17,10 +17,10 @@
 description = "Knot.x Data Bridge Integration Tests"
 
 dependencies {
-  compile project(':knotx-databridge-core')
-  compile project(':knotx-databridge-adapter-http')
+  compileOnly project(':knotx-databridge-core')
+  compileOnly project(':knotx-databridge-adapter-http')
 
-  compile "io.vertx:vertx-web-client"
+  compileOnly "io.vertx:vertx-web-client"
 
   testCompile project(path: ':knotx-databridge-core', configuration: 'testResources')
   testCompile group: 'io.knotx', name: 'knotx-core', version: "${project.version}", classifier: 'tests'

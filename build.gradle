@@ -71,11 +71,11 @@ subprojects { subproject ->
   }
 
   dependencies {
-    compile 'io.knotx:knotx-core'
+    compileOnly 'io.knotx:knotx-core'
 
-    compile 'io.vertx:vertx-core'
-    compile 'io.vertx:vertx-service-proxy'
-    compile 'io.vertx:vertx-rx-java2'
+    compileOnly 'io.vertx:vertx-core'
+    compileOnly 'io.vertx:vertx-service-proxy'
+    compileOnly 'io.vertx:vertx-rx-java2'
 
     compileOnly 'io.vertx:vertx-codegen'
 
