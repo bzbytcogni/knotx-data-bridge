@@ -19,7 +19,7 @@ import io.knotx.databridge.api.DataSourceAdapterRequest;
 import io.knotx.databridge.api.DataSourceAdapterResponse;
 import io.knotx.databridge.core.DataBridgeKnotOptions;
 import io.knotx.databridge.core.DataSourceDefinition;
-import io.knotx.engine.api.FragmentEventContext;
+import io.knotx.fragments.handler.api.fragment.FragmentContext;
 import io.knotx.reactivex.databridge.api.DataSourceAdapterProxy;
 import io.netty.handler.codec.http.HttpStatusClass;
 import io.reactivex.Single;
@@ -59,7 +59,7 @@ public class DataSourcesEngine {
   }
 
   public Single<JsonObject> doServiceCall(DataSourceEntry serviceEntry,
-      FragmentEventContext fragmentContext) {
+      FragmentContext fragmentContext) {
     DataSourceAdapterRequest adapterRequest = new DataSourceAdapterRequest()
         .setRequest(fragmentContext.getClientRequest())
         .setParams(serviceEntry.getParams());

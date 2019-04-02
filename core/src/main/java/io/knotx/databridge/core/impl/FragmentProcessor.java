@@ -15,13 +15,12 @@
  */
 package io.knotx.databridge.core.impl;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
-
 import io.knotx.databridge.core.DataBridgeKnotOptions;
 import io.knotx.databridge.core.datasource.DataSourceEntry;
 import io.knotx.databridge.core.datasource.DataSourcesEngine;
-import io.knotx.engine.api.FragmentEvent;
-import io.knotx.engine.api.FragmentEventContext;
+import io.knotx.fragment.Fragment;
+import io.knotx.fragments.handler.api.fragment.FragmentContext;
+import io.knotx.fragments.handler.api.fragment.FragmentResult;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.vertx.core.json.JsonObject;
@@ -39,29 +38,31 @@ public class FragmentProcessor {
     this.serviceEngine = new DataSourcesEngine(vertx, options);
   }
 
-  public Single<FragmentEvent> processSnippet(FragmentEventContext context) {
-    return Observable.just(context.getFragmentEvent())
+  public Single<FragmentResult> processSnippet(FragmentContext context) {
+    return Observable.just(context)
         .map(DataBridgeSnippet::from)
         .flatMap(DataBridgeSnippet::services)
         .map(serviceEngine::mergeWithConfiguration)
         .doOnNext(this::traceService)
         .flatMap(serviceEntry -> fetchServiceData(context, serviceEntry))
         .reduce(new JsonObject(), JsonObject::mergeIn)
-        .map(results -> applyData(context.getFragmentEvent(), results));
+        .map(results -> applyData(context, results));
   }
 
 
-  private Observable<JsonObject> fetchServiceData(FragmentEventContext fragmentContext,
+  private Observable<JsonObject> fetchServiceData(FragmentContext fragmentContext,
       DataSourceEntry serviceEntry) {
     return serviceEngine.doServiceCall(serviceEntry, fragmentContext)
         .map(serviceEntry::getResultWithNamespaceAsKey)
         .toObservable();
   }
 
-  private FragmentEvent applyData(final FragmentEvent event, JsonObject serviceResult) {
-    LOGGER.trace("Applying data to snippet {}", event);
-    event.getFragment().mergeInPayload(serviceResult);
-    return event;
+  private FragmentResult applyData(final FragmentContext context, JsonObject serviceResult) {
+    LOGGER.trace("Applying data to snippet {}", context);
+    Fragment fragment = context.getFragment();
+    fragment.mergeInPayload(serviceResult);
+
+    return new FragmentResult(fragment, FragmentResult.DEFAULT_TRANSITION);
   }
 
   private void traceService(DataSourceEntry serviceEntry) {
