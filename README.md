@@ -1,11 +1,15 @@
 # Knot.x Data Bridge
-Knot.x Data Bridge module is a "bridge" between Knot.x rendering mechanism and external data sources.
-Its main responsibility is to collect data from external data sources (these can be flat files, web services or any other kind of data sources)
-and expose it in a common structure. Such structure is to be digested by further processing modules, such as handlebars.
+Data Bridge module is a [Knot](https://github.com/Knotx/knotx-fragments-handler/tree/master/api#knot) 
+that collects data from external data sources (these can be flat files, web services or any other kind 
+of data sources) and expose it in a [Fragment's payload](https://github.com/Knotx/knotx-fragment-api/blob/master/docs/asciidoc/dataobjects.adoc).
 
 ## How does it work?
-In order to use data from external data sources you need to create an Knot.x [Fragments](https://github.com/Cognifide/knotx/wiki/Splitter).
-The fragments caries out a set of data source names to be used in your markup.
+Data Bridge is an [Action](https://github.com/Knotx/knotx-fragments-handler) that is exposed via 
+[Vert.x Event Bus](https://vertx.io/docs/vertx-core/java/#event_bus) to the graph processing. 
+Retrieves the fragment to be processed and replies with the new fragment and the default transition 
+(which means that the graph will continue to be processed).
+
+The fragment caries out a set of data source names to be used in your markup.
 These names are to be used as variables under which you can find your data.
 
 Data bridge binds those data source names with the Knot.x [Data Dource Adapters](#data-source-adapters) (that retrieves data from the any kind of sources).
@@ -37,7 +41,7 @@ dataDefinitions = [
   }
 ]
 ```
-The unique name is the data source identifier that can be used in the HTML template. Then we can
+An unique name identifies the data within Fragment's payload. Then we can
 specify default parameters that are used during the data source integration. The `params` attribute is a
 JSON object which can be easily split into key-value pairs with [HOCON syntax](https://github.com/lightbend/config/blob/master/HOCON.md#array-and-object-concatenation).
 The last definition entry, the `adapter`, specifies the module deployed within Knot.x that calls the
@@ -76,7 +80,7 @@ Now let's see how the `employees-rest-service` data source in the HTML markup is
 `<knotx:snippet>` definition (Fragment) looks like:
 
 ```html
-<knotx:snippet knots="databridge"
+<knotx:snippet 
   databridge-name="employees-rest-service" databridge-params='{"path":"/overridden/path"}'
   databridge-name-mysalaries="salaries-db-source"
   type="text/knotx-snippet">
@@ -84,15 +88,14 @@ Now let's see how the `employees-rest-service` data source in the HTML markup is
 </knotx:snippet>
 ```
 
-Data Bridge filters Fragments containing the `databridge` entry in the `knots` attribute
-(the list of Knots). Then for all filtered fragments it collects responses from data sources specified in
+It collects responses from data sources specified in
 `databridge-name-{NAMESPACE}`=[data source definition name] attributes through subsequent
 asynchronous Adapters calls. All collected JSONs (see Data Source Adapter contract) are saved
-in the [Fragment Context](https://github.com/Cognifide/knotx/wiki/Splitter#fragment).
+in the [Fragment's payload](https://github.com/Knotx/knotx-fragment-api/blob/master/docs/asciidoc/dataobjects.adoc).
 The `NAMESPACE` is optional and specifies the key under which the response from the data
 source is saved. The default namespace is `_result`.
 
-The final Fragment Context for our example looks like:
+The final Fragment's payload for our example looks like:
 ```json
 {
   "_result": { EMPLOYEES_JSON },
@@ -103,41 +106,6 @@ The final Fragment Context for our example looks like:
 The data source parameters can be also configured in Fragment and merged with default ones using
 the `databridge-params-{NAMESPACE}={JSON DATA}` attribute. The attribute is matched with the data
 source definition based on a namespace.
-
-<span id="fallback-mechanism"></span>
-## Fallback mechanism
-The fallback mechanism allows you to handle errors when fragment processing. The Data Bridge module retrieves data from various data sources using [Data Source Adapters](#data-source-adapters). 
-If any adapter throws an exception or responds with status code `500` or higher, then Knot.x Bridge marks the entire fragment as unsuccessful.
-    
-See the example below:
-```html
-<knotx:snippet knots="databridge" 
-  databridge-name="employees-rest-service"
-  databridge-name-mysalaries="salaries-db-source"
-  fallback="my_fallback_id"
-  type="text/knotx-snippet">
-   ... some content ...
-</knotx:snippet>
-```
-The Data Bridge asynchronously invokes `employees-rest-service` and `salaries-db-source` adapters asynchronously. If the `salaries-db-source` adapter responds with error *500*, then the entire fragment  will be marked as unsuccessful (even if the `employees-rest-service` adapter responds with status code 200).
-
-## Data Source Calls Caching
-
-Template might consists of more than one Data Source Adapter call. 
-It's also possible that there are multiple fragments on the page, each using same call. 
-Knot.x Data Bridge does caching results of Adapter calls to avoid multiple calls for the same data.
-
-By default adapter call is cached by data source `name` and `params` key, but you can also define a `cacheKey` value in configuration
-
-```hocon
-{
-  name = employees-rest-service
-  params = "{ \"path\": \"/path/employees.json\" }"
-  cacheKey = first
-  adapter = rest-http-adapter
-}
-``` 
-Caching is performed within page request scope, this means another request will not get cached data.
 
 <span id="data-source-adapters"></span>
 ## Data Sources Adapters
