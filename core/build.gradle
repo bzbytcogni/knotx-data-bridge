@@ -24,7 +24,6 @@ configurations {
 
 dependencies {
   compile project(':knotx-databridge-api')
-//  testCompile group: 'io.knotx', name: 'knotx-fragments-handler', version: "${project.version}", classifier: 'tests'
   testResources sourceSets.test.output
 }
 
