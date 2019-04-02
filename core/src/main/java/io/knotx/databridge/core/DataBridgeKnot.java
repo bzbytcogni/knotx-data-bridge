@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Knot.x Project
+ * Copyright (C) 2018 Knot.x Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,15 @@
  */
 package io.knotx.databridge.core;
 
+import io.knotx.databridge.core.impl.FragmentProcessor;
 import io.knotx.fragments.handler.api.Knot;
+import io.knotx.fragments.handler.api.fragment.FragmentContext;
+import io.knotx.fragments.handler.api.fragment.FragmentResult;
+import io.reactivex.Single;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
-import io.vertx.core.Vertx;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -25,32 +31,59 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.serviceproxy.ServiceBinder;
 
-public class DataBridgeKnot extends AbstractVerticle {
+public class DataBridgeKnot extends AbstractVerticle implements Knot {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DataBridgeKnot.class);
 
-  private DataBridgeKnotOptions options;
-  private MessageConsumer<JsonObject> knotProxy;
+  private MessageConsumer<JsonObject> serviceConsumer;
   private ServiceBinder serviceBinder;
 
+  private DataBridgeKnotOptions options;
+  private FragmentProcessor snippetProcessor;
+
   @Override
-  public void init(Vertx vertx, Context context) {
+  public void apply(FragmentContext fragmentContext, Handler<AsyncResult<FragmentResult>> result) {
+    Single.just(fragmentContext)
+        .doOnSuccess(this::traceFragmentContext)
+        .flatMap(eventCtx -> snippetProcessor.processSnippet(eventCtx))
+        .subscribe(
+            success -> {
+              LOGGER.debug("Processing ends with result [{}]", success);
+              Future.succeededFuture(success).setHandler(result);
+            },
+            error -> {
+              LOGGER.error("Processing ends with exception!", error);
+              Future<FragmentResult> future = Future.failedFuture(error);
+              future.setHandler(result);
+            });
+  }
+
+  private void traceFragmentContext(FragmentContext ctx) {
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("Processing fragment {}", ctx.getFragment().toJson().encodePrettily());
+    }
+  }
+
+  @Override
+  public void init(io.vertx.core.Vertx vertx, Context context) {
     super.init(vertx, context);
     this.options = new DataBridgeKnotOptions(config());
     this.serviceBinder = new ServiceBinder(vertx);
+    this.snippetProcessor = new FragmentProcessor(this.vertx, new DataBridgeKnotOptions(config()));
   }
 
   @Override
   public void start() {
     LOGGER.info("Starting <{}>", this.getClass().getSimpleName());
-    knotProxy = serviceBinder
+    serviceConsumer = serviceBinder
         .setAddress(options.getAddress())
-        .register(Knot.class, new DataBridgeKnotProxy(vertx, options));
+        .register(Knot.class, this);
   }
 
   @Override
   public void stop() {
     LOGGER.info("Stopping <{}>", this.getClass().getSimpleName());
-    serviceBinder.unregister(knotProxy);
+    serviceBinder.unregister(serviceConsumer);
   }
+
 }
