@@ -15,7 +15,7 @@
  */
 package io.knotx.databridge.core;
 
-import io.knotx.engine.api.KnotProxy;
+import io.knotx.fragments.handler.api.Knot;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.MessageConsumer;
@@ -28,7 +28,6 @@ import io.vertx.serviceproxy.ServiceBinder;
 public class DataBridgeKnot extends AbstractVerticle {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DataBridgeKnot.class);
-  public static final String EB_ADDRESS = "knotx.knot.databridge";
 
   private DataBridgeKnotOptions options;
   private MessageConsumer<JsonObject> knotProxy;
@@ -45,8 +44,8 @@ public class DataBridgeKnot extends AbstractVerticle {
   public void start() {
     LOGGER.info("Starting <{}>", this.getClass().getSimpleName());
     knotProxy = serviceBinder
-        .setAddress(EB_ADDRESS)
-        .register(KnotProxy.class, new DataBridgeKnotProxy(vertx, options));
+        .setAddress(options.getAddress())
+        .register(Knot.class, new DataBridgeKnotProxy(vertx, options));
   }
 
   @Override

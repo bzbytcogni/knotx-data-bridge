@@ -16,56 +16,48 @@
 package io.knotx.databridge.core;
 
 import io.knotx.databridge.core.impl.FragmentProcessor;
-import io.knotx.engine.api.FragmentEvent;
-import io.knotx.engine.api.FragmentEventContext;
-import io.knotx.engine.api.FragmentEventResult;
-import io.knotx.engine.api.TraceableKnotOptions;
-import io.knotx.engine.api.TraceableKnotProxy;
-import io.reactivex.Maybe;
+import io.knotx.fragments.handler.api.Knot;
+import io.knotx.fragments.handler.api.fragment.FragmentContext;
+import io.knotx.fragments.handler.api.fragment.FragmentResult;
 import io.reactivex.Single;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.reactivex.core.Vertx;
 
-public class DataBridgeKnotProxy extends TraceableKnotProxy {
+public class DataBridgeKnotProxy implements Knot {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DataBridgeKnotProxy.class);
-  public static final String DEFAULT_SUCCESS_TRANSITION = "next";
 
   private FragmentProcessor snippetProcessor;
 
-  public DataBridgeKnotProxy(Vertx vertx, DataBridgeKnotOptions options) {
-    super(new TraceableKnotOptions());
+  DataBridgeKnotProxy(Vertx vertx, DataBridgeKnotOptions options) {
     this.snippetProcessor = new FragmentProcessor(vertx, options);
   }
 
   @Override
-  protected Maybe<FragmentEventResult> execute(FragmentEventContext fragmentContext) {
-    return Single.just(fragmentContext)
+  public void apply(FragmentContext fragmentContext, Handler<AsyncResult<FragmentResult>> result) {
+    Single.just(fragmentContext)
         .doOnSuccess(this::traceFragmentContext)
         .flatMap(eventCtx -> snippetProcessor.processSnippet(eventCtx))
-        .doOnError(error -> traceError(fragmentContext, error))
-        .map(this::createSuccessResult)
-        .toMaybe();
+        .subscribe(
+            success -> {
+              LOGGER.debug("Processing ends with result [{}]", success);
+              Future.succeededFuture(success).setHandler(result);
+            },
+            error -> {
+              LOGGER.error("Processing ends with exception!", error);
+              Future<FragmentResult> future = Future.failedFuture(error);
+              future.setHandler(result);
+            });
   }
 
-  @Override
-  protected String getAddress() {
-    return DataBridgeKnot.EB_ADDRESS;
-  }
-
-  private FragmentEventResult createSuccessResult(FragmentEvent event) {
-    return new FragmentEventResult(event, DEFAULT_SUCCESS_TRANSITION);
-  }
-
-  private void traceFragmentContext(FragmentEventContext ctx) {
+  private void traceFragmentContext(FragmentContext ctx) {
     if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("Processing fragment {}",
-          ctx.getFragmentEvent().getFragment().toJson().encodePrettily());
+      LOGGER.trace("Processing fragment {}", ctx.getFragment().toJson().encodePrettily());
     }
   }
 
-  private void traceError(FragmentEventContext fragmentContext, Throwable error) {
-    LOGGER.warn("Could not process the fragment []!", fragmentContext.getFragmentEvent(), error);
-  }
 }

@@ -28,6 +28,12 @@ import java.util.List;
 @DataObject(generateConverter = true, publicConverter = false)
 public class DataBridgeKnotOptions {
 
+  /**
+   * Default EB address of the verticle
+   */
+  public final static String DEFAULT_ADDRESS = "knotx.core.service";
+
+  private String address;
   private List<DataSourceDefinition> dataDefinitions;
   private DeliveryOptions deliveryOptions;
 
@@ -44,6 +50,7 @@ public class DataBridgeKnotOptions {
    * @param other the instance to copy
    */
   public DataBridgeKnotOptions(DataBridgeKnotOptions other) {
+    this.address = other.address;
     this.dataDefinitions = new ArrayList<>(other.dataDefinitions);
     this.deliveryOptions = new DeliveryOptions(other.deliveryOptions);
   }
@@ -70,8 +77,27 @@ public class DataBridgeKnotOptions {
   }
 
   private void init() {
+    address = DEFAULT_ADDRESS;
     dataDefinitions = Collections.emptyList();
     deliveryOptions = new DeliveryOptions();
+  }
+
+  /**
+   * @return EB address
+   */
+  public String getAddress() {
+    return address;
+  }
+
+  /**
+   * Sets the EB address of the verticle. Default is 'knotx.core.service'
+   *
+   * @param address EB address of the verticle
+   * @return a reference to this, so the API can be used fluently
+   */
+  public DataBridgeKnotOptions setAddress(String address) {
+    this.address = address;
+    return this;
   }
 
   /**

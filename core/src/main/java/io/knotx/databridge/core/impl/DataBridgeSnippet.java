@@ -18,8 +18,8 @@ package io.knotx.databridge.core.impl;
 import com.google.common.base.MoreObjects;
 import io.knotx.databridge.core.attribute.DataSourceAttribute;
 import io.knotx.databridge.core.datasource.DataSourceEntry;
-import io.knotx.engine.api.FragmentEvent;
 import io.knotx.fragment.Fragment;
+import io.knotx.fragments.handler.api.fragment.FragmentContext;
 import io.reactivex.Observable;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 
 class DataBridgeSnippet {
 
-  private FragmentEvent fragmentEvent;
+  private FragmentContext context;
   List<DataSourceEntry> services;
 
   private DataBridgeSnippet() {
@@ -39,11 +39,11 @@ class DataBridgeSnippet {
    * Factory method that creates context from the {@link Fragment}. All services and params are
    * extracted to separate entries.
    *
-   * @param fragmentEvent - fragment from which the context will be created.
+   * @param context - fragment context that contains fragment and client request
    * @return a DataBridgeSnippet that wraps given fragment.
    */
-  static DataBridgeSnippet from(FragmentEvent fragmentEvent) {
-    final Fragment fragment = fragmentEvent.getFragment();
+  static DataBridgeSnippet from(FragmentContext context) {
+    final Fragment fragment = context.getFragment();
     List<DataSourceAttribute> dataSourceNameAttributes = fragment.getConfiguration().stream()
         .filter(attr -> attr.getKey().startsWith(DataSourceAttribute.DATA_SERVICE_KEY_PREFIX))
         .map(e -> DataSourceAttribute.from(e.getKey(), e.getValue().toString()))
@@ -57,7 +57,7 @@ class DataBridgeSnippet {
         .collect(Collectors.toMap(DataSourceAttribute::getNamespace, Function.identity()));
 
     return new DataBridgeSnippet()
-        .fragmentEvent(fragmentEvent)
+        .context(context)
         .services(
             dataSourceNameAttributes.stream()
                 .map(dsName -> new DataSourceEntry(dsName,
@@ -78,15 +78,11 @@ class DataBridgeSnippet {
    * @return a fragment wrapped in this context.
    */
   public Fragment fragment() {
-    return fragmentEvent.getFragment();
+    return context.getFragment();
   }
 
-  public FragmentEvent event() {
-    return fragmentEvent;
-  }
-
-  private DataBridgeSnippet fragmentEvent(FragmentEvent fragmentEvent) {
-    this.fragmentEvent = fragmentEvent;
+  private DataBridgeSnippet context(FragmentContext context) {
+    this.context = context;
     return this;
   }
 
@@ -98,7 +94,7 @@ class DataBridgeSnippet {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("fragmentEvent", fragmentEvent)
+        .add("context", context)
         .add("services", services)
         .toString();
   }
