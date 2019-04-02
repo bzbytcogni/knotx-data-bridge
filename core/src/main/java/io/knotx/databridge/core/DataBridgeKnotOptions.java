@@ -31,7 +31,7 @@ public class DataBridgeKnotOptions {
   /**
    * Default EB address of the verticle
    */
-  public final static String DEFAULT_ADDRESS = "knotx.core.service";
+  public final static String DEFAULT_ADDRESS = "knotx.knot.databridge";
 
   private String address;
   private List<DataSourceDefinition> dataDefinitions;
