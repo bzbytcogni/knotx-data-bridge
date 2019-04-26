@@ -1,7 +1,0 @@
-{
-  "configuration": {
-    "flow": "knotx.knot.databridge",
-    "databridge-name": "no-name-service",
-    "databridge-name-named": "named-service"
-  }
-}
