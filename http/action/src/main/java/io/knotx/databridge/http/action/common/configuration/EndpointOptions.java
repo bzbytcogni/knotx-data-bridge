@@ -38,6 +38,8 @@ public class EndpointOptions {
   private Set<String> allowedRequestHeaders;
   private JsonObject additionalHeaders;
 
+  //ToDo: private Set<StatusCode> successStatusCodes;
+
   private List<Pattern> allowedRequestHeadersPatterns;
 
   /**
