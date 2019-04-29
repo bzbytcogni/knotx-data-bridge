@@ -47,6 +47,7 @@ import io.vertx.reactivex.ext.web.client.WebClient;
 import java.util.List;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class HttpAction implements Action {
 
@@ -82,8 +83,9 @@ public class HttpAction implements Action {
         .map(this::buildRequest)
         .flatMap(
             request -> callEndpoint(request)
-                .doOnSuccess(resp -> logResponse(request, resp)))
-        .flatMap(response -> wrapResponse(fragmentContext, response));
+                .doOnSuccess(resp -> logResponse(request, resp))
+                .map(resp -> Pair.of(request, resp)))
+        .flatMap(pair -> wrapResponse(fragmentContext, pair.getLeft(), pair.getRight()));
   }
 
   private Single<HttpResponse<Buffer>> callEndpoint(EndpointRequest endpointRequest) {
@@ -149,18 +151,18 @@ public class HttpAction implements Action {
   }
 
   private Single<FragmentResult> wrapResponse(FragmentContext fragmentContext,
-      HttpResponse<Buffer> response) {
+      EndpointRequest endpointRequest, HttpResponse<Buffer> response) {
     return toBody(response)
         .doOnSuccess(this::traceServiceCall)
         .map(buffer -> {
           // TODO handle error responses better
           Fragment fragment = fragmentContext.getFragment();
-          appendResponseToPayload(fragment, response, buffer.toString());
+          appendResponseToPayload(fragment, response, buffer.toString(), endpointRequest);
           final String transition;
-          if (HttpStatusClass.SUCCESS != HttpStatusClass.valueOf(response.statusCode())) {
-            transition = FragmentResult.ERROR_TRANSITION;
-          } else {
+          if (isSuccess(response)) {
             transition = FragmentResult.SUCCESS_TRANSITION;
+          } else {
+            transition = FragmentResult.ERROR_TRANSITION;
           }
 
           return new FragmentResult(fragment, transition);
@@ -168,10 +170,10 @@ public class HttpAction implements Action {
   }
 
   private void appendResponseToPayload(Fragment fragment, HttpResponse<Buffer> response,
-      String responseBody) {
+      String responseBody, EndpointRequest endpointRequest) {
 
-    ActionRequest request = new ActionRequest(HTTP_ACTION_TYPE,
-        response.getDelegate().getHeader("Location"));
+    ActionRequest request = new ActionRequest(HTTP_ACTION_TYPE, endpointRequest.getPath());
+    request.appendMetadata("headers", headersToJsonObject(endpointRequest.getHeaders()));
 
     ActionPayload payload;
     if (isSuccess(response)) {
@@ -185,16 +187,34 @@ public class HttpAction implements Action {
       }
       payload = ActionPayload.success(request, responseData);
     } else {
-
       payload = ActionPayload.error(request,
           HttpResponseStatus.valueOf(response.statusCode()).toString(), response.statusMessage());
     }
+    payload.getResponse()
+        .appendMetadata("statusCode", String.valueOf(response.statusCode()))
+        .appendMetadata("headers", headersToJsonObject(response.headers()));
+
     fragment.appendPayload(actionAlias, payload.toJson());
 
   }
 
+  private JsonObject headersToJsonObject(MultiMap headers) {
+    JsonObject responseHeaders = new JsonObject();
+    headers.entries().forEach(entry -> {
+      final JsonArray values;
+      if (responseHeaders.containsKey(entry.getKey())) {
+        values = responseHeaders.getJsonArray(entry.getKey());
+      } else {
+        values = new JsonArray();
+      }
+      responseHeaders.put(entry.getKey(), values.add(entry.getValue())
+      );
+    });
+    return responseHeaders;
+  }
+
   private boolean isSuccess(HttpResponse<Buffer> response) {
-    return response.statusCode() == HttpResponseStatus.OK.code();
+    return HttpStatusClass.SUCCESS == HttpStatusClass.valueOf(response.statusCode());
   }
 
   private Single<Buffer> toBody(HttpResponse<Buffer> response) {

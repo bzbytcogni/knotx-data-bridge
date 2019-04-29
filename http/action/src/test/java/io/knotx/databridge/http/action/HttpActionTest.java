@@ -44,6 +44,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.MultiMap;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.BeforeEach;
@@ -168,6 +169,8 @@ class HttpActionTest {
       JsonObject metadata = response.getMetadata();
       assertNotNull(metadata);
       assertEquals("200", metadata.getString("statusCode"));
+      assertEquals(new JsonArray().add("response"),
+          metadata.getJsonObject("headers").getJsonArray("responseHeader"));
     }, testContext);
   }
 
@@ -186,12 +189,13 @@ class HttpActionTest {
       assertFalse(response.isSuccess());
       ActionResponseError error = response.getError();
       assertNotNull(error);
-      assertEquals("ERROR", error.getCode());
+      assertEquals("500 Internal Server Error", error.getCode());
       assertEquals("Internal Error", error.getMessage());
       JsonObject metadata = response.getMetadata();
       assertNotNull(metadata);
       assertEquals("500", metadata.getString("statusCode"));
-
+      assertEquals(new JsonArray().add("response"),
+          metadata.getJsonObject("headers").getJsonArray("responseHeader"));
     }, testContext);
   }
 
@@ -210,6 +214,10 @@ class HttpActionTest {
       assertNotNull(request);
       assertEquals("HTTP", request.getType());
       assertEquals(VALID_REQUEST_PATH, request.getSource());
+      JsonObject metadata = request.getMetadata();
+      assertNotNull(metadata);
+      assertEquals(new JsonArray().add("request"),
+          metadata.getJsonObject("headers").getJsonArray("requestHeader"));
     }, testContext);
   }
 
@@ -228,6 +236,10 @@ class HttpActionTest {
       assertNotNull(request);
       assertEquals("HTTP", request.getType());
       assertEquals(VALID_REQUEST_PATH, request.getSource());
+      JsonObject metadata = request.getMetadata();
+      assertNotNull(metadata);
+      assertEquals(new JsonArray().add("request"),
+          metadata.getJsonObject("headers").getJsonArray("requestHeader"));
     }, testContext);
 
   }
@@ -288,7 +300,7 @@ class HttpActionTest {
 
   @Test
   @DisplayName("Expect endpoint called with placeholders in path resolved with values from FragmentContext clientRequest query params")
-  void placehodersInPathResolvedWithClientRequestQueryParams() {
+  void placeholdersInPathResolvedWithClientRequestQueryParams() {
 
   }
 
@@ -306,14 +318,19 @@ class HttpActionTest {
     wireMockServer.stubFor(get(urlEqualTo(requestPath))
         .willReturn(aResponse()
             .withHeader("Content-Type", "application/json")
+            .withHeader("responseHeader", "response")
             .withBody(responseBody)
             .withStatus(statusCode)
             .withStatusMessage(statusMessage)));
     when(clientRequest.getPath()).thenReturn(requestPath);
-    when(clientRequest.getHeaders()).thenReturn(MultiMap.caseInsensitiveMultiMap());
+    when(clientRequest.getHeaders())
+        .thenReturn(MultiMap.caseInsensitiveMultiMap().add("requestHeader", "request"));
 
-    EndpointOptions endpointOptions = new EndpointOptions().setPath(requestPath)
-        .setDomain("localhost").setPort(wireMockServer.port());
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(requestPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaders(Collections.singleton("requestHeader"));
 
     return new HttpAction(vertx,
         new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
