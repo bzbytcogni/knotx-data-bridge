@@ -19,7 +19,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
-import static io.knotx.fragments.handler.api.domain.FragmentResult.SUCCESS_TRANSITION;
+import static io.knotx.fragments.handler.api.fragment.FragmentResult.SUCCESS_TRANSITION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -27,8 +27,8 @@ import static org.mockito.Mockito.when;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.knotx.databridge.http.action.common.configuration.EndpointOptions;
 import io.knotx.fragment.Fragment;
-import io.knotx.fragments.handler.api.domain.FragmentContext;
-import io.knotx.fragments.handler.api.domain.payload.ActionPayload;
+import io.knotx.fragments.handler.api.fragment.FragmentContext;
+import io.knotx.fragments.handler.api.fragment.FragmentResult;
 import io.knotx.server.api.context.ClientRequest;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
@@ -37,6 +37,7 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.MultiMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -57,7 +58,7 @@ class HttpActionTest {
   private static final String VALID_EMPTY_RESPONSE_BODY = "";
 
   private static final Fragment FRAGMENT = new Fragment("type", new JsonObject(), "expectedBody");
-  private static final String ACTION_ALIAS = "httpAction";
+  private static final String HTTP_ACTION = "httpAction";
 
   @Mock
   private ClientRequest clientRequest;
@@ -77,43 +78,10 @@ class HttpActionTest {
     // given
     HttpAction tested = configure(vertx, VALID_REQUEST_PATH, VALID_JSON_RESPONSE_BODY);
 
-    // when
-    tested.apply(new FragmentContext(FRAGMENT, new ClientRequest()),
-        testContext.succeeding(result -> {
-          testContext
-              .verify(() -> assertEquals(SUCCESS_TRANSITION, result.getTransition()));
-          testContext.completeNow();
-        }));
-
-    //then
-    assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
-    if (testContext.failed()) {
-      throw testContext.causeOfFailure();
-    }
-  }
-
-  @Test
-  @DisplayName("Expect action alias key in fragment payload when endpoint responded with success status code")
-  void appendActionAliasToPayload(VertxTestContext testContext, Vertx vertx)
-      throws Throwable {
-    // given
-    HttpAction tested = configure(vertx, VALID_REQUEST_PATH, VALID_JSON_RESPONSE_BODY);
-
-    // when
-    tested.apply(new FragmentContext(FRAGMENT, new ClientRequest()),
-        testContext.succeeding(result -> {
-          testContext
-              .verify(() -> {
-                assertTrue(result.getFragment().getPayload().containsKey(ACTION_ALIAS));
-              });
-          testContext.completeNow();
-        }));
-
-    //then
-    assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
-    if (testContext.failed()) {
-      throw testContext.causeOfFailure();
-    }
+    // then
+    verifyExecution(tested,
+        fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
+        testContext);
   }
 
   @Test
@@ -123,25 +91,16 @@ class HttpActionTest {
     // given
     HttpAction tested = configure(vertx, VALID_REQUEST_PATH, VALID_JSON_RESPONSE_BODY);
 
-    // when
-    tested.apply(new FragmentContext(FRAGMENT, new ClientRequest()),
-        testContext.succeeding(result -> {
-          testContext
-              .verify(() -> {
-                ActionPayload payload = new ActionPayload(result.getFragment().getPayload()
-                    .getJsonObject(ACTION_ALIAS));
-                assertTrue(payload.getResponse().isSuccess());
-                assertEquals(new JsonObject(VALID_JSON_RESPONSE_BODY), payload.getResult());
-              });
-          testContext.completeNow();
-        }));
+    // then
+    verifyExecution(tested, fragmentResult -> {
+      assertTrue(fragmentResult.getFragment().getPayload().containsKey(HTTP_ACTION),
+          "Service response should be available under HTTP action alias key.");
+      assertEquals(new JsonObject(VALID_JSON_RESPONSE_BODY),
+          fragmentResult.getFragment().getPayload().getJsonObject(HTTP_ACTION));
+    }, testContext);
 
-    //then
-    assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
-    if (testContext.failed()) {
-      throw testContext.causeOfFailure();
-    }
   }
+
 
   @Test
   @DisplayName("Expect fragment payload appended with endpoint result when endpoint responded with success status code and JSONArray body")
@@ -150,24 +109,13 @@ class HttpActionTest {
     // given
     HttpAction tested = configure(vertx, VALID_REQUEST_PATH, VALID_JSON_ARRAY_RESPONSE_BODY);
 
-    // when
-    tested.apply(new FragmentContext(FRAGMENT, new ClientRequest()),
-        testContext.succeeding(result -> {
-          testContext
-              .verify(() -> {
-                ActionPayload payload = new ActionPayload(result.getFragment().getPayload()
-                    .getJsonObject(ACTION_ALIAS));
-                assertTrue(payload.getResponse().isSuccess());
-                assertEquals(new JsonArray(VALID_JSON_ARRAY_RESPONSE_BODY), payload.getResult());
-              });
-          testContext.completeNow();
-        }));
-
-    //then
-    assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
-    if (testContext.failed()) {
-      throw testContext.causeOfFailure();
-    }
+    // then
+    verifyExecution(tested, fragmentResult -> {
+      assertTrue(fragmentResult.getFragment().getPayload().containsKey(HTTP_ACTION),
+          "Service response should be available under HTTP action alias key.");
+      assertEquals(new JsonArray(VALID_JSON_ARRAY_RESPONSE_BODY),
+          fragmentResult.getFragment().getPayload().getJsonArray(HTTP_ACTION));
+    }, testContext);
   }
 
   @Test
@@ -177,19 +125,10 @@ class HttpActionTest {
     // given
     HttpAction tested = configure(vertx, VALID_REQUEST_PATH, VALID_EMPTY_RESPONSE_BODY);
 
-    // when
-    tested.apply(new FragmentContext(FRAGMENT, new ClientRequest()),
-        testContext.succeeding(result -> {
-          testContext
-              .verify(() -> assertEquals(FRAGMENT.getBody(), result.getFragment().getBody()));
-          testContext.completeNow();
-        }));
-
-    //then
-    assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
-    if (testContext.failed()) {
-      throw testContext.causeOfFailure();
-    }
+    // then
+    verifyExecution(tested,
+        fragmentResult -> assertEquals(FRAGMENT.getBody(), fragmentResult.getFragment().getBody()),
+        testContext);
   }
 
   @Test
@@ -269,6 +208,21 @@ class HttpActionTest {
         .setDomain("localhost").setPort(wireMockServer.port());
 
     return new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), HTTP_ACTION);
+  }
+
+  private void verifyExecution(HttpAction tested, Consumer<FragmentResult> assertions,
+      VertxTestContext testContext) throws Throwable {
+    tested.apply(new FragmentContext(FRAGMENT, clientRequest),
+        testContext.succeeding(result -> {
+          testContext.verify(() -> assertions.accept(result));
+          testContext.completeNow();
+        }));
+
+    //then
+    assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
+    if (testContext.failed()) {
+      throw testContext.causeOfFailure();
+    }
   }
 }
