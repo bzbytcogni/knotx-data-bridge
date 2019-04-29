@@ -18,9 +18,11 @@ package io.knotx.databridge.http.action;
 import io.knotx.databridge.http.action.common.configuration.EndpointOptions;
 import io.knotx.databridge.http.action.common.placeholders.UriTransformer;
 import io.knotx.fragment.Fragment;
-import io.knotx.fragments.handler.api.fragment.Action;
-import io.knotx.fragments.handler.api.fragment.FragmentContext;
-import io.knotx.fragments.handler.api.fragment.FragmentResult;
+import io.knotx.fragments.handler.api.Action;
+import io.knotx.fragments.handler.api.domain.FragmentContext;
+import io.knotx.fragments.handler.api.domain.FragmentResult;
+import io.knotx.fragments.handler.api.domain.payload.ActionPayload;
+import io.knotx.fragments.handler.api.domain.payload.ActionRequest;
 import io.knotx.server.api.context.ClientRequest;
 import io.knotx.server.util.AllowedHeadersFilter;
 import io.knotx.server.util.DataObjectsUtil;
@@ -48,6 +50,7 @@ import org.apache.commons.lang3.StringUtils;
 public class HttpAction implements Action {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpAction.class);
+  public static final String HTTP_ACTION_TYPE = "HTTP";
 
   private final EndpointOptions endpointOptions;
   private final WebClient webClient;
@@ -151,23 +154,39 @@ public class HttpAction implements Action {
         .map(buffer -> {
           // TODO handle error responses
           Fragment fragment = fragmentContext.getFragment();
-          appendResponseToPayload(fragment, HttpResponseStatus.valueOf(response.statusCode()),
-              buffer.toString());
+          appendResponseToPayload(fragment, response, buffer.toString());
           return new FragmentResult(fragment, FragmentResult.SUCCESS_TRANSITION);
         });
   }
 
-  private void appendResponseToPayload(Fragment fragment, HttpResponseStatus responseStatus,
+  private void appendResponseToPayload(Fragment fragment, HttpResponse<Buffer> response,
       String responseBody) {
-    Object responseData;
-    if (StringUtils.isBlank(responseBody)) {
-      responseData = new JsonObject();
-    } else if (responseBody.startsWith("[")) {
-      responseData = new JsonArray(responseBody);
+
+    ActionRequest request = new ActionRequest(HTTP_ACTION_TYPE,
+        response.getDelegate().getHeader("Location"));
+
+    ActionPayload payload;
+    if (isSuccess(response)) {
+      Object responseData;
+      if (StringUtils.isBlank(responseBody)) {
+        responseData = new JsonObject();
+      } else if (responseBody.startsWith("[")) {
+        responseData = new JsonArray(responseBody);
+      } else {
+        responseData = new JsonObject(responseBody);
+      }
+      payload = ActionPayload.success(request, responseData);
     } else {
-      responseData = new JsonObject(responseBody);
+
+      payload = ActionPayload.error(request,
+          HttpResponseStatus.valueOf(response.statusCode()).toString(), response.statusMessage());
     }
-    fragment.appendPayload(actionAlias, responseData);
+    fragment.appendPayload(actionAlias, payload.toJson());
+
+  }
+
+  private boolean isSuccess(HttpResponse<Buffer> response) {
+    return response.statusCode() == HttpResponseStatus.OK.code();
   }
 
   private Single<Buffer> toBody(HttpResponse<Buffer> response) {
