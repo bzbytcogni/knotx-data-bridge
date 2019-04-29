@@ -48,6 +48,7 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -259,46 +260,60 @@ class HttpActionTest {
 
   @Test
   @DisplayName("Expect error transition when endpoint returned not valid JSON")
-  void errorTransitionWhenResponseIsNotJson() {
+  void errorTransitionWhenResponseIsNotJson(VertxTestContext testContext,
+      Vertx vertx) throws Throwable {
+    // given, when
+    HttpAction tested = successAction(vertx, VALID_REQUEST_PATH, "<html>Hello</html>");
 
+    // then
+    verifyExecution(tested,
+        fragmentResult -> assertEquals(ERROR_TRANSITION, fragmentResult.getTransition()),
+        testContext);
   }
 
   @Test
+  @Disabled
   @DisplayName("Expect error transition when endpoint times out")
   void errorTransitionWhenEndpointTimesOut() {
 
   }
 
   @Test
+  @Disabled
   @DisplayName("Expect error transition when calling not existing endpoint")
   void errorTransitionWhenEndpointDoesNotExist() {
 
   }
 
   @Test
+  @Disabled
   @DisplayName("Expect headers from FragmentContext clientRequest are filtered and sent in endpoint request")
   void headersFromClientRequestFilteredAndSendToEndpoint() {
 
   }
 
   @Test
+  @Disabled
   @DisplayName("Expect additionalHeaders from EndpointOptions are sent in endpoint request")
   void additionalHeadersSentToEndpoint() {
 
   }
 
   @Test
+  @Disabled
   @DisplayName("Expect additionalHeaders override headers from FragmentContext clientRequest")
   void additionalHeadersOverrideClientRequestHeaders() {
   }
 
   @Test
+  @Disabled
   @DisplayName("Expect endpoint called with placeholders in path resolved with values from headers from FragmentContext clientRequest")
   void placeholdersInPathResolvedWithHeadersValues() {
 
   }
 
   @Test
+  @Disabled
   @DisplayName("Expect endpoint called with placeholders in path resolved with values from FragmentContext clientRequest query params")
   void placeholdersInPathResolvedWithClientRequestQueryParams() {
 
@@ -317,7 +332,6 @@ class HttpActionTest {
       int statusCode, String statusMessage) {
     wireMockServer.stubFor(get(urlEqualTo(requestPath))
         .willReturn(aResponse()
-            .withHeader("Content-Type", "application/json")
             .withHeader("responseHeader", "response")
             .withBody(responseBody)
             .withStatus(statusCode)

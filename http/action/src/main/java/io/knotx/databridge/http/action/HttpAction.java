@@ -35,6 +35,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -157,35 +158,38 @@ public class HttpAction implements Action {
         .map(buffer -> {
           // TODO handle error responses better
           Fragment fragment = fragmentContext.getFragment();
-          appendResponseToPayload(fragment, response, buffer.toString(), endpointRequest);
-          final String transition;
-          if (isSuccess(response)) {
-            transition = FragmentResult.SUCCESS_TRANSITION;
-          } else {
-            transition = FragmentResult.ERROR_TRANSITION;
-          }
+          final String transition = appendResponseToPayloadAndGetTransition(fragment, response,
+              buffer.toString(), endpointRequest);
 
           return new FragmentResult(fragment, transition);
         });
   }
 
-  private void appendResponseToPayload(Fragment fragment, HttpResponse<Buffer> response,
+  private String appendResponseToPayloadAndGetTransition(Fragment fragment,
+      HttpResponse<Buffer> response,
       String responseBody, EndpointRequest endpointRequest) {
+    String transition = FragmentResult.ERROR_TRANSITION;
 
     ActionRequest request = new ActionRequest(HTTP_ACTION_TYPE, endpointRequest.getPath());
     request.appendMetadata("headers", headersToJsonObject(endpointRequest.getHeaders()));
 
     ActionPayload payload;
     if (isSuccess(response)) {
-      Object responseData;
-      if (StringUtils.isBlank(responseBody)) {
-        responseData = new JsonObject();
-      } else if (responseBody.startsWith("[")) {
-        responseData = new JsonArray(responseBody);
-      } else {
-        responseData = new JsonObject(responseBody);
+      try {
+        Object responseData;
+        if (StringUtils.isBlank(responseBody)) {
+          responseData = new JsonObject();
+        } else if (responseBody.startsWith("[")) {
+          responseData = new JsonArray(responseBody);
+        } else {
+          responseData = new JsonObject(responseBody);
+        }
+        payload = ActionPayload.success(request, responseData);
+        transition = FragmentResult.SUCCESS_TRANSITION;
+      } catch (DecodeException e) {
+        payload = ActionPayload
+            .error(request, "Response body is not a valid JSON!", e.getMessage());
       }
-      payload = ActionPayload.success(request, responseData);
     } else {
       payload = ActionPayload.error(request,
           HttpResponseStatus.valueOf(response.statusCode()).toString(), response.statusMessage());
@@ -195,7 +199,7 @@ public class HttpAction implements Action {
         .appendMetadata("headers", headersToJsonObject(response.headers()));
 
     fragment.appendPayload(actionAlias, payload.toJson());
-
+    return transition;
   }
 
   private JsonObject headersToJsonObject(MultiMap headers) {
