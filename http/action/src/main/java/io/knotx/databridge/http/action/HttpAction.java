@@ -25,12 +25,14 @@ import io.knotx.server.api.context.ClientRequest;
 import io.knotx.server.util.AllowedHeadersFilter;
 import io.knotx.server.util.DataObjectsUtil;
 import io.knotx.server.util.MultiMapCollector;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -41,6 +43,7 @@ import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import java.util.List;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringUtils;
 
 public class HttpAction implements Action {
 
@@ -148,11 +151,23 @@ public class HttpAction implements Action {
         .map(buffer -> {
           // TODO handle error responses
           Fragment fragment = fragmentContext.getFragment();
-          JsonObject result = new JsonObject().put(actionAlias, buffer.toJsonObject());
-          fragment.mergeInPayload(result);
-
+          appendResponseToPayload(fragment, HttpResponseStatus.valueOf(response.statusCode()),
+              buffer.toString());
           return new FragmentResult(fragment, FragmentResult.SUCCESS_TRANSITION);
         });
+  }
+
+  private void appendResponseToPayload(Fragment fragment, HttpResponseStatus responseStatus,
+      String responseBody) {
+    Object responseData;
+    if (StringUtils.isBlank(responseBody)) {
+      responseData = new JsonObject();
+    } else if (responseBody.startsWith("[")) {
+      responseData = new JsonArray(responseBody);
+    } else {
+      responseData = new JsonObject(responseBody);
+    }
+    fragment.appendPayload(actionAlias, responseData);
   }
 
   private Single<Buffer> toBody(HttpResponse<Buffer> response) {
