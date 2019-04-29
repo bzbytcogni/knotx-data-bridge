@@ -19,6 +19,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static io.knotx.fragments.handler.api.fragment.FragmentResult.ERROR_TRANSITION;
 import static io.knotx.fragments.handler.api.fragment.FragmentResult.SUCCESS_TRANSITION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -173,8 +174,7 @@ class HttpActionTest {
   void responseMetadataInPayloadWhenErrorResponse(VertxTestContext testContext,
       Vertx vertx) throws Throwable {
     // given, when
-    HttpAction tested = errorAction(vertx, VALID_REQUEST_PATH, VALID_JSON_RESPONSE_BODY, 500,
-        "Internal Error");
+    HttpAction tested = errorAction(vertx, VALID_REQUEST_PATH, null, 500, "Internal Error");
 
     // then
     verifyExecution(tested, fragmentResult -> {
@@ -195,9 +195,8 @@ class HttpActionTest {
   void requestMetadataInPayloadWhenErrorResponse(VertxTestContext testContext,
       Vertx vertx) throws Throwable {
     // given, when
-    HttpAction tested = errorAction(vertx, VALID_REQUEST_PATH, VALID_JSON_RESPONSE_BODY, 500,
-        "Internal Error");
-    
+    HttpAction tested = errorAction(vertx, VALID_REQUEST_PATH, null, 500, "Internal Error");
+
     // then
     verifyExecution(tested, fragmentResult -> {
       JsonObject payload = fragmentResult.getFragment().getPayload().getJsonObject(HTTP_ACTION);
@@ -211,8 +210,15 @@ class HttpActionTest {
 
   @Test
   @DisplayName("Expect error transition when endpoint returned error status code")
-  void errorTransitionWhenErrorStatusCode() {
+  void errorTransitionWhenErrorStatusCode(VertxTestContext testContext,
+      Vertx vertx) throws Throwable {
+    // given, when
+    HttpAction tested = errorAction(vertx, VALID_REQUEST_PATH, null, 500, "Internal Error");
 
+    // then
+    verifyExecution(tested,
+        fragmentResult -> assertEquals(ERROR_TRANSITION, fragmentResult.getTransition()),
+        testContext);
   }
 
   @Test

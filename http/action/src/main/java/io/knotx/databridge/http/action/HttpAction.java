@@ -28,6 +28,7 @@ import io.knotx.server.util.AllowedHeadersFilter;
 import io.knotx.server.util.DataObjectsUtil;
 import io.knotx.server.util.MultiMapCollector;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpStatusClass;
 import io.reactivex.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -152,10 +153,17 @@ public class HttpAction implements Action {
     return toBody(response)
         .doOnSuccess(this::traceServiceCall)
         .map(buffer -> {
-          // TODO handle error responses
+          // TODO handle error responses better
           Fragment fragment = fragmentContext.getFragment();
           appendResponseToPayload(fragment, response, buffer.toString());
-          return new FragmentResult(fragment, FragmentResult.SUCCESS_TRANSITION);
+          final String transition;
+          if (HttpStatusClass.SUCCESS != HttpStatusClass.valueOf(response.statusCode())) {
+            transition = FragmentResult.ERROR_TRANSITION;
+          } else {
+            transition = FragmentResult.SUCCESS_TRANSITION;
+          }
+
+          return new FragmentResult(fragment, transition);
         });
   }
 
