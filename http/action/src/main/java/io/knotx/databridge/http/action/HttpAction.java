@@ -105,8 +105,7 @@ public class HttpAction implements Action {
     MultiMap requestHeaders = getRequestHeaders(clientRequest);
     return new EndpointRequest(path, requestHeaders);
   }
-
-
+  
   private void logResponse(EndpointRequest endpointRequest, HttpResponse<Buffer> resp) {
     // TODO use util here
     if (resp.statusCode() >= 400 && resp.statusCode() < 600) {

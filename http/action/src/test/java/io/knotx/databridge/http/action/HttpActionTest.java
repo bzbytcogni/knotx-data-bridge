@@ -341,17 +341,64 @@ class HttpActionTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("Expect endpoint called with placeholders in path resolved with values from FragmentContext clientRequest headers")
-  void placeholdersInPathResolvedWithHeadersValues() {
+  void placeholdersInPathResolvedWithHeadersValues(VertxTestContext testContext,
+      Vertx vertx) throws Throwable {
+    // given, when
+    MultiMap clientRequestHeaders = MultiMap.caseInsensitiveMultiMap().add("bookId", "999000");
+    String endpointPath = "/api/book/999000";
+    String clientRequestPath = "/book-page";
+    String optionsPath = "/api/book/{header.bookId}";
 
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(VALID_JSON_RESPONSE_BODY)));
+    when(clientRequest.getPath()).thenReturn(clientRequestPath);
+    when(clientRequest.getHeaders()).thenReturn(clientRequestHeaders);
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(optionsPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+
+    // then
+    verifyExecution(tested,
+        fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
+        testContext);
   }
 
   @Test
-  @Disabled
   @DisplayName("Expect endpoint called with placeholders in path resolved with values from FragmentContext clientRequest query params")
-  void placeholdersInPathResolvedWithClientRequestQueryParams() {
+  void placeholdersInPathResolvedWithClientRequestQueryParams(VertxTestContext testContext,
+      Vertx vertx) throws Throwable {
+    // given, when
+    MultiMap clientRequestParams = MultiMap.caseInsensitiveMultiMap().add("bookId", "999000");
+    String endpointPath = "/api/book/999000";
+    String clientRequestPath = "/book-page";
+    String optionsPath = "/api/book/{param.bookId}";
 
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(VALID_JSON_RESPONSE_BODY)));
+    when(clientRequest.getPath()).thenReturn(clientRequestPath);
+    when(clientRequest.getHeaders()).thenReturn(MultiMap.caseInsensitiveMultiMap());
+    when(clientRequest.getParams()).thenReturn(clientRequestParams);
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(optionsPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+
+    // then
+    verifyExecution(tested,
+        fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
+        testContext);
   }
 
   private HttpAction successAction(Vertx vertx, String responseBody) {
@@ -405,7 +452,7 @@ class HttpActionTest {
     return new HttpAction(vertx,
         new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
   }
-  
+
   private HttpAction timeoutAction(Vertx vertx, String requestPath, int timeout) {
     wireMockServer.stubFor(get(urlEqualTo(requestPath))
         .willReturn(aResponse().withFixedDelay(timeout + 5000)));
