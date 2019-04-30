@@ -20,6 +20,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.matching;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static io.knotx.databridge.http.action.HttpAction.TIMEOUT_TRANSITION;
 import static io.knotx.fragments.handler.api.domain.FragmentResult.ERROR_TRANSITION;
 import static io.knotx.fragments.handler.api.domain.FragmentResult.SUCCESS_TRANSITION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -42,7 +43,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.MultiMap;
@@ -275,19 +275,54 @@ class HttpActionTest {
   }
 
   @Test
-  @Disabled
   @DisplayName("Expect error transition when endpoint times out")
-  void errorTransitionWhenEndpointTimesOut(VertxTestContext testContext,
-      Vertx vertx) throws Throwable {
+  void errorTransitionWhenEndpointTimesOut(VertxTestContext testContext, Vertx vertx)
+      throws Throwable {
+    // given, when
+    int requestTimeoutMs = 1000;
+    wireMockServer.stubFor(get(urlEqualTo(VALID_REQUEST_PATH))
+        .willReturn(aResponse().withFixedDelay(2 * requestTimeoutMs)));
 
+    when(clientRequest.getHeaders()).thenReturn(MultiMap.caseInsensitiveMultiMap());
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(VALID_REQUEST_PATH)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port());
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions)
+            .setRequestTimeoutMs(requestTimeoutMs), ACTION_ALIAS);
+
+    // then
+    verifyExecution(tested,
+        fragmentResult -> assertEquals(TIMEOUT_TRANSITION, fragmentResult.getTransition()),
+        testContext);
   }
 
   @Test
-  @Disabled
   @DisplayName("Expect error transition when calling not existing endpoint")
   void errorTransitionWhenEndpointDoesNotExist(VertxTestContext testContext,
       Vertx vertx) throws Throwable {
+    // given, when
+    when(clientRequest.getPath()).thenReturn("not-existing-endpoint");
+    when(clientRequest.getHeaders())
+        .thenReturn(MultiMap.caseInsensitiveMultiMap().add("requestHeader", "request"));
 
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath("not-existing-endpoint")
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+
+    // then
+    verifyExecution(tested,
+        fragmentResult -> assertEquals(ERROR_TRANSITION, fragmentResult.getTransition()),
+        testContext);
   }
 
   @Test
@@ -451,25 +486,6 @@ class HttpActionTest {
 
     return new HttpAction(vertx,
         new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
-  }
-
-  private HttpAction timeoutAction(Vertx vertx, String requestPath, int timeout) {
-    wireMockServer.stubFor(get(urlEqualTo(requestPath))
-        .willReturn(aResponse().withFixedDelay(timeout + 5000)));
-    when(clientRequest.getHeaders())
-        .thenReturn(MultiMap.caseInsensitiveMultiMap());
-
-    EndpointOptions endpointOptions = new EndpointOptions()
-        .setPath(requestPath)
-        .setDomain("localhost")
-        .setPort(wireMockServer.port());
-
-    WebClientOptions webClientOptions = new WebClientOptions().setConnectTimeout(timeout);
-
-    return new HttpAction(vertx,
-        new HttpActionOptions()
-            .setEndpointOptions(endpointOptions)
-            .setWebClientOptions(webClientOptions), ACTION_ALIAS);
   }
 
   private void verifyExecution(HttpAction tested, Consumer<FragmentResult> assertions,

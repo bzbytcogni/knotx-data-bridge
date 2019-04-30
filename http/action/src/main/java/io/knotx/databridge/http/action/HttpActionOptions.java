@@ -24,8 +24,11 @@ import java.util.Objects;
 @DataObject(generateConverter = true)
 public class HttpActionOptions {
 
+  private static final long DEFAULT_REQUEST_TIMEOUT = 0L;
+
   private WebClientOptions webClientOptions;
   private EndpointOptions endpointOptions;
+  private long requestTimeoutMs;
 
   /**
    * Default constructor
@@ -41,6 +44,7 @@ public class HttpActionOptions {
 
   private void init() {
     webClientOptions = new WebClientOptions();
+    requestTimeoutMs = DEFAULT_REQUEST_TIMEOUT;
   }
 
   public WebClientOptions getWebClientOptions() {
@@ -63,22 +67,21 @@ public class HttpActionOptions {
     return this;
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    HttpActionOptions that = (HttpActionOptions) o;
-    return Objects.equals(webClientOptions, that.webClientOptions) &&
-        Objects.equals(endpointOptions, that.endpointOptions);
+  public long getRequestTimeoutMs() {
+    return requestTimeoutMs;
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(webClientOptions, endpointOptions);
+  /**
+   * Configures the amount of time in milliseconds after which if the request does not return any
+   * data within, _timeout transition will be returned. Setting zero or a negative
+   * value disables the timeout. By default it is set to {@code 0}.
+   *
+   * @param requestTimeoutMs - request timeout in milliseconds
+   * @return a reference to this, so the API can be used fluently
+   */
+  public HttpActionOptions setRequestTimeoutMs(long requestTimeoutMs) {
+    this.requestTimeoutMs = requestTimeoutMs;
+    return this;
   }
 
   @Override
@@ -86,6 +89,7 @@ public class HttpActionOptions {
     return "HttpActionOptions{" +
         "webClientOptions=" + webClientOptions +
         ", endpointOptions=" + endpointOptions +
+        ", requestTimeoutMs=" + requestTimeoutMs +
         '}';
   }
 }

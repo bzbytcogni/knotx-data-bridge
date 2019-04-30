@@ -30,6 +30,7 @@ import io.knotx.server.util.MultiMapCollector;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpStatusClass;
 import io.reactivex.Single;
+import io.reactivex.exceptions.Exceptions;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -46,6 +47,7 @@ import io.vertx.reactivex.ext.web.client.HttpRequest;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -54,12 +56,15 @@ public class HttpAction implements Action {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpAction.class);
   public static final String HTTP_ACTION_TYPE = "HTTP";
+  public static final String TIMEOUT_TRANSITION = "_timeout";
 
   private final EndpointOptions endpointOptions;
   private final WebClient webClient;
   private final String actionAlias;
+  private final HttpActionOptions httpActionOptions;
 
   HttpAction(Vertx vertx, HttpActionOptions httpActionOptions, String actionAlias) {
+    this.httpActionOptions = httpActionOptions;
     this.webClient = WebClient.create(io.vertx.reactivex.core.Vertx.newInstance(vertx),
         httpActionOptions.getWebClientOptions());
     this.endpointOptions = httpActionOptions.getEndpointOptions();
@@ -85,6 +90,14 @@ public class HttpAction implements Action {
         .flatMap(
             request -> callEndpoint(request)
                 .doOnSuccess(resp -> logResponse(request, resp))
+                .map(EndpointResponse::fromHttpResponse)
+                .onErrorReturn(throwable -> {
+                  if (throwable instanceof TimeoutException) {
+                    LOGGER.error("Error timeout: ", throwable);
+                    return new EndpointResponse(HttpResponseStatus.REQUEST_TIMEOUT);
+                  }
+                  throw Exceptions.propagate(throwable);
+                })
                 .map(resp -> Pair.of(request, resp)))
         .flatMap(pair -> wrapResponse(fragmentContext, pair.getLeft(), pair.getRight()));
   }
@@ -92,7 +105,8 @@ public class HttpAction implements Action {
   private Single<HttpResponse<Buffer>> callEndpoint(EndpointRequest endpointRequest) {
     HttpRequest<Buffer> request = webClient
         .request(HttpMethod.GET, endpointOptions.getPort(), endpointOptions.getDomain(),
-            endpointRequest.getPath());
+            endpointRequest.getPath())
+        .timeout(httpActionOptions.getRequestTimeoutMs());
 
     endpointRequest.getHeaders().entries()
         .forEach(entry -> request.putHeader(entry.getKey(), entry.getValue()));
@@ -105,7 +119,7 @@ public class HttpAction implements Action {
     MultiMap requestHeaders = getRequestHeaders(clientRequest);
     return new EndpointRequest(path, requestHeaders);
   }
-  
+
   private void logResponse(EndpointRequest endpointRequest, HttpResponse<Buffer> resp) {
     // TODO use util here
     if (resp.statusCode() >= 400 && resp.statusCode() < 600) {
@@ -151,22 +165,15 @@ public class HttpAction implements Action {
   }
 
   private Single<FragmentResult> wrapResponse(FragmentContext fragmentContext,
-      EndpointRequest endpointRequest, HttpResponse<Buffer> response) {
-    return toBody(response)
-        .doOnSuccess(this::traceServiceCall)
-        .map(buffer -> {
-          // TODO handle error responses better
-          Fragment fragment = fragmentContext.getFragment();
-          final String transition = appendResponseToPayloadAndGetTransition(fragment, response,
-              buffer.toString(), endpointRequest);
-
-          return new FragmentResult(fragment, transition);
-        });
+      EndpointRequest endpointRequest, EndpointResponse endpointResponse) {
+    Fragment fragment = fragmentContext.getFragment();
+    final String transition = appendResponseToPayloadAndGetTransition(fragment, endpointRequest,
+        endpointResponse);
+    return Single.just(new FragmentResult(fragment, transition));
   }
 
   private String appendResponseToPayloadAndGetTransition(Fragment fragment,
-      HttpResponse<Buffer> response,
-      String responseBody, EndpointRequest endpointRequest) {
+      EndpointRequest endpointRequest, EndpointResponse response) {
     String transition = FragmentResult.ERROR_TRANSITION;
 
     ActionRequest request = new ActionRequest(HTTP_ACTION_TYPE, endpointRequest.getPath());
@@ -175,6 +182,7 @@ public class HttpAction implements Action {
     ActionPayload payload;
     if (isSuccess(response)) {
       try {
+        String responseBody = response.getBody().toString();
         Object responseData;
         if (StringUtils.isBlank(responseBody)) {
           responseData = new JsonObject();
@@ -190,15 +198,21 @@ public class HttpAction implements Action {
             .error(request, "Response body is not a valid JSON!", e.getMessage());
       }
     } else {
-      payload = ActionPayload.error(request,
-          HttpResponseStatus.valueOf(response.statusCode()).toString(), response.statusMessage());
+      payload = ActionPayload.error(request, response.getStatusCode().toString(), response.getStatusMessage());
+      if (isTimeout(response)) {
+        transition = TIMEOUT_TRANSITION;
+      }
     }
     payload.getResponse()
-        .appendMetadata("statusCode", String.valueOf(response.statusCode()))
-        .appendMetadata("headers", headersToJsonObject(response.headers()));
+        .appendMetadata("statusCode", String.valueOf(response.getStatusCode().code()))
+        .appendMetadata("headers", headersToJsonObject(response.getHeaders()));
 
     fragment.appendPayload(actionAlias, payload.toJson());
     return transition;
+  }
+
+  private boolean isTimeout(EndpointResponse response) {
+    return HttpResponseStatus.REQUEST_TIMEOUT == response.getStatusCode();
   }
 
   private JsonObject headersToJsonObject(MultiMap headers) {
@@ -216,23 +230,8 @@ public class HttpAction implements Action {
     return responseHeaders;
   }
 
-  private boolean isSuccess(HttpResponse<Buffer> response) {
-    return HttpStatusClass.SUCCESS == HttpStatusClass.valueOf(response.statusCode());
-  }
-
-  private Single<Buffer> toBody(HttpResponse<Buffer> response) {
-    if (response.body() != null) {
-      return Single.just(response.body());
-    } else {
-      LOGGER.warn("Service returned empty body");
-      return Single.just(Buffer.buffer());
-    }
-  }
-
-  private void traceServiceCall(Buffer results) {
-    if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("Service call returned <{}>", results.toString());
-    }
+  private boolean isSuccess(EndpointResponse response) {
+    return HttpStatusClass.SUCCESS == HttpStatusClass.valueOf(response.getStatusCode().code());
   }
 
 }
