@@ -89,7 +89,7 @@ class HttpActionTest {
   void expectSuccessTransitionWhenSuccessResponse(VertxTestContext testContext, Vertx vertx)
       throws Throwable {
     // given, when
-    HttpAction tested = successAction(vertx, VALID_REQUEST_PATH, VALID_JSON_RESPONSE_BODY);
+    HttpAction tested = successAction(vertx, VALID_JSON_RESPONSE_BODY);
 
     // then
     verifyExecution(tested,
@@ -102,7 +102,7 @@ class HttpActionTest {
   void appendActionAliasToPayload(VertxTestContext testContext, Vertx vertx)
       throws Throwable {
     // given
-    HttpAction tested = successAction(vertx, VALID_REQUEST_PATH, VALID_JSON_RESPONSE_BODY);
+    HttpAction tested = successAction(vertx, VALID_JSON_RESPONSE_BODY);
 
     // then
     verifyExecution(tested,
@@ -116,7 +116,7 @@ class HttpActionTest {
   void appendPayloadWhenEndpointResponseWithJsonObject(VertxTestContext testContext, Vertx vertx)
       throws Throwable {
     // given, when
-    HttpAction tested = successAction(vertx, VALID_REQUEST_PATH, VALID_JSON_RESPONSE_BODY);
+    HttpAction tested = successAction(vertx, VALID_JSON_RESPONSE_BODY);
 
     // then
     verifyExecution(tested, fragmentResult -> {
@@ -132,7 +132,7 @@ class HttpActionTest {
   void appendPayloadWhenEndpointResponseWithJsonArrayVertxTestContext(VertxTestContext testContext,
       Vertx vertx) throws Throwable {
     // given, when
-    HttpAction tested = successAction(vertx, VALID_REQUEST_PATH, VALID_JSON_ARRAY_RESPONSE_BODY);
+    HttpAction tested = successAction(vertx, VALID_JSON_ARRAY_RESPONSE_BODY);
 
     // then
     verifyExecution(tested, fragmentResult -> {
@@ -148,7 +148,7 @@ class HttpActionTest {
   void fragmentsBodyNotModifiedWhenEmptyResponseBody(VertxTestContext testContext,
       Vertx vertx) throws Throwable {
     // given, when
-    HttpAction tested = successAction(vertx, VALID_REQUEST_PATH, VALID_EMPTY_RESPONSE_BODY);
+    HttpAction tested = successAction(vertx, VALID_EMPTY_RESPONSE_BODY);
 
     // then
     verifyExecution(tested,
@@ -161,7 +161,7 @@ class HttpActionTest {
   void responseMetadataInPayloadWhenSuccessResponse(VertxTestContext testContext,
       Vertx vertx) throws Throwable {
     // given, when
-    HttpAction tested = successAction(vertx, VALID_REQUEST_PATH, VALID_JSON_RESPONSE_BODY);
+    HttpAction tested = successAction(vertx, VALID_JSON_RESPONSE_BODY);
 
     // then
     verifyExecution(tested, fragmentResult -> {
@@ -183,7 +183,7 @@ class HttpActionTest {
   void responseMetadataInPayloadWhenErrorResponse(VertxTestContext testContext,
       Vertx vertx) throws Throwable {
     // given, when
-    HttpAction tested = errorAction(vertx, VALID_REQUEST_PATH, 500, "Internal Error");
+    HttpAction tested = errorAction(vertx, 500, "Internal Error");
 
     // then
     verifyExecution(tested, fragmentResult -> {
@@ -208,7 +208,7 @@ class HttpActionTest {
   void requestMetadataInPayloadWhenSuccessResponse(VertxTestContext testContext,
       Vertx vertx) throws Throwable {
     // given, when
-    HttpAction tested = successAction(vertx, VALID_REQUEST_PATH, VALID_JSON_RESPONSE_BODY);
+    HttpAction tested = successAction(vertx, VALID_JSON_RESPONSE_BODY);
 
     // then
     verifyExecution(tested, fragmentResult -> {
@@ -230,7 +230,7 @@ class HttpActionTest {
   void requestMetadataInPayloadWhenErrorResponse(VertxTestContext testContext,
       Vertx vertx) throws Throwable {
     // given, when
-    HttpAction tested = errorAction(vertx, VALID_REQUEST_PATH, 500, "Internal Error");
+    HttpAction tested = errorAction(vertx, 500, "Internal Error");
 
     // then
     verifyExecution(tested, fragmentResult -> {
@@ -253,7 +253,7 @@ class HttpActionTest {
   void errorTransitionWhenErrorStatusCode(VertxTestContext testContext,
       Vertx vertx) throws Throwable {
     // given, when
-    HttpAction tested = errorAction(vertx, VALID_REQUEST_PATH, 500, "Internal Error");
+    HttpAction tested = errorAction(vertx, 500, "Internal Error");
 
     // then
     verifyExecution(tested,
@@ -266,7 +266,7 @@ class HttpActionTest {
   void errorTransitionWhenResponseIsNotJson(VertxTestContext testContext,
       Vertx vertx) throws Throwable {
     // given, when
-    HttpAction tested = successAction(vertx, VALID_REQUEST_PATH, "<html>Hello</html>");
+    HttpAction tested = successAction(vertx, "<html>Hello</html>");
 
     // then
     verifyExecution(tested,
@@ -297,7 +297,7 @@ class HttpActionTest {
     // given, when
     MultiMap clientRequestHeaders = MultiMap.caseInsensitiveMultiMap()
         .add("crHeaderKey", "crHeaderValue");
-    HttpAction tested = getHttpActionWithHeaders(vertx, VALID_REQUEST_PATH, clientRequestHeaders,
+    HttpAction tested = getHttpActionWithHeaders(vertx, clientRequestHeaders,
         null, "crHeaderKey", "crHeaderValue");
 
     // then
@@ -313,7 +313,7 @@ class HttpActionTest {
     // given, when
     MultiMap clientRequestHeaders = MultiMap.caseInsensitiveMultiMap();
     JsonObject additionalHeaders = new JsonObject().put("additionalHeader", "additionalValue");
-    HttpAction tested = getHttpActionWithHeaders(vertx, VALID_REQUEST_PATH, clientRequestHeaders,
+    HttpAction tested = getHttpActionWithHeaders(vertx, clientRequestHeaders,
         additionalHeaders, "additionalHeader", "additionalValue");
 
     // then
@@ -331,7 +331,7 @@ class HttpActionTest {
     MultiMap clientRequestHeaders = MultiMap.caseInsensitiveMultiMap()
         .add("customHeader", "crHeaderValue");
     JsonObject additionalHeaders = new JsonObject().put("customHeader", "additionalValue");
-    HttpAction tested = getHttpActionWithHeaders(vertx, VALID_REQUEST_PATH, clientRequestHeaders,
+    HttpAction tested = getHttpActionWithHeaders(vertx, clientRequestHeaders,
         additionalHeaders, "customHeader", "additionalValue");
 
     // then
@@ -342,7 +342,7 @@ class HttpActionTest {
 
   @Test
   @Disabled
-  @DisplayName("Expect endpoint called with placeholders in path resolved with values from headers from FragmentContext clientRequest")
+  @DisplayName("Expect endpoint called with placeholders in path resolved with values from FragmentContext clientRequest headers")
   void placeholdersInPathResolvedWithHeadersValues() {
 
   }
@@ -354,13 +354,13 @@ class HttpActionTest {
 
   }
 
-  private HttpAction successAction(Vertx vertx, String requestPath, String responseBody) {
-    return getHttpAction(vertx, requestPath, responseBody, HttpResponseStatus.OK.code(), null);
+  private HttpAction successAction(Vertx vertx, String responseBody) {
+    return getHttpAction(vertx, HttpActionTest.VALID_REQUEST_PATH, responseBody,
+        HttpResponseStatus.OK.code(), null);
   }
 
-  private HttpAction errorAction(Vertx vertx, String requestPath, int statusCode,
-      String statusMessage) {
-    return getHttpAction(vertx, requestPath, null, statusCode, statusMessage);
+  private HttpAction errorAction(Vertx vertx, int statusCode, String statusMessage) {
+    return getHttpAction(vertx, HttpActionTest.VALID_REQUEST_PATH, null, statusCode, statusMessage);
   }
 
   private HttpAction getHttpAction(Vertx vertx, String requestPath, String responseBody,
@@ -385,19 +385,18 @@ class HttpActionTest {
         new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
   }
 
-  private HttpAction getHttpActionWithHeaders(Vertx vertx, String requestPath,
-      MultiMap clientRequestHeaders, JsonObject additionalHeaders, String expectedHeaderKey,
-      String expectedHeaderValue) {
-    wireMockServer.stubFor(get(urlEqualTo(requestPath))
+  private HttpAction getHttpActionWithHeaders(Vertx vertx, MultiMap clientRequestHeaders,
+      JsonObject additionalHeaders, String expectedHeaderKey, String expectedHeaderValue) {
+    wireMockServer.stubFor(get(urlEqualTo(HttpActionTest.VALID_REQUEST_PATH))
         .withHeader(expectedHeaderKey, matching(expectedHeaderValue))
         .willReturn(aResponse()
             .withBody(VALID_JSON_RESPONSE_BODY)));
-    when(clientRequest.getPath()).thenReturn(requestPath);
+    when(clientRequest.getPath()).thenReturn(HttpActionTest.VALID_REQUEST_PATH);
     when(clientRequest.getHeaders())
         .thenReturn(clientRequestHeaders);
 
     EndpointOptions endpointOptions = new EndpointOptions()
-        .setPath(requestPath)
+        .setPath(HttpActionTest.VALID_REQUEST_PATH)
         .setDomain("localhost")
         .setPort(wireMockServer.port())
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")))
@@ -406,8 +405,7 @@ class HttpActionTest {
     return new HttpAction(vertx,
         new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
   }
-
-
+  
   private HttpAction timeoutAction(Vertx vertx, String requestPath, int timeout) {
     wireMockServer.stubFor(get(urlEqualTo(requestPath))
         .willReturn(aResponse().withFixedDelay(timeout + 5000)));
