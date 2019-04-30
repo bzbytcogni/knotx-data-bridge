@@ -110,7 +110,7 @@ public class HttpAction implements Action {
   private void logResponse(EndpointRequest endpointRequest, HttpResponse<Buffer> resp) {
     // TODO use util here
     if (resp.statusCode() >= 400 && resp.statusCode() < 600) {
-      LOGGER.error("{} {} -> Got response {}, headers[{}]",
+      LOGGER.error("{} {} -> Error response {}, headers[{}]",
           logResponseData(endpointRequest, resp));
     } else if (LOGGER.isTraceEnabled()) {
       LOGGER.trace("{} {} -> Got response {}, headers[{}]",
