@@ -436,6 +436,35 @@ class HttpActionTest {
         testContext);
   }
 
+  @Test
+  @DisplayName("Expect endpoint called with placeholders in path resolved with values from FragmentContext clientRequest request uri")
+  void placeholdersInPathResolvedWithClientRequesUriParams(VertxTestContext testContext,
+      Vertx vertx) throws Throwable {
+    // given, when
+    String endpointPath = "/api/thumbnail.png";
+    String clientRequestPath = "/book.png";
+    String optionsPath = "/api/thumbnail.{uri.extension}";
+
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(VALID_JSON_RESPONSE_BODY)));
+    when(clientRequest.getPath()).thenReturn(clientRequestPath);
+    when(clientRequest.getHeaders()).thenReturn(MultiMap.caseInsensitiveMultiMap());
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(optionsPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+
+    // then
+    verifyExecution(tested,
+        fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
+        testContext);
+  }
+
   private HttpAction successAction(Vertx vertx, String responseBody) {
     return getHttpAction(vertx, HttpActionTest.VALID_REQUEST_PATH, responseBody,
         HttpResponseStatus.OK.code(), null);
