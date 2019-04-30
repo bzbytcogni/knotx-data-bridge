@@ -15,8 +15,11 @@
  */
 package io.knotx.databridge.http.action;
 
-import io.knotx.databridge.http.action.common.configuration.EndpointOptions;
-import io.knotx.databridge.http.action.common.placeholders.UriTransformer;
+import static io.netty.handler.codec.http.HttpStatusClass.CLIENT_ERROR;
+import static io.netty.handler.codec.http.HttpStatusClass.SERVER_ERROR;
+import static io.netty.handler.codec.http.HttpStatusClass.SUCCESS;
+
+import io.knotx.databridge.http.action.placeholders.UriTransformer;
 import io.knotx.fragment.Fragment;
 import io.knotx.fragments.handler.api.Action;
 import io.knotx.fragments.handler.api.domain.FragmentContext;
@@ -28,7 +31,6 @@ import io.knotx.server.util.AllowedHeadersFilter;
 import io.knotx.server.util.DataObjectsUtil;
 import io.knotx.server.util.MultiMapCollector;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpStatusClass;
 import io.reactivex.Single;
 import io.reactivex.exceptions.Exceptions;
 import io.vertx.core.AsyncResult;
@@ -84,7 +86,7 @@ public class HttpAction implements Action {
     });
   }
 
-  public Single<FragmentResult> process(FragmentContext fragmentContext) {
+  private Single<FragmentResult> process(FragmentContext fragmentContext) {
     return Single.just(fragmentContext.getClientRequest())
         .map(this::buildRequest)
         .flatMap(
@@ -121,8 +123,7 @@ public class HttpAction implements Action {
   }
 
   private void logResponse(EndpointRequest endpointRequest, HttpResponse<Buffer> resp) {
-    // TODO use util here
-    if (resp.statusCode() >= 400 && resp.statusCode() < 600) {
+    if (CLIENT_ERROR.contains(resp.statusCode()) || SERVER_ERROR.contains(resp.statusCode())) {
       LOGGER.error("{} {} -> Error response {}, headers[{}]",
           logResponseData(endpointRequest, resp));
     } else if (LOGGER.isTraceEnabled()) {
@@ -133,19 +134,15 @@ public class HttpAction implements Action {
 
   private Object[] logResponseData(EndpointRequest request,
       HttpResponse<Buffer> resp) {
-    Object[] data = {
+    return new Object[]{
         HttpMethod.GET,
         toUrl(request),
         resp.statusCode(),
         DataObjectsUtil.toString(resp.headers())};
-
-    return data;
   }
 
   private String toUrl(EndpointRequest request) {
-    return new StringBuilder(endpointOptions.getDomain()).append(":")
-        .append(endpointOptions.getPort())
-        .append(request.getPath()).toString();
+    return endpointOptions.getDomain() + ":" + endpointOptions.getPort() + request.getPath();
   }
 
   private MultiMap getRequestHeaders(ClientRequest clientRequest) {
@@ -176,39 +173,60 @@ public class HttpAction implements Action {
       EndpointRequest endpointRequest, EndpointResponse response) {
     String transition = FragmentResult.ERROR_TRANSITION;
 
-    ActionRequest request = new ActionRequest(HTTP_ACTION_TYPE, endpointRequest.getPath());
-    request.appendMetadata("headers", headersToJsonObject(endpointRequest.getHeaders()));
-
+    ActionRequest request = createActionRequest(endpointRequest);
     ActionPayload payload;
-    if (isSuccess(response)) {
+    if (SUCCESS.contains(response.getStatusCode().code())) {
       try {
-        String responseBody = response.getBody().toString();
-        Object responseData;
-        if (StringUtils.isBlank(responseBody)) {
-          responseData = new JsonObject();
-        } else if (responseBody.startsWith("[")) {
-          responseData = new JsonArray(responseBody);
-        } else {
-          responseData = new JsonObject(responseBody);
-        }
-        payload = ActionPayload.success(request, responseData);
+        payload = handleSuccessResponse(response, request);
         transition = FragmentResult.SUCCESS_TRANSITION;
       } catch (DecodeException e) {
-        payload = ActionPayload
-            .error(request, "Response body is not a valid JSON!", e.getMessage());
+        payload = handleInvalidResponseBodyFormat(request, e);
       }
     } else {
-      payload = ActionPayload.error(request, response.getStatusCode().toString(), response.getStatusMessage());
+      payload = handleErrorResponse(request, response.getStatusCode().toString(),
+          response.getStatusMessage());
       if (isTimeout(response)) {
         transition = TIMEOUT_TRANSITION;
       }
     }
-    payload.getResponse()
-        .appendMetadata("statusCode", String.valueOf(response.getStatusCode().code()))
-        .appendMetadata("headers", headersToJsonObject(response.getHeaders()));
+    updateResponseMetadata(response, payload);
 
     fragment.appendPayload(actionAlias, payload.toJson());
     return transition;
+  }
+
+  private ActionRequest createActionRequest(EndpointRequest endpointRequest) {
+    ActionRequest request = new ActionRequest(HTTP_ACTION_TYPE, endpointRequest.getPath());
+    request.appendMetadata("headers", headersToJsonObject(endpointRequest.getHeaders()));
+    return request;
+  }
+
+  private void updateResponseMetadata(EndpointResponse response, ActionPayload payload) {
+    payload.getResponse()
+        .appendMetadata("statusCode", String.valueOf(response.getStatusCode().code()))
+        .appendMetadata("headers", headersToJsonObject(response.getHeaders()));
+  }
+
+  private ActionPayload handleErrorResponse(ActionRequest request, String statusCode,
+      String statusMessage) {
+    return ActionPayload.error(request, statusCode, statusMessage);
+  }
+
+  private ActionPayload handleInvalidResponseBodyFormat(ActionRequest request, DecodeException e) {
+    return ActionPayload.error(request, "Response body is not a valid JSON!", e.getMessage());
+  }
+
+  private ActionPayload handleSuccessResponse(EndpointResponse response, ActionRequest request) {
+    String responseBody = response.getBody().toString();
+    Object responseData;
+    if (StringUtils.isBlank(responseBody)) {
+      responseData = new JsonObject();
+    } else if (responseBody.startsWith("[")) {
+      responseData = new JsonArray(responseBody);
+    } else {
+      responseData = new JsonObject(responseBody);
+    }
+    return ActionPayload.success(request, responseData);
   }
 
   private boolean isTimeout(EndpointResponse response) {
@@ -228,10 +246,6 @@ public class HttpAction implements Action {
       );
     });
     return responseHeaders;
-  }
-
-  private boolean isSuccess(EndpointResponse response) {
-    return HttpStatusClass.SUCCESS == HttpStatusClass.valueOf(response.getStatusCode().code());
   }
 
 }

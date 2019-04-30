@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.knotx.databridge.http.action.common.placeholders;
+package io.knotx.databridge.http.action.placeholders;
 
 import io.knotx.server.api.context.ClientRequest;
 import java.util.stream.Stream;

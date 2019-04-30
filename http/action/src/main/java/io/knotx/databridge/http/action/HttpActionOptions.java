@@ -15,11 +15,9 @@
  */
 package io.knotx.databridge.http.action;
 
-import io.knotx.databridge.http.action.common.configuration.EndpointOptions;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClientOptions;
-import java.util.Objects;
 
 @DataObject(generateConverter = true)
 public class HttpActionOptions {

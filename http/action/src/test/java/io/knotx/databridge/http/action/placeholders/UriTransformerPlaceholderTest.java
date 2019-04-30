@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Knot.x Project
+ * Copyright (C) 2018 Knot.x Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.knotx.databridge.http.action.common.placeholders;
+package io.knotx.databridge.http.action.placeholders;
 
-import io.knotx.server.api.context.ClientRequest;
+import java.util.List;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-@FunctionalInterface
-public interface PlaceholderSubstitutor {
+public class UriTransformerPlaceholderTest {
 
-  /**
-   * Get the replacement value from the supplied clientRequest and placeholder name
-   *
-   * @param request the supplied clientRequest
-   * @param placeholder the placeholder name
-   * @return the replacement value, or null if no replacement can be get
-   */
-  String getValue(ClientRequest request, String placeholder);
-
+  @Test
+  public void getPlaceholders_whenGivenUrlWithPlaceholders_expectPlaceholdersExtractedInArray() {
+    List<String> placeholders =
+        UriTransformer.getPlaceholders("/dssds/{first.aa}/dsu/{second}");
+    Assertions.assertArrayEquals(placeholders.toArray(), new String[]{"first.aa", "second"});
+  }
 }

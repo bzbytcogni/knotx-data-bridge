@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.knotx.databridge.http.action.common.configuration;
+package io.knotx.databridge.http.action;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.core.json.JsonObject;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -142,8 +141,8 @@ public class EndpointOptions {
   }
 
   /**
-   * Sets the allowed requests headers that should be send to the service.
-   * The selected headers from the original client HTTP request are being send.
+   * Sets the allowed requests headers that should be send to the service. The selected headers from
+   * the original client HTTP request are being send.
    *
    * @param allowedRequestHeaders set of Strings with header names
    * @return a reference to this, so the API can be used fluently
@@ -179,7 +178,8 @@ public class EndpointOptions {
   }
 
   @GenIgnore
-  public EndpointOptions setAllowedRequestHeaderPatterns(List<Pattern> allowedRequestHeaderPatterns) {
+  public EndpointOptions setAllowedRequestHeaderPatterns(
+      List<Pattern> allowedRequestHeaderPatterns) {
     this.allowedRequestHeadersPatterns = allowedRequestHeaderPatterns;
     return this;
   }
