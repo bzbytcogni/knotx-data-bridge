@@ -56,9 +56,11 @@ import org.apache.commons.lang3.tuple.Pair;
 
 public class HttpAction implements Action {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(HttpAction.class);
   public static final String HTTP_ACTION_TYPE = "HTTP";
   public static final String TIMEOUT_TRANSITION = "_timeout";
+  private static final Logger LOGGER = LoggerFactory.getLogger(HttpAction.class);
+  private static final String METADATA_HEADERS_KEY = "headers";
+  private static final String METADATA_STATUS_CODE_KEY = "statusCode";
 
   private final EndpointOptions endpointOptions;
   private final WebClient webClient;
@@ -93,15 +95,17 @@ public class HttpAction implements Action {
             request -> callEndpoint(request)
                 .doOnSuccess(resp -> logResponse(request, resp))
                 .map(EndpointResponse::fromHttpResponse)
-                .onErrorReturn(throwable -> {
-                  if (throwable instanceof TimeoutException) {
-                    LOGGER.error("Error timeout: ", throwable);
-                    return new EndpointResponse(HttpResponseStatus.REQUEST_TIMEOUT);
-                  }
-                  throw Exceptions.propagate(throwable);
-                })
+                .onErrorReturn(this::handleTimeout)
                 .map(resp -> Pair.of(request, resp)))
-        .flatMap(pair -> wrapResponse(fragmentContext, pair.getLeft(), pair.getRight()));
+        .flatMap(pair -> getFragmentResult(fragmentContext, pair.getLeft(), pair.getRight()));
+  }
+
+  private EndpointResponse handleTimeout(Throwable throwable) {
+    if (throwable instanceof TimeoutException) {
+      LOGGER.error("Error timeout: ", throwable);
+      return new EndpointResponse(HttpResponseStatus.REQUEST_TIMEOUT);
+    }
+    throw Exceptions.propagate(throwable);
   }
 
   private Single<HttpResponse<Buffer>> callEndpoint(EndpointRequest endpointRequest) {
@@ -161,50 +165,43 @@ public class HttpAction implements Action {
         .collect(MultiMapCollector.toMultiMap(o -> o, headers::getAll));
   }
 
-  private Single<FragmentResult> wrapResponse(FragmentContext fragmentContext,
+  private Single<FragmentResult> getFragmentResult(FragmentContext fragmentContext,
       EndpointRequest endpointRequest, EndpointResponse endpointResponse) {
-    Fragment fragment = fragmentContext.getFragment();
-    final String transition = appendResponseToPayloadAndGetTransition(fragment, endpointRequest,
-        endpointResponse);
-    return Single.just(new FragmentResult(fragment, transition));
-  }
-
-  private String appendResponseToPayloadAndGetTransition(Fragment fragment,
-      EndpointRequest endpointRequest, EndpointResponse response) {
     String transition = FragmentResult.ERROR_TRANSITION;
 
     ActionRequest request = createActionRequest(endpointRequest);
     ActionPayload payload;
-    if (SUCCESS.contains(response.getStatusCode().code())) {
+    if (SUCCESS.contains(endpointResponse.getStatusCode().code())) {
       try {
-        payload = handleSuccessResponse(response, request);
+        payload = handleSuccessResponse(endpointResponse, request);
         transition = FragmentResult.SUCCESS_TRANSITION;
       } catch (DecodeException e) {
         payload = handleInvalidResponseBodyFormat(request, e);
       }
     } else {
-      payload = handleErrorResponse(request, response.getStatusCode().toString(),
-          response.getStatusMessage());
-      if (isTimeout(response)) {
+      payload = handleErrorResponse(request, endpointResponse.getStatusCode().toString(),
+          endpointResponse.getStatusMessage());
+      if (isTimeout(endpointResponse)) {
         transition = TIMEOUT_TRANSITION;
       }
     }
-    updateResponseMetadata(response, payload);
+    updateResponseMetadata(endpointResponse, payload);
 
+    Fragment fragment = fragmentContext.getFragment();
     fragment.appendPayload(actionAlias, payload.toJson());
-    return transition;
+    return Single.just(new FragmentResult(fragment, transition));
   }
 
   private ActionRequest createActionRequest(EndpointRequest endpointRequest) {
     ActionRequest request = new ActionRequest(HTTP_ACTION_TYPE, endpointRequest.getPath());
-    request.appendMetadata("headers", headersToJsonObject(endpointRequest.getHeaders()));
+    request.appendMetadata(METADATA_HEADERS_KEY, headersToJsonObject(endpointRequest.getHeaders()));
     return request;
   }
 
   private void updateResponseMetadata(EndpointResponse response, ActionPayload payload) {
     payload.getResponse()
-        .appendMetadata("statusCode", String.valueOf(response.getStatusCode().code()))
-        .appendMetadata("headers", headersToJsonObject(response.getHeaders()));
+        .appendMetadata(METADATA_STATUS_CODE_KEY, String.valueOf(response.getStatusCode().code()))
+        .appendMetadata(METADATA_HEADERS_KEY, headersToJsonObject(response.getHeaders()));
   }
 
   private ActionPayload handleErrorResponse(ActionRequest request, String statusCode,
@@ -217,7 +214,10 @@ public class HttpAction implements Action {
   }
 
   private ActionPayload handleSuccessResponse(EndpointResponse response, ActionRequest request) {
-    String responseBody = response.getBody().toString();
+    return ActionPayload.success(request, bodyToJson(response.getBody().toString()));
+  }
+
+  private Object bodyToJson(String responseBody) {
     Object responseData;
     if (StringUtils.isBlank(responseBody)) {
       responseData = new JsonObject();
@@ -226,7 +226,7 @@ public class HttpAction implements Action {
     } else {
       responseData = new JsonObject(responseBody);
     }
-    return ActionPayload.success(request, responseData);
+    return responseData;
   }
 
   private boolean isTimeout(EndpointResponse response) {
