@@ -29,6 +29,9 @@ plugins {
 dependencies {
     api("io.knotx:knotx-fragment-api")
     api("io.knotx:knotx-fragments-handler-api")
+    
+    implementation("io.knotx:knotx-server-http-common-placeholders")
+    implementation("io.knotx:knotx-commons")
 
     implementation(group = "org.apache.commons", name = "commons-lang3")
     implementation(group = "io.vertx", name = "vertx-web-client")

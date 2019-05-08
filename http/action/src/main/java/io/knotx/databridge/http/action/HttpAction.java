@@ -19,7 +19,6 @@ import static io.netty.handler.codec.http.HttpStatusClass.CLIENT_ERROR;
 import static io.netty.handler.codec.http.HttpStatusClass.SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpStatusClass.SUCCESS;
 
-import io.knotx.databridge.http.action.placeholders.UriTransformer;
 import io.knotx.fragment.Fragment;
 import io.knotx.fragments.handler.api.Action;
 import io.knotx.fragments.handler.api.domain.FragmentContext;
@@ -27,6 +26,7 @@ import io.knotx.fragments.handler.api.domain.FragmentResult;
 import io.knotx.fragments.handler.api.domain.payload.ActionPayload;
 import io.knotx.fragments.handler.api.domain.payload.ActionRequest;
 import io.knotx.server.api.context.ClientRequest;
+import io.knotx.server.common.placeholders.UriTransformer;
 import io.knotx.server.util.AllowedHeadersFilter;
 import io.knotx.server.util.DataObjectsUtil;
 import io.knotx.server.util.MultiMapCollector;

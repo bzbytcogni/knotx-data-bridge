@@ -18,8 +18,8 @@ rootProject.name = "knotx-data-bridge"
 
 
 include("knotx-action-http")
-include("knotx-knot-http")
+//include("knotx-knot-http")
 
 project(":knotx-action-http").projectDir = file("http/action")
-project(":knotx-knot-http").projectDir = file("http/knot")
+//project(":knotx-knot-http").projectDir = file("http/knot")
 
