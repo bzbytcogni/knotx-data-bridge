@@ -19,6 +19,9 @@ import static io.netty.handler.codec.http.HttpStatusClass.CLIENT_ERROR;
 import static io.netty.handler.codec.http.HttpStatusClass.SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpStatusClass.SUCCESS;
 
+import io.knotx.commons.http.request.AllowedHeadersFilter;
+import io.knotx.commons.http.request.DataObjectsUtil;
+import io.knotx.commons.http.request.MultiMapCollector;
 import io.knotx.fragment.Fragment;
 import io.knotx.fragments.handler.api.Action;
 import io.knotx.fragments.handler.api.domain.FragmentContext;
@@ -26,10 +29,7 @@ import io.knotx.fragments.handler.api.domain.FragmentResult;
 import io.knotx.fragments.handler.api.domain.payload.ActionPayload;
 import io.knotx.fragments.handler.api.domain.payload.ActionRequest;
 import io.knotx.server.api.context.ClientRequest;
-import io.knotx.server.common.placeholders.UriTransformer;
-import io.knotx.server.util.AllowedHeadersFilter;
-import io.knotx.server.util.DataObjectsUtil;
-import io.knotx.server.util.MultiMapCollector;
+import io.knotx.server.common.placeholders.PlaceholdersResolver;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.Single;
 import io.reactivex.exceptions.Exceptions;
@@ -121,7 +121,7 @@ public class HttpAction implements Action {
   }
 
   private EndpointRequest buildRequest(ClientRequest clientRequest) {
-    String path = UriTransformer.resolveServicePath(endpointOptions.getPath(), clientRequest);
+    String path = PlaceholdersResolver.resolve(endpointOptions.getPath(), clientRequest);
     MultiMap requestHeaders = getRequestHeaders(clientRequest);
     return new EndpointRequest(path, requestHeaders);
   }

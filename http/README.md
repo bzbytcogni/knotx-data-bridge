@@ -185,23 +185,8 @@ Please see [Getting Started with Knot.x Stack](http://knotx.io/tutorials/getting
 where in details the configuration is described.
 
 #### Parametrized services calls
-When found a placeholder within the `path` parameter it will be replaced with a dynamic value based on the current http request (check `DataSourceAdapterRequest`). Available placeholders are:
-
-- {header.x} - is the client requests header value where x is the header name
-- {param.x} - is the client requests query parameter value. For x = q from /a/b/c.html?q=knot it will produce knot
-- {uri.path} - is the client requests sling path. From /a/b/c.sel.it.html/suffix.html?query it will produce /a/b/c.sel.it.html/suffix.html
-- {uri.pathpart[x]} - is the client requests xth sling path part. For x = 2 from /a/b/c.sel.it.html/suffix.html?query it will produce c.sel.it.html
-- {uri.extension} - is the client requests sling extension. From /a/b/c.sel.it.html/suffix.xml?query it will produce xml
-- {slingUri.path} - is the client requests sling path. From /a/b/c.sel.it.html/suffix.html?query it will produce /a/b/c
-- {slingUri.pathpart[x]} - is the client requests xth sling path part. For x = 1 from /a/b/c.sel.it.html/suffix.html?query it will produce b
-- {slingUri.selectorstring} - is the client requests sling selector string. From /a/b/c.sel.it.html/suffix.html?query it will produce sel.it
-- {slingUri.selector[x]} - is the client requests xth sling selector. For x = 1 from /a/b/c.sel.it.html/suffix.html?query it will produce it
-- {slingUri.extension} - is the client requests sling extension. From /a/b/c.sel.it.html/suffix.xml?query it will produce html
-- {slingUri.suffix} - is the client requests sling suffix. From /a/b/c.sel.it.html/suffix.html?query it will produce /suffix.html
-- All placeholders are always substituted with encoded values according to the RFC standard. However, there are two exceptions:
-
-Space character is substituted by %20 instead of +.
-Slash character / remains as it is.
+Http Action supports request parameters resolving for the `path` parameter which defines the final request URI.
+Read more about placeholders in the [Knot.x Server Common Placeholders](https://github.com/Knotx/knotx-server-http/tree/master/common/placeholders#available-request-placeholders-support).
 
 ## Community
 Knot.x gives one communication channel that is described [here](https://github.com/Cognifide/knotx#community).
