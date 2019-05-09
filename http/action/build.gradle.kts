@@ -35,6 +35,10 @@ dependencies {
 
     implementation(group = "org.apache.commons", name = "commons-lang3")
     implementation(group = "io.vertx", name = "vertx-web-client")
+
+    testImplementation(group = "org.mockito", name = "mockito-core")
+    testImplementation(group = "org.mockito", name = "mockito-junit-jupiter")
+    testImplementation(group = "com.github.tomakehurst", name = "wiremock")
 }
 
 // -----------------------------------------------------------------------------
