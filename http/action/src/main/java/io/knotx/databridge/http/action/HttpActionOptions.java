@@ -19,6 +19,9 @@ import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClientOptions;
 
+/**
+ * HTTP Action configuration
+ */
 @DataObject(generateConverter = true)
 public class HttpActionOptions {
 
@@ -28,9 +31,6 @@ public class HttpActionOptions {
   private EndpointOptions endpointOptions;
   private long requestTimeoutMs;
 
-  /**
-   * Default constructor
-   */
   public HttpActionOptions() {
     init();
   }
@@ -49,8 +49,15 @@ public class HttpActionOptions {
     return webClientOptions;
   }
 
-  public HttpActionOptions setWebClientOptions(
-      WebClientOptions webClientOptions) {
+  /**
+   * Set the {@code WebClientOptions} used by the HTTP client to communicate with remote http
+   * endpoint. See https://vertx.io/docs/vertx-web-client/dataobjects.html#WebClientOptions for
+   * the details what can be configured.
+   *
+   * @param webClientOptions {@link WebClientOptions} object
+   * @return a reference to this, so the API can be used fluently
+   */
+  public HttpActionOptions setWebClientOptions(WebClientOptions webClientOptions) {
     this.webClientOptions = webClientOptions;
     return this;
   }
@@ -59,8 +66,13 @@ public class HttpActionOptions {
     return endpointOptions;
   }
 
-  public HttpActionOptions setEndpointOptions(
-      EndpointOptions endpointOptions) {
+  /**
+   * Set the details of the remote http endpoint location.
+   *
+   * @param endpointOptions a {@link EndpointOptions} object
+   * @return a reference to this, so the API can be used fluently
+   */
+  public HttpActionOptions setEndpointOptions(EndpointOptions endpointOptions) {
     this.endpointOptions = endpointOptions;
     return this;
   }
@@ -71,8 +83,8 @@ public class HttpActionOptions {
 
   /**
    * Configures the amount of time in milliseconds after which if the request does not return any
-   * data within, _timeout transition will be returned. Setting zero or a negative
-   * value disables the timeout. By default it is set to {@code 0}.
+   * data within, _timeout transition will be returned. Setting zero or a negative value disables
+   * the timeout. By default it is set to {@code 0}.
    *
    * @param requestTimeoutMs - request timeout in milliseconds
    * @return a reference to this, so the API can be used fluently

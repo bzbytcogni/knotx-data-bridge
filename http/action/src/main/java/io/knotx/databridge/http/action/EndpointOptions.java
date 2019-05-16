@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * Describes a physical details of HTTP service endpoint the ServiceAdapter will use.
+ * Describes a physical details of HTTP service endpoint that Action will connect to.
  */
 @DataObject(generateConverter = true, publicConverter = false)
 public class EndpointOptions {
@@ -36,24 +36,13 @@ public class EndpointOptions {
   private int port;
   private Set<String> allowedRequestHeaders;
   private JsonObject additionalHeaders;
-
+  private List<Pattern> allowedRequestHeadersPatterns;
   //ToDo: private Set<StatusCode> successStatusCodes;
 
-  private List<Pattern> allowedRequestHeadersPatterns;
-
-  /**
-   * Default constructor
-   */
   public EndpointOptions() {
-    //empty constructor
+    //empty default constructor
   }
 
-
-  /**
-   * Copy constructor
-   *
-   * @param other the instance to copy
-   */
   public EndpointOptions(EndpointOptions other) {
     this.path = other.path;
     this.domain = other.domain;
@@ -63,11 +52,6 @@ public class EndpointOptions {
     this.additionalHeaders = other.additionalHeaders.copy();
   }
 
-  /**
-   * Create an settings from JSON
-   *
-   * @param json the JSON
-   */
   public EndpointOptions(JsonObject json) {
     this();
     EndpointOptionsConverter.fromJson(json, this);
@@ -77,11 +61,6 @@ public class EndpointOptions {
     }
   }
 
-  /**
-   * Convert to JSON
-   *
-   * @return the JSON
-   */
   public JsonObject toJson() {
     JsonObject json = new JsonObject();
     EndpointOptionsConverter.toJson(this, json);
@@ -92,6 +71,12 @@ public class EndpointOptions {
     return path;
   }
 
+  /**
+   * Sets the request path to the endpoint.
+   *
+   * @param path an endpoint request path.
+   * @return a reference to this, so the API can be used fluently
+   */
   public EndpointOptions setPath(String path) {
     this.path = path;
     return this;
@@ -105,7 +90,7 @@ public class EndpointOptions {
   }
 
   /**
-   * Set the {@code domain} of the external service
+   * Sets the {@code domain} of the external service
    *
    * @param domain - domain of the external service
    * @return a reference to this, so the API can be used fluently
@@ -150,7 +135,7 @@ public class EndpointOptions {
   public EndpointOptions setAllowedRequestHeaders(Set<String> allowedRequestHeaders) {
     this.allowedRequestHeaders = allowedRequestHeaders;
     allowedRequestHeadersPatterns = allowedRequestHeaders.stream()
-        .map(expr -> Pattern.compile(expr)).collect(Collectors.toList());
+        .map(Pattern::compile).collect(Collectors.toList());
     return this;
   }
 
@@ -162,7 +147,7 @@ public class EndpointOptions {
   }
 
   /**
-   * Set the additional request headers (and values) to be send in each request
+   * Sets the additional request headers (and values) to be send in each request
    *
    * @param additionalHeaders - JSON Object specifying additional header
    * @return a reference to this, so the API can be used fluently
