@@ -27,7 +27,7 @@ plugins {
 // Dependencies
 // -----------------------------------------------------------------------------
 dependencies {
-    api("io.knotx:knotx-fragment-api:${project.version}")
+    api("io.knotx:knotx-fragments-api:${project.version}")
     api("io.knotx:knotx-fragments-handler-api:${project.version}")
     
     implementation("io.knotx:knotx-server-http-common-placeholders:${project.version}")
