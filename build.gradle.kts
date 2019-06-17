@@ -1,5 +1,3 @@
-import org.gradle.kotlin.dsl.apply
-
 /*
  * Copyright (C) 2019 Knot.x Project
  *
@@ -17,7 +15,10 @@ import org.gradle.kotlin.dsl.apply
  */
 
 plugins {
-    id("maven-publish")
+    id("io.knotx.maven-publish")
+    id("io.knotx.publish-all-composite")
+    id("io.knotx.unit-tests")
+    id("io.knotx.jacoco")
 }
 
 subprojects {
@@ -30,7 +31,3 @@ subprojects {
         maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots") }
     }
 }
-
-apply(from = "gradle/javaAndUnitTests.gradle.kts")
-apply(from = "gradle/jacoco.gradle.kts")
-apply(from = "gradle/compositeParentPublish.gradle.kts")
