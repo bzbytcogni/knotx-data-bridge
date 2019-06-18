@@ -18,9 +18,9 @@ import org.nosphere.apache.rat.RatTask
 plugins {
     id("io.knotx.java-library")
     id("io.knotx.maven-publish")
-    id("io.knotx.signing")
     id("io.knotx.jacoco")
     id("io.knotx.codegen")
+    id("io.knotx.unit-test")
 
     id("org.nosphere.apache.rat") version "0.4.0"
 }
@@ -44,7 +44,17 @@ apply(from = "../../gradle/common.deps.gradle.kts")
 
 tasks {
     named<RatTask>("rat") {
-        excludes.addAll("**/*.json", "**/*.md", "**/*.adoc", "**/build/*", "**/out/*", "**/generated/*")
+        excludes.addAll("**/*.json", "**/*.md", "**/*.adoc", "**/build/*", "**/out/*", "**/generated/*", "gradle.properties")
     }
     getByName("build").dependsOn("rat")
+}
+
+publishing {
+    publications {
+        withType(MavenPublication::class) {
+            from(components["java"])
+            artifact(tasks["sourcesJar"])
+            artifact(tasks["javadocJar"])
+        }
+    }
 }

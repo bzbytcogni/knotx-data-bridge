@@ -15,10 +15,8 @@
  */
 
 plugins {
-    id("io.knotx.maven-publish")
-    id("io.knotx.publish-all-composite")
-    id("io.knotx.unit-tests")
-    id("io.knotx.jacoco")
+    java
+    id("io.knotx.publish-all-composite") version "0.1.0"
 }
 
 subprojects {
