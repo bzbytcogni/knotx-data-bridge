@@ -1,11 +1,11 @@
 # Knot.x Data Bridge
-Data Bridge module contains [**Actions**](https://github.com/Knotx/knotx-fragments-handler/tree/master/api#action)
-implementations that are "bridge" between Knot.x [Fragments Processing](https://github.com/Knotx/knotx-fragments-handler)
+Data Bridge module contains [**Actions**](https://github.com/Knotx/knotx-fragments/tree/master/api#action)
+implementations that are "bridge" between Knot.x [Fragments Processing](https://github.com/Knotx/knotx-fragments)
 mechanism and external data sources (like Web APIs, databases, caches etc.).
 
 ## How does it work
-Data Bridge Actions logic is to collect the data from external data sources and update processed [Fragment's](https://github.com/Knotx/knotx-fragment-api#knotx-fragment-api)
-`payload` with it. Such operation enables [further Actions in the Task](https://github.com/Knotx/knotx-fragments-handler#how-does-it-works) 
+Data Bridge Actions logic is to collect the data from external data sources and update processed [Fragment's](https://github.com/Knotx/knotx-fragments/tree/master/api#knotx-fragment-api)
+`payload` with it. Such operation enables [further Actions in the Task](https://github.com/Knotx/knotx-fragments#how-does-it-works) 
 to use that data during later processing (e.g. during template processing).
 
 ## Data Bridge Actions

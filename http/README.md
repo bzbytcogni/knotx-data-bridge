@@ -1,7 +1,7 @@
 # HTTP Action
-HTTP Action is an [Action](https://github.com/Knotx/knotx-fragments-handler/tree/master/api#action) 
+HTTP Action is an [Action](https://github.com/Knotx/knotx-fragments/tree/master/api#action) 
 that connects to the external WEB endpoint that responds with JSON and saves the response into the 
-[Fragment's](https://github.com/Knotx/knotx-fragment-api#knotx-fragment-api) `payload`.
+[Fragment's](https://github.com/Knotx/knotx-fragments/tree/master/api#knotx-fragment-api) `payload`.
 
 ## How does it work
 HTTP Action uses HTTP Client to connect to the external WEB endpoint. It expects HTTP response with
@@ -9,8 +9,8 @@ JSON body. To configure endpoint you will have to provide `domain` and `port` an
 a request `path` to the WEB endpoint. The `path` parameter could contain placeholders that will be
 resolved with the logic described above.
 After the result from the external WEB endpoint is obtained, it is merged with processed
-[Fragment's](https://github.com/Knotx/knotx-fragment-api#knotx-fragment-api) `payload`
-and returned in the [`FragmentResult`](https://github.com/Knotx/knotx-fragments-handler/blob/master/api/docs/asciidoc/dataobjects.adoc#FragmentResult)
+[Fragment's](https://github.com/Knotx/knotx-fragments/tree/master/api#knotx-fragment-api) `payload`
+and returned in the [`FragmentResult`](https://github.com/Knotx/knotx-fragments/blob/master/handler/api/docs/asciidoc/dataobjects.adoc#FragmentResult)
 together with Transition.
 
 #### Parametrized services calls
