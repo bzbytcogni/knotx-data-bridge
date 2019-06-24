@@ -26,21 +26,23 @@ plugins {
 }
 
 dependencies {
+    implementation(platform("io.knotx:knotx-dependencies:${project.version}"))
+
     api("io.knotx:knotx-fragments-api:${project.version}")
     api("io.knotx:knotx-fragments-handler-api:${project.version}")
 
     implementation("io.knotx:knotx-server-http-common-placeholders:${project.version}")
     implementation("io.knotx:knotx-commons:${project.version}")
 
-    implementation(group = "org.apache.commons", name = "commons-lang3")
+    implementation(group = "io.vertx", name = "vertx-core")
+    implementation(group = "io.vertx", name = "vertx-rx-java2")
     implementation(group = "io.vertx", name = "vertx-web-client")
+    implementation(group = "org.apache.commons", name = "commons-lang3")
 
     testImplementation(group = "org.mockito", name = "mockito-core")
     testImplementation(group = "org.mockito", name = "mockito-junit-jupiter")
     testImplementation(group = "com.github.tomakehurst", name = "wiremock")
 }
-
-apply(from = "../../gradle/common.deps.gradle.kts")
 
 tasks {
     named<RatTask>("rat") {
