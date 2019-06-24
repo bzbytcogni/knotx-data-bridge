@@ -1,5 +1,5 @@
 # Knot.x Data Bridge
-Data Bridge module contains [**Actions**](https://github.com/Knotx/knotx-fragments/tree/master/api#action)
+Data Bridge module contains [**Actions**](https://github.com/Knotx/knotx-fragments/tree/master/handler/api#action)
 implementations that are "bridge" between Knot.x [Fragments Processing](https://github.com/Knotx/knotx-fragments)
 mechanism and external data sources (like Web APIs, databases, caches etc.).
 
