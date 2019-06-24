@@ -463,6 +463,35 @@ class HttpActionTest {
         testContext);
   }
 
+  @Test
+  @DisplayName("Expect endpoint called with placeholders in payload resolved with values from FragmentContext clientRequest request uri")
+  void placeholdersInPayloadResolvedWithClientRequesUriParams(VertxTestContext testContext,
+      Vertx vertx) throws Throwable {
+    // given, when
+    String endpointPath = "/api/thumbnail.png";
+    String clientRequestPath = "/book.png";
+    String optionsPath = "/api/thumbnail.{payload.thumbnail.extension}";
+
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(VALID_JSON_RESPONSE_BODY)));
+    when(clientRequest.getPath()).thenReturn(clientRequestPath);
+    when(clientRequest.getHeaders()).thenReturn(MultiMap.caseInsensitiveMultiMap());
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(optionsPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+
+    // then
+    verifyExecution(tested, FRAGMENT.appendPayload("thumbnail", new JsonObject().put("extension", "png")),
+        fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
+        testContext);
+  }
+
   private HttpAction successAction(Vertx vertx, String responseBody) {
     return getHttpAction(vertx, HttpActionTest.VALID_REQUEST_PATH, responseBody,
         HttpResponseStatus.OK.code(), null);
@@ -515,9 +544,9 @@ class HttpActionTest {
         new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
   }
 
-  private void verifyExecution(HttpAction tested, Consumer<FragmentResult> assertions,
+  private void verifyExecution(HttpAction tested, Fragment fragment, Consumer<FragmentResult> assertions,
       VertxTestContext testContext) throws Throwable {
-    tested.apply(new FragmentContext(FRAGMENT, clientRequest),
+    tested.apply(new FragmentContext(fragment, clientRequest),
         testContext.succeeding(result -> {
           testContext.verify(() -> assertions.accept(result));
           testContext.completeNow();
@@ -528,5 +557,10 @@ class HttpActionTest {
     if (testContext.failed()) {
       throw testContext.causeOfFailure();
     }
+  }
+
+  private void verifyExecution(HttpAction tested, Consumer<FragmentResult> assertions,
+      VertxTestContext testContext) throws Throwable {
+    verifyExecution(tested, FRAGMENT, assertions, testContext);
   }
 }
