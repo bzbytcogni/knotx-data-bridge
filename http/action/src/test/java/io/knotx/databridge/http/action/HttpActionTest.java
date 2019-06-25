@@ -87,10 +87,8 @@ class HttpActionTest {
     // given, when
     HttpAction tested = successAction(vertx, VALID_JSON_RESPONSE_BODY);
 
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setPath(HttpActionTest.VALID_REQUEST_PATH);
-    clientRequest.setHeaders(MultiMap.caseInsensitiveMultiMap()
-        .add("requestHeader", "request"));
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
@@ -104,15 +102,16 @@ class HttpActionTest {
       throws Throwable {
     // given
     HttpAction tested = successAction(vertx, VALID_JSON_RESPONSE_BODY);
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setPath(HttpActionTest.VALID_REQUEST_PATH);
-    clientRequest.setHeaders(MultiMap.caseInsensitiveMultiMap()
-        .add("requestHeader", "request"));
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
         fragmentResult -> assertTrue(
-            fragmentResult.getFragment().getPayload().containsKey(ACTION_ALIAS)),
+            fragmentResult.getFragment()
+                .getPayload()
+                .containsKey(ACTION_ALIAS)),
         testContext);
   }
 
@@ -122,16 +121,18 @@ class HttpActionTest {
       throws Throwable {
     // given, when
     HttpAction tested = successAction(vertx, VALID_JSON_RESPONSE_BODY);
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setPath(HttpActionTest.VALID_REQUEST_PATH);
-    clientRequest.setHeaders(MultiMap.caseInsensitiveMultiMap()
-        .add("requestHeader", "request"));
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
       ActionPayload payload = new ActionPayload(
-          fragmentResult.getFragment().getPayload().getJsonObject(ACTION_ALIAS));
-      assertTrue(payload.getResponse().isSuccess());
+          fragmentResult.getFragment()
+              .getPayload()
+              .getJsonObject(ACTION_ALIAS));
+      assertTrue(payload.getResponse()
+          .isSuccess());
       assertEquals(new JsonObject(VALID_JSON_RESPONSE_BODY), payload.getResult());
     }, testContext);
   }
@@ -142,16 +143,18 @@ class HttpActionTest {
       Vertx vertx) throws Throwable {
     // given, when
     HttpAction tested = successAction(vertx, VALID_JSON_ARRAY_RESPONSE_BODY);
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setPath(HttpActionTest.VALID_REQUEST_PATH);
-    clientRequest.setHeaders(MultiMap.caseInsensitiveMultiMap()
-        .add("requestHeader", "request"));
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
       ActionPayload payload = new ActionPayload(
-          fragmentResult.getFragment().getPayload().getJsonObject(ACTION_ALIAS));
-      assertTrue(payload.getResponse().isSuccess());
+          fragmentResult.getFragment()
+              .getPayload()
+              .getJsonObject(ACTION_ALIAS));
+      assertTrue(payload.getResponse()
+          .isSuccess());
       assertEquals(new JsonArray(VALID_JSON_ARRAY_RESPONSE_BODY), payload.getResult());
     }, testContext);
   }
@@ -162,14 +165,14 @@ class HttpActionTest {
       Vertx vertx) throws Throwable {
     // given, when
     HttpAction tested = successAction(vertx, VALID_EMPTY_RESPONSE_BODY);
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setPath(HttpActionTest.VALID_REQUEST_PATH);
-    clientRequest.setHeaders(MultiMap.caseInsensitiveMultiMap()
-        .add("requestHeader", "request"));
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
-        fragmentResult -> assertEquals(FRAGMENT.getBody(), fragmentResult.getFragment().getBody()),
+        fragmentResult -> assertEquals(FRAGMENT.getBody(), fragmentResult.getFragment()
+            .getBody()),
         testContext);
   }
 
@@ -179,15 +182,16 @@ class HttpActionTest {
       Vertx vertx) throws Throwable {
     // given, when
     HttpAction tested = successAction(vertx, VALID_JSON_RESPONSE_BODY);
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setPath(HttpActionTest.VALID_REQUEST_PATH);
-    clientRequest.setHeaders(MultiMap.caseInsensitiveMultiMap()
-        .add("requestHeader", "request"));
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
       ActionPayload payload = new ActionPayload(
-          fragmentResult.getFragment().getPayload().getJsonObject(ACTION_ALIAS));
+          fragmentResult.getFragment()
+              .getPayload()
+              .getJsonObject(ACTION_ALIAS));
       ActionResponse response = payload.getResponse();
       assertNotNull(response);
       assertTrue(response.isSuccess());
@@ -195,7 +199,8 @@ class HttpActionTest {
       assertNotNull(metadata);
       assertEquals("200", metadata.getString("statusCode"));
       assertEquals(new JsonArray().add("response"),
-          metadata.getJsonObject("headers").getJsonArray("responseHeader"));
+          metadata.getJsonObject("headers")
+              .getJsonArray("responseHeader"));
     }, testContext);
   }
 
@@ -206,15 +211,15 @@ class HttpActionTest {
     // given, when
     HttpAction tested = errorAction(vertx, 500, "Internal Error");
 
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setPath(HttpActionTest.VALID_REQUEST_PATH);
-    clientRequest.setHeaders(MultiMap.caseInsensitiveMultiMap()
-        .add("requestHeader", "request"));
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
       ActionPayload payload = new ActionPayload(
-          fragmentResult.getFragment().getPayload().getJsonObject(ACTION_ALIAS));
+          fragmentResult.getFragment()
+              .getPayload()
+              .getJsonObject(ACTION_ALIAS));
       ActionResponse response = payload.getResponse();
       assertFalse(response.isSuccess());
       ActionResponseError error = response.getError();
@@ -225,7 +230,8 @@ class HttpActionTest {
       assertNotNull(metadata);
       assertEquals("500", metadata.getString("statusCode"));
       assertEquals(new JsonArray().add("response"),
-          metadata.getJsonObject("headers").getJsonArray("responseHeader"));
+          metadata.getJsonObject("headers")
+              .getJsonArray("responseHeader"));
     }, testContext);
   }
 
@@ -235,15 +241,16 @@ class HttpActionTest {
       Vertx vertx) throws Throwable {
     // given, when
     HttpAction tested = successAction(vertx, VALID_JSON_RESPONSE_BODY);
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setPath(HttpActionTest.VALID_REQUEST_PATH);
-    clientRequest.setHeaders(MultiMap.caseInsensitiveMultiMap()
-        .add("requestHeader", "request"));
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
       ActionPayload payload = new ActionPayload(
-          fragmentResult.getFragment().getPayload().getJsonObject(ACTION_ALIAS));
+          fragmentResult.getFragment()
+              .getPayload()
+              .getJsonObject(ACTION_ALIAS));
       ActionRequest request = payload.getRequest();
       assertNotNull(request);
       assertEquals("HTTP", request.getType());
@@ -251,7 +258,8 @@ class HttpActionTest {
       JsonObject metadata = request.getMetadata();
       assertNotNull(metadata);
       assertEquals(new JsonArray().add("request"),
-          metadata.getJsonObject("headers").getJsonArray("requestHeader"));
+          metadata.getJsonObject("headers")
+              .getJsonArray("requestHeader"));
     }, testContext);
   }
 
@@ -262,15 +270,16 @@ class HttpActionTest {
     // given, when
     HttpAction tested = errorAction(vertx, 500, "Internal Error");
 
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setPath(HttpActionTest.VALID_REQUEST_PATH);
-    clientRequest.setHeaders(MultiMap.caseInsensitiveMultiMap()
-        .add("requestHeader", "request"));
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
       ActionPayload payload = new ActionPayload(
-          fragmentResult.getFragment().getPayload().getJsonObject(ACTION_ALIAS));
+          fragmentResult.getFragment()
+              .getPayload()
+              .getJsonObject(ACTION_ALIAS));
       ActionRequest request = payload.getRequest();
       assertNotNull(request);
       assertEquals("HTTP", request.getType());
@@ -278,7 +287,8 @@ class HttpActionTest {
       JsonObject metadata = request.getMetadata();
       assertNotNull(metadata);
       assertEquals(new JsonArray().add("request"),
-          metadata.getJsonObject("headers").getJsonArray("requestHeader"));
+          metadata.getJsonObject("headers")
+              .getJsonArray("requestHeader"));
     }, testContext);
 
   }
@@ -289,10 +299,9 @@ class HttpActionTest {
       Vertx vertx) throws Throwable {
     // given, when
     HttpAction tested = errorAction(vertx, 500, "Internal Error");
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setPath(HttpActionTest.VALID_REQUEST_PATH);
-    clientRequest.setHeaders(MultiMap.caseInsensitiveMultiMap()
-        .add("requestHeader", "request"));
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
@@ -306,10 +315,9 @@ class HttpActionTest {
       Vertx vertx) throws Throwable {
     // given, when
     HttpAction tested = successAction(vertx, "<html>Hello</html>");
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setPath(HttpActionTest.VALID_REQUEST_PATH);
-    clientRequest.setHeaders(MultiMap.caseInsensitiveMultiMap()
-        .add("requestHeader", "request"));
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
@@ -350,10 +358,9 @@ class HttpActionTest {
   void errorTransitionWhenEndpointDoesNotExist(VertxTestContext testContext,
       Vertx vertx) throws Throwable {
     // given, when
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setHeaders(MultiMap.caseInsensitiveMultiMap()
-        .add("requestHeader", "request"));
-    clientRequest.setPath("not-existing-endpoint");
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), "not-existing-endpoint");
 
     EndpointOptions endpointOptions = new EndpointOptions()
         .setPath("not-existing-endpoint")
@@ -380,9 +387,9 @@ class HttpActionTest {
     HttpAction tested = getHttpActionWithAdditionalHeaders(vertx,
         null, "crHeaderKey", "crHeaderValue");
 
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setPath(HttpActionTest.VALID_REQUEST_PATH);
-    clientRequest.setHeaders(clientRequestHeaders);
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        clientRequestHeaders, HttpActionTest.VALID_REQUEST_PATH);
+
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
@@ -399,9 +406,8 @@ class HttpActionTest {
     HttpAction tested = getHttpActionWithAdditionalHeaders(vertx,
         additionalHeaders, "additionalHeader", "additionalValue");
 
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setPath(HttpActionTest.VALID_REQUEST_PATH);
-    clientRequest.setHeaders(clientRequestHeaders);
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        clientRequestHeaders, HttpActionTest.VALID_REQUEST_PATH);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
@@ -421,9 +427,8 @@ class HttpActionTest {
     HttpAction tested = getHttpActionWithAdditionalHeaders(vertx,
         additionalHeaders, "customHeader", "additionalValue"
     );
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setPath(HttpActionTest.VALID_REQUEST_PATH);
-    clientRequest.setHeaders(clientRequestHeaders);
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        clientRequestHeaders, HttpActionTest.VALID_REQUEST_PATH);
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
@@ -435,18 +440,17 @@ class HttpActionTest {
   void placeholdersInPathResolvedWithHeadersValues(VertxTestContext testContext,
       Vertx vertx) throws Throwable {
     // given, when
-    MultiMap clientRequestHeaders = MultiMap.caseInsensitiveMultiMap().add("bookId", "999000");
+    MultiMap clientRequestHeaders = MultiMap.caseInsensitiveMultiMap()
+        .add("bookId", "999000");
     String endpointPath = "/api/book/999000";
     String clientRequestPath = "/book-page";
     String optionsPath = "/api/book/{header.bookId}";
 
     wireMockServer.stubFor(get(urlEqualTo(endpointPath))
         .willReturn(aResponse().withBody(VALID_JSON_RESPONSE_BODY)));
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setPath(clientRequestPath);
-    clientRequest.setHeaders(clientRequestHeaders);
-    //when(clientRequest.getPath()).thenReturn(clientRequestPath);
-    //when(clientRequest.getHeaders()).thenReturn(clientRequestHeaders);
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        clientRequestHeaders, clientRequestPath);
 
     EndpointOptions endpointOptions = new EndpointOptions()
         .setPath(optionsPath)
@@ -468,7 +472,8 @@ class HttpActionTest {
   void placeholdersInPathResolvedWithClientRequestQueryParams(VertxTestContext testContext,
       Vertx vertx) throws Throwable {
     // given, when
-    MultiMap clientRequestParams = MultiMap.caseInsensitiveMultiMap().add("bookId", "999000");
+    MultiMap clientRequestParams = MultiMap.caseInsensitiveMultiMap()
+        .add("bookId", "999000");
     String endpointPath = "/api/book/999000";
     String clientRequestPath = "/book-page";
     String optionsPath = "/api/book/{param.bookId}";
@@ -476,13 +481,8 @@ class HttpActionTest {
     wireMockServer.stubFor(get(urlEqualTo(endpointPath))
         .willReturn(aResponse().withBody(VALID_JSON_RESPONSE_BODY)));
 
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setPath(clientRequestPath);
-    clientRequest.setHeaders(MultiMap.caseInsensitiveMultiMap());
-    clientRequest.setParams(clientRequestParams);
-    //when(clientRequest.getPath()).thenReturn(clientRequestPath);
-    //when(clientRequest.getHeaders()).thenReturn(MultiMap.caseInsensitiveMultiMap());
-    //when(clientRequest.getParams()).thenReturn(clientRequestParams);
+    ClientRequest clientRequest = prepareClientRequest(clientRequestParams,
+        MultiMap.caseInsensitiveMultiMap(), clientRequestPath);
 
     EndpointOptions endpointOptions = new EndpointOptions()
         .setPath(optionsPath)
@@ -511,11 +511,8 @@ class HttpActionTest {
     wireMockServer.stubFor(get(urlEqualTo(endpointPath))
         .willReturn(aResponse().withBody(VALID_JSON_RESPONSE_BODY)));
 
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setPath(clientRequestPath);
-    clientRequest.setHeaders(MultiMap.caseInsensitiveMultiMap());
-    //when(clientRequest.getPath()).thenReturn(clientRequestPath);
-    //when(clientRequest.getHeaders()).thenReturn(MultiMap.caseInsensitiveMultiMap());
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), clientRequestPath);
 
     EndpointOptions endpointOptions = new EndpointOptions()
         .setPath(optionsPath)
@@ -544,9 +541,8 @@ class HttpActionTest {
     wireMockServer.stubFor(get(urlEqualTo(endpointPath))
         .willReturn(aResponse().withBody(VALID_JSON_RESPONSE_BODY)));
 
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setPath(clientRequestPath);
-    clientRequest.setHeaders(MultiMap.caseInsensitiveMultiMap());
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), clientRequestPath);
 
     EndpointOptions endpointOptions = new EndpointOptions()
         .setPath(optionsPath)
@@ -624,5 +620,14 @@ class HttpActionTest {
     if (testContext.failed()) {
       throw testContext.causeOfFailure();
     }
+  }
+
+  private ClientRequest prepareClientRequest(MultiMap clientRequestParams,
+      MultiMap headers, String clientRequestPath) {
+    ClientRequest clientRequest = new ClientRequest();
+    clientRequest.setPath(clientRequestPath);
+    clientRequest.setHeaders(headers);
+    clientRequest.setParams(clientRequestParams);
+    return clientRequest;
   }
 }
