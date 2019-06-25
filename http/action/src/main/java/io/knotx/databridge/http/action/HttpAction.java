@@ -19,6 +19,14 @@ import static io.netty.handler.codec.http.HttpStatusClass.CLIENT_ERROR;
 import static io.netty.handler.codec.http.HttpStatusClass.SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpStatusClass.SUCCESS;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+
 import io.knotx.commons.http.request.AllowedHeadersFilter;
 import io.knotx.commons.http.request.DataObjectsUtil;
 import io.knotx.commons.http.request.MultiMapCollector;
@@ -48,11 +56,6 @@ import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.client.HttpRequest;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
-import java.util.regex.Pattern;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 
 public class HttpAction implements Action {
 
@@ -89,7 +92,7 @@ public class HttpAction implements Action {
   }
 
   private Single<FragmentResult> process(FragmentContext fragmentContext) {
-    return Single.just(fragmentContext.getClientRequest())
+    return Single.just(fragmentContext)
         .map(this::buildRequest)
         .flatMap(
             request -> callEndpoint(request)
@@ -120,8 +123,11 @@ public class HttpAction implements Action {
     return request.rxSend();
   }
 
-  private EndpointRequest buildRequest(ClientRequest clientRequest) {
-    String path = PlaceholdersResolver.resolve(endpointOptions.getPath(), clientRequest);
+  private EndpointRequest buildRequest(FragmentContext context) {
+    ClientRequest clientRequest = context.getClientRequest();
+    String path = PlaceholdersResolver.resolve(endpointOptions.getPath(),
+        Arrays.asList(clientRequest, context.getFragment()
+            .getPayload()));
     MultiMap requestHeaders = getRequestHeaders(clientRequest);
     return new EndpointRequest(path, requestHeaders);
   }

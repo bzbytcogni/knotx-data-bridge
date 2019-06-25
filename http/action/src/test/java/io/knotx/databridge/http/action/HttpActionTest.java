@@ -27,9 +27,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
+
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.regex.Pattern;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+
 import io.knotx.fragments.api.Fragment;
 import io.knotx.fragments.handler.api.domain.FragmentContext;
 import io.knotx.fragments.handler.api.domain.FragmentResult;
@@ -45,18 +58,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.MultiMap;
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.regex.Pattern;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 
 @ExtendWith(VertxExtension.class)
 @ExtendWith(MockitoExtension.class)
@@ -70,9 +71,6 @@ class HttpActionTest {
 
   private static final Fragment FRAGMENT = new Fragment("type", new JsonObject(), "expectedBody");
   private static final String ACTION_ALIAS = "httpAction";
-
-  @Mock
-  private ClientRequest clientRequest;
 
   private WireMockServer wireMockServer;
 
@@ -89,8 +87,11 @@ class HttpActionTest {
     // given, when
     HttpAction tested = successAction(vertx, VALID_JSON_RESPONSE_BODY);
 
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), HttpActionTest.VALID_REQUEST_PATH);
+
     // then
-    verifyExecution(tested,
+    verifyExecution(tested, clientRequest, FRAGMENT,
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -101,11 +102,16 @@ class HttpActionTest {
       throws Throwable {
     // given
     HttpAction tested = successAction(vertx, VALID_JSON_RESPONSE_BODY);
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested,
+    verifyExecution(tested, clientRequest, FRAGMENT,
         fragmentResult -> assertTrue(
-            fragmentResult.getFragment().getPayload().containsKey(ACTION_ALIAS)),
+            fragmentResult.getFragment()
+                .getPayload()
+                .containsKey(ACTION_ALIAS)),
         testContext);
   }
 
@@ -115,12 +121,18 @@ class HttpActionTest {
       throws Throwable {
     // given, when
     HttpAction tested = successAction(vertx, VALID_JSON_RESPONSE_BODY);
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, fragmentResult -> {
+    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
       ActionPayload payload = new ActionPayload(
-          fragmentResult.getFragment().getPayload().getJsonObject(ACTION_ALIAS));
-      assertTrue(payload.getResponse().isSuccess());
+          fragmentResult.getFragment()
+              .getPayload()
+              .getJsonObject(ACTION_ALIAS));
+      assertTrue(payload.getResponse()
+          .isSuccess());
       assertEquals(new JsonObject(VALID_JSON_RESPONSE_BODY), payload.getResult());
     }, testContext);
   }
@@ -131,12 +143,18 @@ class HttpActionTest {
       Vertx vertx) throws Throwable {
     // given, when
     HttpAction tested = successAction(vertx, VALID_JSON_ARRAY_RESPONSE_BODY);
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, fragmentResult -> {
+    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
       ActionPayload payload = new ActionPayload(
-          fragmentResult.getFragment().getPayload().getJsonObject(ACTION_ALIAS));
-      assertTrue(payload.getResponse().isSuccess());
+          fragmentResult.getFragment()
+              .getPayload()
+              .getJsonObject(ACTION_ALIAS));
+      assertTrue(payload.getResponse()
+          .isSuccess());
       assertEquals(new JsonArray(VALID_JSON_ARRAY_RESPONSE_BODY), payload.getResult());
     }, testContext);
   }
@@ -147,10 +165,14 @@ class HttpActionTest {
       Vertx vertx) throws Throwable {
     // given, when
     HttpAction tested = successAction(vertx, VALID_EMPTY_RESPONSE_BODY);
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested,
-        fragmentResult -> assertEquals(FRAGMENT.getBody(), fragmentResult.getFragment().getBody()),
+    verifyExecution(tested, clientRequest, FRAGMENT,
+        fragmentResult -> assertEquals(FRAGMENT.getBody(), fragmentResult.getFragment()
+            .getBody()),
         testContext);
   }
 
@@ -160,11 +182,16 @@ class HttpActionTest {
       Vertx vertx) throws Throwable {
     // given, when
     HttpAction tested = successAction(vertx, VALID_JSON_RESPONSE_BODY);
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, fragmentResult -> {
+    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
       ActionPayload payload = new ActionPayload(
-          fragmentResult.getFragment().getPayload().getJsonObject(ACTION_ALIAS));
+          fragmentResult.getFragment()
+              .getPayload()
+              .getJsonObject(ACTION_ALIAS));
       ActionResponse response = payload.getResponse();
       assertNotNull(response);
       assertTrue(response.isSuccess());
@@ -172,7 +199,8 @@ class HttpActionTest {
       assertNotNull(metadata);
       assertEquals("200", metadata.getString("statusCode"));
       assertEquals(new JsonArray().add("response"),
-          metadata.getJsonObject("headers").getJsonArray("responseHeader"));
+          metadata.getJsonObject("headers")
+              .getJsonArray("responseHeader"));
     }, testContext);
   }
 
@@ -183,10 +211,15 @@ class HttpActionTest {
     // given, when
     HttpAction tested = errorAction(vertx, 500, "Internal Error");
 
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), HttpActionTest.VALID_REQUEST_PATH);
+
     // then
-    verifyExecution(tested, fragmentResult -> {
+    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
       ActionPayload payload = new ActionPayload(
-          fragmentResult.getFragment().getPayload().getJsonObject(ACTION_ALIAS));
+          fragmentResult.getFragment()
+              .getPayload()
+              .getJsonObject(ACTION_ALIAS));
       ActionResponse response = payload.getResponse();
       assertFalse(response.isSuccess());
       ActionResponseError error = response.getError();
@@ -197,7 +230,8 @@ class HttpActionTest {
       assertNotNull(metadata);
       assertEquals("500", metadata.getString("statusCode"));
       assertEquals(new JsonArray().add("response"),
-          metadata.getJsonObject("headers").getJsonArray("responseHeader"));
+          metadata.getJsonObject("headers")
+              .getJsonArray("responseHeader"));
     }, testContext);
   }
 
@@ -207,11 +241,16 @@ class HttpActionTest {
       Vertx vertx) throws Throwable {
     // given, when
     HttpAction tested = successAction(vertx, VALID_JSON_RESPONSE_BODY);
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, fragmentResult -> {
+    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
       ActionPayload payload = new ActionPayload(
-          fragmentResult.getFragment().getPayload().getJsonObject(ACTION_ALIAS));
+          fragmentResult.getFragment()
+              .getPayload()
+              .getJsonObject(ACTION_ALIAS));
       ActionRequest request = payload.getRequest();
       assertNotNull(request);
       assertEquals("HTTP", request.getType());
@@ -219,7 +258,8 @@ class HttpActionTest {
       JsonObject metadata = request.getMetadata();
       assertNotNull(metadata);
       assertEquals(new JsonArray().add("request"),
-          metadata.getJsonObject("headers").getJsonArray("requestHeader"));
+          metadata.getJsonObject("headers")
+              .getJsonArray("requestHeader"));
     }, testContext);
   }
 
@@ -230,10 +270,16 @@ class HttpActionTest {
     // given, when
     HttpAction tested = errorAction(vertx, 500, "Internal Error");
 
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
+
     // then
-    verifyExecution(tested, fragmentResult -> {
+    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
       ActionPayload payload = new ActionPayload(
-          fragmentResult.getFragment().getPayload().getJsonObject(ACTION_ALIAS));
+          fragmentResult.getFragment()
+              .getPayload()
+              .getJsonObject(ACTION_ALIAS));
       ActionRequest request = payload.getRequest();
       assertNotNull(request);
       assertEquals("HTTP", request.getType());
@@ -241,7 +287,8 @@ class HttpActionTest {
       JsonObject metadata = request.getMetadata();
       assertNotNull(metadata);
       assertEquals(new JsonArray().add("request"),
-          metadata.getJsonObject("headers").getJsonArray("requestHeader"));
+          metadata.getJsonObject("headers")
+              .getJsonArray("requestHeader"));
     }, testContext);
 
   }
@@ -252,9 +299,12 @@ class HttpActionTest {
       Vertx vertx) throws Throwable {
     // given, when
     HttpAction tested = errorAction(vertx, 500, "Internal Error");
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested,
+    verifyExecution(tested, clientRequest, FRAGMENT,
         fragmentResult -> assertEquals(ERROR_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -265,9 +315,12 @@ class HttpActionTest {
       Vertx vertx) throws Throwable {
     // given, when
     HttpAction tested = successAction(vertx, "<html>Hello</html>");
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested,
+    verifyExecution(tested, clientRequest, FRAGMENT,
         fragmentResult -> assertEquals(ERROR_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -281,7 +334,8 @@ class HttpActionTest {
     wireMockServer.stubFor(get(urlEqualTo(VALID_REQUEST_PATH))
         .willReturn(aResponse().withFixedDelay(2 * requestTimeoutMs)));
 
-    when(clientRequest.getHeaders()).thenReturn(MultiMap.caseInsensitiveMultiMap());
+    ClientRequest clientRequest = new ClientRequest();
+    clientRequest.setHeaders(MultiMap.caseInsensitiveMultiMap());
 
     EndpointOptions endpointOptions = new EndpointOptions()
         .setPath(VALID_REQUEST_PATH)
@@ -294,7 +348,7 @@ class HttpActionTest {
             .setRequestTimeoutMs(requestTimeoutMs), ACTION_ALIAS);
 
     // then
-    verifyExecution(tested,
+    verifyExecution(tested, clientRequest, FRAGMENT,
         fragmentResult -> assertEquals(TIMEOUT_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -304,9 +358,9 @@ class HttpActionTest {
   void errorTransitionWhenEndpointDoesNotExist(VertxTestContext testContext,
       Vertx vertx) throws Throwable {
     // given, when
-    when(clientRequest.getPath()).thenReturn("not-existing-endpoint");
-    when(clientRequest.getHeaders())
-        .thenReturn(MultiMap.caseInsensitiveMultiMap().add("requestHeader", "request"));
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap()
+            .add("requestHeader", "request"), "not-existing-endpoint");
 
     EndpointOptions endpointOptions = new EndpointOptions()
         .setPath("not-existing-endpoint")
@@ -318,7 +372,7 @@ class HttpActionTest {
         new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
 
     // then
-    verifyExecution(tested,
+    verifyExecution(tested, clientRequest, FRAGMENT,
         fragmentResult -> assertEquals(ERROR_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -330,11 +384,14 @@ class HttpActionTest {
     // given, when
     MultiMap clientRequestHeaders = MultiMap.caseInsensitiveMultiMap()
         .add("crHeaderKey", "crHeaderValue");
-    HttpAction tested = getHttpActionWithHeaders(vertx, clientRequestHeaders,
+    HttpAction tested = getHttpActionWithAdditionalHeaders(vertx,
         null, "crHeaderKey", "crHeaderValue");
 
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        clientRequestHeaders, HttpActionTest.VALID_REQUEST_PATH);
+
     // then
-    verifyExecution(tested,
+    verifyExecution(tested, clientRequest, FRAGMENT,
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -346,11 +403,14 @@ class HttpActionTest {
     // given, when
     MultiMap clientRequestHeaders = MultiMap.caseInsensitiveMultiMap();
     JsonObject additionalHeaders = new JsonObject().put("additionalHeader", "additionalValue");
-    HttpAction tested = getHttpActionWithHeaders(vertx, clientRequestHeaders,
+    HttpAction tested = getHttpActionWithAdditionalHeaders(vertx,
         additionalHeaders, "additionalHeader", "additionalValue");
 
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        clientRequestHeaders, HttpActionTest.VALID_REQUEST_PATH);
+
     // then
-    verifyExecution(tested,
+    verifyExecution(tested, clientRequest, FRAGMENT,
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
 
@@ -364,11 +424,13 @@ class HttpActionTest {
     MultiMap clientRequestHeaders = MultiMap.caseInsensitiveMultiMap()
         .add("customHeader", "crHeaderValue");
     JsonObject additionalHeaders = new JsonObject().put("customHeader", "additionalValue");
-    HttpAction tested = getHttpActionWithHeaders(vertx, clientRequestHeaders,
-        additionalHeaders, "customHeader", "additionalValue");
-
+    HttpAction tested = getHttpActionWithAdditionalHeaders(vertx,
+        additionalHeaders, "customHeader", "additionalValue"
+    );
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        clientRequestHeaders, HttpActionTest.VALID_REQUEST_PATH);
     // then
-    verifyExecution(tested,
+    verifyExecution(tested, clientRequest, FRAGMENT,
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -378,15 +440,17 @@ class HttpActionTest {
   void placeholdersInPathResolvedWithHeadersValues(VertxTestContext testContext,
       Vertx vertx) throws Throwable {
     // given, when
-    MultiMap clientRequestHeaders = MultiMap.caseInsensitiveMultiMap().add("bookId", "999000");
+    MultiMap clientRequestHeaders = MultiMap.caseInsensitiveMultiMap()
+        .add("bookId", "999000");
     String endpointPath = "/api/book/999000";
     String clientRequestPath = "/book-page";
     String optionsPath = "/api/book/{header.bookId}";
 
     wireMockServer.stubFor(get(urlEqualTo(endpointPath))
         .willReturn(aResponse().withBody(VALID_JSON_RESPONSE_BODY)));
-    when(clientRequest.getPath()).thenReturn(clientRequestPath);
-    when(clientRequest.getHeaders()).thenReturn(clientRequestHeaders);
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        clientRequestHeaders, clientRequestPath);
 
     EndpointOptions endpointOptions = new EndpointOptions()
         .setPath(optionsPath)
@@ -398,7 +462,7 @@ class HttpActionTest {
         new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
 
     // then
-    verifyExecution(tested,
+    verifyExecution(tested, clientRequest, FRAGMENT,
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -408,16 +472,17 @@ class HttpActionTest {
   void placeholdersInPathResolvedWithClientRequestQueryParams(VertxTestContext testContext,
       Vertx vertx) throws Throwable {
     // given, when
-    MultiMap clientRequestParams = MultiMap.caseInsensitiveMultiMap().add("bookId", "999000");
+    MultiMap clientRequestParams = MultiMap.caseInsensitiveMultiMap()
+        .add("bookId", "999000");
     String endpointPath = "/api/book/999000";
     String clientRequestPath = "/book-page";
     String optionsPath = "/api/book/{param.bookId}";
 
     wireMockServer.stubFor(get(urlEqualTo(endpointPath))
         .willReturn(aResponse().withBody(VALID_JSON_RESPONSE_BODY)));
-    when(clientRequest.getPath()).thenReturn(clientRequestPath);
-    when(clientRequest.getHeaders()).thenReturn(MultiMap.caseInsensitiveMultiMap());
-    when(clientRequest.getParams()).thenReturn(clientRequestParams);
+
+    ClientRequest clientRequest = prepareClientRequest(clientRequestParams,
+        MultiMap.caseInsensitiveMultiMap(), clientRequestPath);
 
     EndpointOptions endpointOptions = new EndpointOptions()
         .setPath(optionsPath)
@@ -429,7 +494,7 @@ class HttpActionTest {
         new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
 
     // then
-    verifyExecution(tested,
+    verifyExecution(tested, clientRequest, FRAGMENT,
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -445,8 +510,9 @@ class HttpActionTest {
 
     wireMockServer.stubFor(get(urlEqualTo(endpointPath))
         .willReturn(aResponse().withBody(VALID_JSON_RESPONSE_BODY)));
-    when(clientRequest.getPath()).thenReturn(clientRequestPath);
-    when(clientRequest.getHeaders()).thenReturn(MultiMap.caseInsensitiveMultiMap());
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), clientRequestPath);
 
     EndpointOptions endpointOptions = new EndpointOptions()
         .setPath(optionsPath)
@@ -458,7 +524,38 @@ class HttpActionTest {
         new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
 
     // then
-    verifyExecution(tested,
+    verifyExecution(tested, clientRequest, FRAGMENT,
+        fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
+        testContext);
+  }
+
+  @Test
+  @DisplayName("Expect endpoint called with placeholders in payload resolved with values from FragmentContext clientRequest request uri")
+  void placeholdersInPayloadResolvedWithClientRequesUriParams(VertxTestContext testContext,
+      Vertx vertx) throws Throwable {
+    // given, when
+    String endpointPath = "/api/thumbnail.png";
+    String clientRequestPath = "/book.png";
+    String optionsPath = "/api/thumbnail.{payload.thumbnail.extension}";
+
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(VALID_JSON_RESPONSE_BODY)));
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), clientRequestPath);
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(optionsPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+
+    // then
+    verifyExecution(tested, clientRequest,
+        FRAGMENT.appendPayload("thumbnail", new JsonObject().put("extension", "png")),
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -480,9 +577,6 @@ class HttpActionTest {
             .withBody(responseBody)
             .withStatus(statusCode)
             .withStatusMessage(statusMessage)));
-    when(clientRequest.getPath()).thenReturn(requestPath);
-    when(clientRequest.getHeaders())
-        .thenReturn(MultiMap.caseInsensitiveMultiMap().add("requestHeader", "request"));
 
     EndpointOptions endpointOptions = new EndpointOptions()
         .setPath(requestPath)
@@ -494,15 +588,12 @@ class HttpActionTest {
         new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
   }
 
-  private HttpAction getHttpActionWithHeaders(Vertx vertx, MultiMap clientRequestHeaders,
+  private HttpAction getHttpActionWithAdditionalHeaders(Vertx vertx,
       JsonObject additionalHeaders, String expectedHeaderKey, String expectedHeaderValue) {
     wireMockServer.stubFor(get(urlEqualTo(HttpActionTest.VALID_REQUEST_PATH))
         .withHeader(expectedHeaderKey, matching(expectedHeaderValue))
         .willReturn(aResponse()
             .withBody(VALID_JSON_RESPONSE_BODY)));
-    when(clientRequest.getPath()).thenReturn(HttpActionTest.VALID_REQUEST_PATH);
-    when(clientRequest.getHeaders())
-        .thenReturn(clientRequestHeaders);
 
     EndpointOptions endpointOptions = new EndpointOptions()
         .setPath(HttpActionTest.VALID_REQUEST_PATH)
@@ -515,9 +606,10 @@ class HttpActionTest {
         new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
   }
 
-  private void verifyExecution(HttpAction tested, Consumer<FragmentResult> assertions,
+  private void verifyExecution(HttpAction tested, ClientRequest clientRequest, Fragment fragment,
+      Consumer<FragmentResult> assertions,
       VertxTestContext testContext) throws Throwable {
-    tested.apply(new FragmentContext(FRAGMENT, clientRequest),
+    tested.apply(new FragmentContext(fragment, clientRequest),
         testContext.succeeding(result -> {
           testContext.verify(() -> assertions.accept(result));
           testContext.completeNow();
@@ -528,5 +620,14 @@ class HttpActionTest {
     if (testContext.failed()) {
       throw testContext.causeOfFailure();
     }
+  }
+
+  private ClientRequest prepareClientRequest(MultiMap clientRequestParams,
+      MultiMap headers, String clientRequestPath) {
+    ClientRequest clientRequest = new ClientRequest();
+    clientRequest.setPath(clientRequestPath);
+    clientRequest.setHeaders(headers);
+    clientRequest.setParams(clientRequestParams);
+    return clientRequest;
   }
 }
