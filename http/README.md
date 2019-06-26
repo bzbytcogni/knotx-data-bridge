@@ -14,8 +14,11 @@ and returned in the [`FragmentResult`](https://github.com/Knotx/knotx-fragments/
 together with Transition.
 
 #### Parametrized services calls
-Http Action supports request parameters resolving for the `path` parameter which defines the final request URI.
+Http Action supports request parameters, `@payload` and `@configuration` resolving for the `path` parameter which defines the final request URI.
 Read more about placeholders in the [Knot.x Server Common Placeholders](https://github.com/Knotx/knotx-server-http/tree/master/common/placeholders#available-request-placeholders-support).
+
+The `@payload` and `@configuration` are values stored in [Fragment](https://github.com/Knotx/knotx-fragments/tree/master/api#knotx-fragment-api).
+For this structures use corresponding prefixes: `payload` and `config` 
 
 ## How to use
 Define HTTP Action using `http` factory and providing config `endpointOptions` in the Fragment's Handler

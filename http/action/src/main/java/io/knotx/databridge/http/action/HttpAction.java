@@ -19,7 +19,6 @@ import static io.netty.handler.codec.http.HttpStatusClass.CLIENT_ERROR;
 import static io.netty.handler.codec.http.HttpStatusClass.SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpStatusClass.SUCCESS;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
@@ -38,6 +37,7 @@ import io.knotx.fragments.handler.api.domain.payload.ActionPayload;
 import io.knotx.fragments.handler.api.domain.payload.ActionRequest;
 import io.knotx.server.api.context.ClientRequest;
 import io.knotx.server.common.placeholders.PlaceholdersResolver;
+import io.knotx.server.common.placeholders.SourceDefinitions;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.Single;
 import io.reactivex.exceptions.Exceptions;
@@ -64,6 +64,8 @@ public class HttpAction implements Action {
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpAction.class);
   private static final String METADATA_HEADERS_KEY = "headers";
   private static final String METADATA_STATUS_CODE_KEY = "statusCode";
+  private static final String PLACEHOLDER_PREFIX_PAYLOAD = "payload";
+  private static final String PLACEHOLDER_PREFIX_CONFIG = "config";
 
   private final EndpointOptions endpointOptions;
   private final WebClient webClient;
@@ -125,11 +127,21 @@ public class HttpAction implements Action {
 
   private EndpointRequest buildRequest(FragmentContext context) {
     ClientRequest clientRequest = context.getClientRequest();
-    String path = PlaceholdersResolver.resolve(endpointOptions.getPath(),
-        Arrays.asList(clientRequest, context.getFragment()
-            .getPayload()));
+    SourceDefinitions sourceDefinitions = buildSourceDefinitions(context, clientRequest);
+    String path = PlaceholdersResolver.resolve(endpointOptions.getPath(), sourceDefinitions);
     MultiMap requestHeaders = getRequestHeaders(clientRequest);
     return new EndpointRequest(path, requestHeaders);
+  }
+
+  private SourceDefinitions buildSourceDefinitions(FragmentContext context,
+      ClientRequest clientRequest) {
+    return SourceDefinitions.builder()
+        .addClientRequestSource(clientRequest)
+        .addJsonObjectSource(context.getFragment()
+            .getPayload(), PLACEHOLDER_PREFIX_PAYLOAD)
+        .addJsonObjectSource(context.getFragment()
+            .getConfiguration(), PLACEHOLDER_PREFIX_CONFIG)
+        .build();
   }
 
   private void logResponse(EndpointRequest endpointRequest, HttpResponse<Buffer> resp) {
