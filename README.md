@@ -1,3 +1,5 @@
+[![Build Status](https://dev.azure.com/knotx/Knotx/_apis/build/status/Knotx.knotx-data-bridge?branchName=master)](https://dev.azure.com/knotx/Knotx/_build/latest?definitionId=11&branchName=master)
+
 # Knot.x Data Bridge
 Data Bridge module contains [**Actions**](https://github.com/Knotx/knotx-fragments/tree/master/handler/api#action)
 implementations that are "bridge" between Knot.x [Fragments Processing](https://github.com/Knotx/knotx-fragments)
