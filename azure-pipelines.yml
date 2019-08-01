@@ -9,38 +9,41 @@ variables:
 
 steps:
   - script: |
-      git clone https://github.com/Knotx/knotx-aggregator.git
-      mkdir $(workspaceDir)
+#      git clone https://github.com/Knotx/knotx-aggregator.git
+#      mkdir $(workspaceDir)
+      echo '##vso[task.setvariable variable=repo]echo "${$(Build.Repository.Name)/Knotx\//}"'
     displayName: "Prepare Aggregator"
-  - task: CmdLine@2
-    inputs:
-      script: |
-        cd knotx-aggregator/development
-        if [[ -z "$(System.PullRequest.SourceBranch)" ]] ; then
-          ./pull-all.sh -r ../../$(workspaceDir) -b "$(Build.SourceBranchName)" -a
-        else
-          ./pull-all.sh -r ../../$(workspaceDir) -b $(System.PullRequest.SourceBranch) -a
-        fi
-    displayName: "Clone all repositories"
-  - task: CmdLine@2
-    inputs:
-      script: |
-        cd knotx-aggregator/development
-        ./build-stack.sh -r ../../$(workspaceDir)
-    displayName: "Build Stack"
-  - task: Maven@3
-    inputs:
-      mavenPomFile: '$(workspaceDir)/knotx-docker/pom.xml'
-      goals: 'package'
-    displayName: "Build Docker image"
-  - task: Gradle@2
-    inputs:
-      gradleWrapperFile: '$(workspaceDir)/knotx-starter-kit/gradlew'
-      workingDirectory: '$(workspaceDir)/knotx-starter-kit'
-      tasks: 'build'
-    displayName: "Build Starter Kit"
+#  - task: CmdLine@2
+#    inputs:
+#      script: |
+#        cd knotx-aggregator/development
+#        if [[ -z "$(System.PullRequest.SourceBranch)" ]] ; then
+#          ./pull-all.sh -r ../../$(workspaceDir) -b "$(Build.SourceBranchName)" -a
+#        else
+#          ./pull-all.sh -r ../../$(workspaceDir) -b $(System.PullRequest.SourceBranch) -a
+#        fi
+#    displayName: "Clone all repositories"
+#  - task: CmdLine@2
+#    inputs:
+#      script: |
+#        cd knotx-aggregator/development
+#        ./build-stack.sh -r ../../$(workspaceDir)
+#    displayName: "Build Stack"
+#  - task: Maven@3
+#    inputs:
+#      mavenPomFile: '$(workspaceDir)/knotx-docker/pom.xml'
+#      goals: 'package'
+#    displayName: "Build Docker image"
+#  - task: Gradle@2
+#    inputs:
+#      gradleWrapperFile: '$(workspaceDir)/knotx-starter-kit/gradlew'
+#      workingDirectory: '$(workspaceDir)/knotx-starter-kit'
+#      tasks: 'build'
+#    displayName: "Build Starter Kit"
+#  - script: |
+#      $(workspaceDir)/$(targetRepository)/gradlew -p $(workspaceDir)/$(targetRepository) clean test jacocoTestReport
+#      bash <(curl -s https://codecov.io/bash) -s $(workspaceDir)/$(targetRepository) -t $(CODECOV_TOKEN)
+#    displayName: "Run Codecov inspection"
   - script: |
-      targetRepository=echo "${$(Build.Repository.Name)/Knotx\//}"
-      $(workspaceDir)/$(targetRepository)/gradlew -p $(workspaceDir)/$(targetRepository) clean test jacocoTestReport
-      bash <(curl -s https://codecov.io/bash) -s $(workspaceDir)/$(targetRepository) -t $(CODECOV_TOKEN)
-    displayName: "Run Codecov inspection"
+      echo target repository is $REPO
+      echo also $repo
