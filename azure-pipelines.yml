@@ -4,6 +4,9 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
+variables:
+  targetRepository: knotx-data-bridge
+
 steps:
   - script: |
       git clone https://github.com/Knotx/knotx-aggregator.git
@@ -25,11 +28,19 @@ steps:
         cd knotx-aggregator/development
         ./build-stack.sh -r ../../knotx-repos
     displayName: "Build Stack"
-  - script: mvn -f knotx-repos/knotx-docker/pom.xml clean package
+  - task: Maven@3
+    inputs:
+      mavenPomFile: 'knotx-repos/knotx-docker/pom.xml'
+      goals: 'package'
     displayName: "Build Docker image"
-  - script: knotx-repos/knotx-starter-kit/gradlew -p knotx-repos/knotx-starter-kit build
+  - task: Gradle@2
+    inputs:
+      gradleWrapperFile: 'knotx-repos/knotx-starter-kit/gradlew'
+      workingDirectory: 'knotx-repos/knotx-starter-kit'
+      tasks: 'build'
     displayName: "Build Starter Kit"
   - script: |
-      knotx-repos/knotx-data-bridge/gradlew -p knotx-repos/knotx-data-bridge clean test jacocoTestReport --rerun-tasks
-      bash <(curl -s https://codecov.io/bash) -s knotx-repos/knotx-data-bridge -t $(CODECOV_TOKEN)
+      knotx-repos/$(targetRepository)/gradlew -p knotx-repos/$(targetRepository) clean test jacocoTestReport
+      bash <(curl -s https://codecov.io/bash) -s knotx-repos/$(targetRepository) -t $(CODECOV_TOKEN)
+      echo $(Build.Repository.Name)
     displayName: "Run Codecov inspection"
