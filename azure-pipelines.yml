@@ -30,6 +30,6 @@ steps:
   - script: knotx-repos/knotx-starter-kit/gradlew -p knotx-repos/knotx-starter-kit build
     displayName: "Build Starter Kit"
   - script: |
-      knotx-repos/knotx-data-bridge/gradlew -p knotx-repos/knotx-data-bridge clean jacocoTestReport --rerun-tasks
+      knotx-repos/knotx-data-bridge/gradlew -p knotx-repos/knotx-data-bridge clean test jacocoTestReport --rerun-tasks
       bash <(curl https://codecov.io/bash) -s knotx-repos/knotx-data-bridge -t {CODECOV_TOKEN}
     displayName: "Run Codecov inspection"
