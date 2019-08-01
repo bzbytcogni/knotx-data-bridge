@@ -5,7 +5,8 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  targetRepository: knotx-data-bridge
+  targetRepository: echo "${$(Build.Repository.Name)/Knotx\//}"
+  # knotx-data-bridge
 
 steps:
   - script: |
@@ -43,4 +44,5 @@ steps:
       knotx-repos/$(targetRepository)/gradlew -p knotx-repos/$(targetRepository) clean test jacocoTestReport
       bash <(curl -s https://codecov.io/bash) -s knotx-repos/$(targetRepository) -t $(CODECOV_TOKEN)
       echo $(Build.Repository.Name)
+      echo $(Build.Repository.ID)
     displayName: "Run Codecov inspection"
