@@ -25,16 +25,11 @@ steps:
         cd knotx-aggregator/development
         ./build-stack.sh -r ../../knotx-repos
     displayName: "Build Stack"
-  - script: |
-      cd knotx-repos/knotx-docker
-      mvn clean package
+  - script: mvn -f knotx-repos/knotx-docker/pom.xml clean package
     displayName: "Build Docker image"
-  - script: |
-      cd knotx-repos/knotx-starter-kit
-      ./gradlew build
+  - script: knotx-repos/knotx-starter-kit/gradlew -p knotx-repos/knotx-starter-kit build
     displayName: "Build Starter Kit"
   - script: |
-      cd knotx-repos/knotx-data-bridge
-      ./gradlew jacocoTestReport --rerun-tasks
-      bash <(curl https://codecov.io/bash) -t {CODECOV_TOKEN}
-    displayName: "Run codecov inspection"
+      knotx-repos/knotx-data-bridge/gradlew -p knotx-repos/knotx-data-bridge clean jacocoTestReport --rerun-tasks
+      bash <(curl https://codecov.io/bash) -s knotx-repos/knotx-data-bridge -t {CODECOV_TOKEN}
+    displayName: "Run Codecov inspection"
