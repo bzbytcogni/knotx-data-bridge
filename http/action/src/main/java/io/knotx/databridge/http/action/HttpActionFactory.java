@@ -16,6 +16,7 @@
 package io.knotx.databridge.http.action;
 
 import io.knotx.fragments.handler.api.Action;
+import io.knotx.fragments.handler.api.ActionConfig;
 import io.knotx.fragments.handler.api.ActionFactory;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -28,12 +29,11 @@ public class HttpActionFactory implements ActionFactory {
   }
 
   @Override
-  public Action create(String alias, JsonObject config, Vertx vertx, Action doAction) {
-    // TODO add custom exception here (ActionConfigurationException)
+  public Action create(String alias, ActionConfig config, Vertx vertx, Action doAction) {
     if (doAction != null) {
       throw new IllegalArgumentException("Http Action can not wrap another action");
     }
-    return new HttpAction(vertx, new HttpActionOptions(config), alias);
+    return new HttpAction(vertx, new HttpActionOptions(config.getOptions()), alias, config.getLogMode());
   }
 
 }

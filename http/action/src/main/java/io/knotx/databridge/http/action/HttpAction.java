@@ -31,6 +31,7 @@ import io.knotx.commons.http.request.DataObjectsUtil;
 import io.knotx.commons.http.request.MultiMapCollector;
 import io.knotx.fragments.api.Fragment;
 import io.knotx.fragments.handler.api.Action;
+import io.knotx.fragments.handler.api.ActionLogMode;
 import io.knotx.fragments.handler.api.domain.FragmentContext;
 import io.knotx.fragments.handler.api.domain.FragmentResult;
 import io.knotx.fragments.handler.api.domain.payload.ActionPayload;
@@ -71,13 +72,15 @@ public class HttpAction implements Action {
   private final WebClient webClient;
   private final String actionAlias;
   private final HttpActionOptions httpActionOptions;
+  private final ActionLogMode actionLogMode;
 
-  HttpAction(Vertx vertx, HttpActionOptions httpActionOptions, String actionAlias) {
+  HttpAction(Vertx vertx, HttpActionOptions httpActionOptions, String actionAlias, ActionLogMode actionLogMode) {
     this.httpActionOptions = httpActionOptions;
     this.webClient = WebClient.create(io.vertx.reactivex.core.Vertx.newInstance(vertx),
         httpActionOptions.getWebClientOptions());
     this.endpointOptions = httpActionOptions.getEndpointOptions();
     this.actionAlias = actionAlias;
+    this.actionLogMode = actionLogMode;
   }
 
   @Override

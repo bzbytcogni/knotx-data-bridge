@@ -21,6 +21,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.matching;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static io.knotx.databridge.http.action.HttpAction.TIMEOUT_TRANSITION;
+import static io.knotx.fragments.handler.api.ActionLogMode.ERROR;
 import static io.knotx.fragments.handler.api.domain.FragmentResult.ERROR_TRANSITION;
 import static io.knotx.fragments.handler.api.domain.FragmentResult.SUCCESS_TRANSITION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -44,6 +45,7 @@ import org.mockito.quality.Strictness;
 import com.github.tomakehurst.wiremock.WireMockServer;
 
 import io.knotx.fragments.api.Fragment;
+import io.knotx.fragments.handler.api.ActionLogMode;
 import io.knotx.fragments.handler.api.domain.FragmentContext;
 import io.knotx.fragments.handler.api.domain.FragmentResult;
 import io.knotx.fragments.handler.api.domain.payload.ActionPayload;
@@ -345,7 +347,7 @@ class HttpActionTest {
     HttpAction tested = new HttpAction(vertx,
         new HttpActionOptions()
             .setEndpointOptions(endpointOptions)
-            .setRequestTimeoutMs(requestTimeoutMs), ACTION_ALIAS);
+            .setRequestTimeoutMs(requestTimeoutMs), ACTION_ALIAS, ERROR);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
@@ -369,7 +371,7 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, ERROR);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
@@ -459,7 +461,7 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, ERROR);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
@@ -491,7 +493,7 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, ERROR);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
@@ -521,7 +523,7 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, ERROR);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
@@ -551,7 +553,7 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, ERROR);
 
     // then
     verifyExecution(tested, clientRequest,
@@ -585,7 +587,7 @@ class HttpActionTest {
         .setAllowedRequestHeaders(Collections.singleton("requestHeader"));
 
     return new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, ERROR);
   }
 
   private HttpAction getHttpActionWithAdditionalHeaders(Vertx vertx,
@@ -603,7 +605,7 @@ class HttpActionTest {
         .setAdditionalHeaders(additionalHeaders);
 
     return new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, ERROR);
   }
 
   private void verifyExecution(HttpAction tested, ClientRequest clientRequest, Fragment fragment,
