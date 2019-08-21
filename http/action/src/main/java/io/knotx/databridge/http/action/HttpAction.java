@@ -32,6 +32,7 @@ import io.knotx.commons.http.request.MultiMapCollector;
 import io.knotx.fragments.api.Fragment;
 import io.knotx.fragments.handler.api.Action;
 import io.knotx.fragments.handler.api.actionlog.ActionLogMode;
+import io.knotx.fragments.handler.api.actionlog.ActionLogger;
 import io.knotx.fragments.handler.api.domain.FragmentContext;
 import io.knotx.fragments.handler.api.domain.FragmentResult;
 import io.knotx.fragments.handler.api.domain.payload.ActionPayload;
@@ -72,7 +73,7 @@ public class HttpAction implements Action {
   private final WebClient webClient;
   private final String actionAlias;
   private final HttpActionOptions httpActionOptions;
-  private final ActionLogMode actionLogMode;
+  private final ActionLogger actionLogger;
 
   HttpAction(Vertx vertx, HttpActionOptions httpActionOptions, String actionAlias, ActionLogMode actionLogMode) {
     this.httpActionOptions = httpActionOptions;
@@ -80,7 +81,7 @@ public class HttpAction implements Action {
         httpActionOptions.getWebClientOptions());
     this.endpointOptions = httpActionOptions.getEndpointOptions();
     this.actionAlias = actionAlias;
-    this.actionLogMode = actionLogMode;
+    this.actionLogger = ActionLogger.create(actionLogMode);
   }
 
   @Override
@@ -189,7 +190,6 @@ public class HttpAction implements Action {
   private Single<FragmentResult> getFragmentResult(FragmentContext fragmentContext,
       EndpointRequest endpointRequest, EndpointResponse endpointResponse) {
     String transition = FragmentResult.ERROR_TRANSITION;
-
     ActionRequest request = createActionRequest(endpointRequest);
     ActionPayload payload;
     if (SUCCESS.contains(endpointResponse.getStatusCode().code())) {
@@ -208,9 +208,28 @@ public class HttpAction implements Action {
     }
     updateResponseMetadata(endpointResponse, payload);
 
+    logActionData(endpointRequest, endpointResponse, payload);
+
     Fragment fragment = fragmentContext.getFragment();
     fragment.appendPayload(actionAlias, payload.toJson());
-    return Single.just(new FragmentResult(fragment, transition));
+    return Single.just(new FragmentResult(fragment, transition, actionLogger.getLog()));
+  }
+
+  private void logActionData(EndpointRequest endpointRequest, EndpointResponse endpointResponse,
+      ActionPayload payload) {
+    actionLogger.info("request", endpointRequest, this::toDebugJson);
+    actionLogger.info("response", endpointResponse, this::toDebugJson);
+    actionLogger.info("payload", payload, ActionPayload::toJson);
+  }
+
+  private JsonObject toDebugJson(EndpointResponse response) {
+    return new JsonObject().put("statusCode", response.getStatusCode().code())
+        .put("headers", response.getHeaders());
+  }
+
+  private JsonObject toDebugJson(EndpointRequest request) {
+    return new JsonObject().put("path", request.getPath())
+        .put("headers", request.getHeaders());
   }
 
   private ActionRequest createActionRequest(EndpointRequest endpointRequest) {
