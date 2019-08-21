@@ -21,7 +21,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.matching;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static io.knotx.databridge.http.action.HttpAction.TIMEOUT_TRANSITION;
-import static io.knotx.fragments.handler.api.ActionLogMode.ERROR;
+import static io.knotx.fragments.handler.api.actionlog.ActionLogMode.ERROR;
 import static io.knotx.fragments.handler.api.domain.FragmentResult.ERROR_TRANSITION;
 import static io.knotx.fragments.handler.api.domain.FragmentResult.SUCCESS_TRANSITION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,7 +45,6 @@ import org.mockito.quality.Strictness;
 import com.github.tomakehurst.wiremock.WireMockServer;
 
 import io.knotx.fragments.api.Fragment;
-import io.knotx.fragments.handler.api.ActionLogMode;
 import io.knotx.fragments.handler.api.domain.FragmentContext;
 import io.knotx.fragments.handler.api.domain.FragmentResult;
 import io.knotx.fragments.handler.api.domain.payload.ActionPayload;

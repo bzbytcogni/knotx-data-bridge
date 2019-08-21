@@ -31,7 +31,7 @@ import io.knotx.commons.http.request.DataObjectsUtil;
 import io.knotx.commons.http.request.MultiMapCollector;
 import io.knotx.fragments.api.Fragment;
 import io.knotx.fragments.handler.api.Action;
-import io.knotx.fragments.handler.api.ActionLogMode;
+import io.knotx.fragments.handler.api.actionlog.ActionLogMode;
 import io.knotx.fragments.handler.api.domain.FragmentContext;
 import io.knotx.fragments.handler.api.domain.FragmentResult;
 import io.knotx.fragments.handler.api.domain.payload.ActionPayload;
