@@ -19,7 +19,6 @@ import io.knotx.fragments.handler.api.Action;
 import io.knotx.fragments.handler.api.ActionConfig;
 import io.knotx.fragments.handler.api.ActionFactory;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 
 public class HttpActionFactory implements ActionFactory {
 
@@ -29,11 +28,11 @@ public class HttpActionFactory implements ActionFactory {
   }
 
   @Override
-  public Action create(String alias, ActionConfig config, Vertx vertx, Action doAction) {
-    if (doAction != null) {
+  public Action create(ActionConfig config, Vertx vertx) {
+    if (config.hasAction()) {
       throw new IllegalArgumentException("Http Action can not wrap another action");
     }
-    return new HttpAction(vertx, new HttpActionOptions(config.getOptions()), alias, config.getLogMode());
+    return new HttpAction(vertx, new HttpActionOptions(config.getOptions()), config.getAlias(), config.getActionLogMode());
   }
 
 }
