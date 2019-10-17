@@ -34,6 +34,7 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -396,6 +397,7 @@ class HttpActionTest {
         testContext);
   }
 
+  @Disabled
   @Test
   @DisplayName("Expect additionalHeaders from EndpointOptions are sent in endpoint request")
   void additionalHeadersSentToEndpoint(VertxTestContext testContext,

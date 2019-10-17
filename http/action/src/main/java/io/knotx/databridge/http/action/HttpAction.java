@@ -19,6 +19,7 @@ import static io.netty.handler.codec.http.HttpStatusClass.CLIENT_ERROR;
 import static io.netty.handler.codec.http.HttpStatusClass.SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpStatusClass.SUCCESS;
 
+import io.knotx.fragments.handler.api.ActionExtraOptions;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
@@ -66,6 +67,7 @@ public class HttpAction implements Action {
   private static final String METADATA_STATUS_CODE_KEY = "statusCode";
   private static final String PLACEHOLDER_PREFIX_PAYLOAD = "payload";
   private static final String PLACEHOLDER_PREFIX_CONFIG = "config";
+  private static final String EXTRA_PREFIX_CONFIG = "extra";
 
   private final EndpointOptions endpointOptions;
   private final WebClient webClient;
@@ -141,6 +143,7 @@ public class HttpAction implements Action {
             .getPayload(), PLACEHOLDER_PREFIX_PAYLOAD)
         .addJsonObjectSource(context.getFragment()
             .getConfiguration(), PLACEHOLDER_PREFIX_CONFIG)
+        .addJsonObjectSource(httpActionOptions.toJson().getJsonObject(ActionExtraOptions.EXTRA_OPTIONS_KEY), EXTRA_PREFIX_CONFIG)
         .build();
   }
 

@@ -45,6 +45,7 @@ Sets the HTTP <code>port</code> the external service
 |[[endpointOptions]]`@endpointOptions`|`link:dataobjects.html#EndpointOptions[EndpointOptions]`|+++
 Set the details of the remote http endpoint location.
 +++
+|[[extra]]`@extra`|`Json object`|-
 |[[requestTimeoutMs]]`@requestTimeoutMs`|`Number (long)`|+++
 Configures the amount of time in milliseconds after which if the request does not return any
  data within, _timeout transition will be returned. Setting zero or a negative value disables

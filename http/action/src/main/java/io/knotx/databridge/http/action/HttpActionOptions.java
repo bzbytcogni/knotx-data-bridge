@@ -15,6 +15,7 @@
  */
 package io.knotx.databridge.http.action;
 
+import io.knotx.fragments.handler.api.ActionExtraOptions;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClientOptions;
@@ -23,7 +24,7 @@ import io.vertx.ext.web.client.WebClientOptions;
  * HTTP Action configuration
  */
 @DataObject(generateConverter = true)
-public class HttpActionOptions {
+public class HttpActionOptions extends ActionExtraOptions {
 
   private static final long DEFAULT_REQUEST_TIMEOUT = 0L;
 
@@ -32,10 +33,12 @@ public class HttpActionOptions {
   private long requestTimeoutMs;
 
   public HttpActionOptions() {
+    super();
     init();
   }
 
   public HttpActionOptions(JsonObject json) {
+    super(json);
     init();
     HttpActionOptionsConverter.fromJson(json, this);
   }
@@ -93,6 +96,8 @@ public class HttpActionOptions {
     this.requestTimeoutMs = requestTimeoutMs;
     return this;
   }
+
+
 
   @Override
   public String toString() {
