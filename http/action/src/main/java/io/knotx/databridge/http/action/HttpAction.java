@@ -81,7 +81,7 @@ public class HttpAction implements Action {
         httpActionOptions.getWebClientOptions());
     this.endpointOptions = httpActionOptions.getEndpointOptions();
     this.actionAlias = actionAlias;
-    this.actionLogger = ActionLogger.create(actionLogMode);
+    this.actionLogger = ActionLogger.create(actionAlias, actionLogMode);
   }
 
   @Override
@@ -212,7 +212,7 @@ public class HttpAction implements Action {
 
     Fragment fragment = fragmentContext.getFragment();
     fragment.appendPayload(actionAlias, payload.toJson());
-    return Single.just(new FragmentResult(fragment, transition, actionLogger.getLog()));
+    return Single.just(new FragmentResult(fragment, transition, actionLogger.toLog()));
   }
 
   private void logActionData(EndpointRequest endpointRequest, EndpointResponse endpointResponse,
