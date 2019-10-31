@@ -30,6 +30,7 @@ public class HttpActionOptions {
   private WebClientOptions webClientOptions;
   private EndpointOptions endpointOptions;
   private long requestTimeoutMs;
+  private String actionLogLevel;
 
   public HttpActionOptions() {
     init();
@@ -74,6 +75,21 @@ public class HttpActionOptions {
    */
   public HttpActionOptions setEndpointOptions(EndpointOptions endpointOptions) {
     this.endpointOptions = endpointOptions;
+    return this;
+  }
+
+  public String getActionLogLevel() {
+    return actionLogLevel;
+  }
+
+  /**
+   * Set level of action logs.
+   *
+   * @param actionLogLevel alevel of action logs
+   * @return a reference to this, so the API can be used fluently
+   */
+  public HttpActionOptions setActionLogLevel(String actionLogLevel) {
+    this.actionLogLevel = actionLogLevel;
     return this;
   }
 

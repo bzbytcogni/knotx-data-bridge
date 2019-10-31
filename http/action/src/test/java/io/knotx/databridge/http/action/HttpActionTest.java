@@ -21,7 +21,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.matching;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static io.knotx.databridge.http.action.HttpAction.TIMEOUT_TRANSITION;
-import static io.knotx.fragments.handler.api.actionlog.ActionLogMode.ERROR;
 import static io.knotx.fragments.handler.api.domain.FragmentResult.ERROR_TRANSITION;
 import static io.knotx.fragments.handler.api.domain.FragmentResult.SUCCESS_TRANSITION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -346,7 +345,8 @@ class HttpActionTest {
     HttpAction tested = new HttpAction(vertx,
         new HttpActionOptions()
             .setEndpointOptions(endpointOptions)
-            .setRequestTimeoutMs(requestTimeoutMs), ACTION_ALIAS, ERROR);
+            .setRequestTimeoutMs(requestTimeoutMs)
+            .setActionLogLevel("error"), ACTION_ALIAS);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
@@ -370,7 +370,9 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, ERROR);
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions)
+            .setActionLogLevel("error"), ACTION_ALIAS);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
@@ -460,7 +462,9 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, ERROR);
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions)
+            .setActionLogLevel("error"), ACTION_ALIAS);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
@@ -492,7 +496,9 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, ERROR);
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions)
+            .setActionLogLevel("error"), ACTION_ALIAS);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
@@ -522,7 +528,9 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, ERROR);
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions)
+            .setActionLogLevel("error"), ACTION_ALIAS);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
@@ -552,7 +560,9 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, ERROR);
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions)
+            .setActionLogLevel("error"), ACTION_ALIAS);
 
     // then
     verifyExecution(tested, clientRequest,
@@ -586,7 +596,9 @@ class HttpActionTest {
         .setAllowedRequestHeaders(Collections.singleton("requestHeader"));
 
     return new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, ERROR);
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions)
+            .setActionLogLevel("error"), ACTION_ALIAS);
   }
 
   private HttpAction getHttpActionWithAdditionalHeaders(Vertx vertx,
@@ -604,7 +616,9 @@ class HttpActionTest {
         .setAdditionalHeaders(additionalHeaders);
 
     return new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, ERROR);
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions)
+            .setActionLogLevel("error"), ACTION_ALIAS);
   }
 
   private void verifyExecution(HttpAction tested, ClientRequest clientRequest, Fragment fragment,

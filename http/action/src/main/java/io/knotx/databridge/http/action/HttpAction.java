@@ -18,6 +18,7 @@ package io.knotx.databridge.http.action;
 import static io.netty.handler.codec.http.HttpStatusClass.CLIENT_ERROR;
 import static io.netty.handler.codec.http.HttpStatusClass.SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpStatusClass.SUCCESS;
+import static java.util.stream.Collectors.joining;
 
 import java.util.List;
 import java.util.concurrent.TimeoutException;
@@ -31,7 +32,6 @@ import io.knotx.commons.http.request.DataObjectsUtil;
 import io.knotx.commons.http.request.MultiMapCollector;
 import io.knotx.fragments.api.Fragment;
 import io.knotx.fragments.handler.api.Action;
-import io.knotx.fragments.handler.api.actionlog.ActionLogMode;
 import io.knotx.fragments.handler.api.actionlog.ActionLogger;
 import io.knotx.fragments.handler.api.domain.FragmentContext;
 import io.knotx.fragments.handler.api.domain.FragmentResult;
@@ -75,13 +75,13 @@ public class HttpAction implements Action {
   private final HttpActionOptions httpActionOptions;
   private final ActionLogger actionLogger;
 
-  HttpAction(Vertx vertx, HttpActionOptions httpActionOptions, String actionAlias, ActionLogMode actionLogMode) {
+  HttpAction(Vertx vertx, HttpActionOptions httpActionOptions, String actionAlias) {
     this.httpActionOptions = httpActionOptions;
     this.webClient = WebClient.create(io.vertx.reactivex.core.Vertx.newInstance(vertx),
         httpActionOptions.getWebClientOptions());
     this.endpointOptions = httpActionOptions.getEndpointOptions();
     this.actionAlias = actionAlias;
-    this.actionLogger = ActionLogger.create(actionAlias, actionLogMode);
+    this.actionLogger = ActionLogger.create(actionAlias, httpActionOptions.getActionLogLevel());
   }
 
   @Override
@@ -224,12 +224,19 @@ public class HttpAction implements Action {
 
   private JsonObject toDebugJson(EndpointResponse response) {
     return new JsonObject().put("statusCode", response.getStatusCode().code())
-        .put("headers", response.getHeaders());
+        .put("headers", toHeaders(response.getHeaders()));
+  }
+
+  private String toHeaders(MultiMap headers) {
+    return headers
+        .names()
+        .stream()
+        .collect(joining(","));
   }
 
   private JsonObject toDebugJson(EndpointRequest request) {
     return new JsonObject().put("path", request.getPath())
-        .put("headers", request.getHeaders());
+        .put("headers", toHeaders(request.getHeaders()));
   }
 
   private ActionRequest createActionRequest(EndpointRequest endpointRequest) {
