@@ -28,21 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.regex.Pattern;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
-
 import com.github.tomakehurst.wiremock.WireMockServer;
-
 import io.knotx.fragments.api.Fragment;
 import io.knotx.fragments.handler.api.domain.FragmentContext;
 import io.knotx.fragments.handler.api.domain.FragmentResult;
@@ -58,6 +44,17 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.MultiMap;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.regex.Pattern;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 @ExtendWith(VertxExtension.class)
 @ExtendWith(MockitoExtension.class)
@@ -65,11 +62,15 @@ import io.vertx.reactivex.core.MultiMap;
 class HttpActionTest {
 
   private static final String VALID_REQUEST_PATH = "/valid-service";
+
   private static final String VALID_JSON_RESPONSE_BODY = "{ \"data\": \"service response\"}";
+
   private static final String VALID_JSON_ARRAY_RESPONSE_BODY = "[ \"first service response\", \" second service response\"]";
+
   private static final String VALID_EMPTY_RESPONSE_BODY = "";
 
   private static final Fragment FRAGMENT = new Fragment("type", new JsonObject(), "expectedBody");
+
   private static final String ACTION_ALIAS = "httpAction";
 
   private WireMockServer wireMockServer;
@@ -323,6 +324,116 @@ class HttpActionTest {
     verifyExecution(tested, clientRequest, FRAGMENT,
         fragmentResult -> assertEquals(ERROR_TRANSITION, fragmentResult.getTransition()),
         testContext);
+  }
+
+  @Test
+  @DisplayName("Expect response body for a raw response configured action")
+  void successTransitionGivenConfiguredActionWhenResponseIsNotJson(VertxTestContext testContext,
+      Vertx vertx) throws Throwable {
+    // given, when
+    String endpointPath = "/api/non-json";
+
+    String responseBody = "<html>Hello</html>";
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(responseBody)));
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), endpointPath);
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(endpointPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions)
+            .setResponseType("raw"), ACTION_ALIAS);
+
+    // then
+    verifyExecution(tested, clientRequest, FRAGMENT,
+        fragmentResult -> {
+          assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
+          JsonObject result = fragmentResult.getFragment().getPayload().getJsonObject("_result");
+          assertNotNull(result);
+          assertEquals(new JsonObject().put("body", responseBody), result);
+        }, testContext);
+  }
+
+  @Test
+  @DisplayName("Expect response metadata transition for a raw response configured action")
+  void validMetadataGivenConfiguredActionWhenResponseHasMetadata(VertxTestContext testContext,
+      Vertx vertx) throws Throwable {
+    // given, when
+    String endpointPath = "/api/non-json";
+
+    String responseBody = "<html>Hello</html>";
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(responseBody)
+            .withHeader("Content-Type", "text/html;charset=utf-8")));
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), endpointPath);
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(endpointPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions)
+            .setResponseType("raw"), ACTION_ALIAS);
+
+    // then
+    verifyExecution(tested, clientRequest, FRAGMENT,
+        fragmentResult -> {
+          assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
+          JsonObject result = fragmentResult.getFragment().getPayload().getJsonObject("_result");
+          assertNotNull(result);
+          assertEquals(new JsonObject().put("body", responseBody)
+              .put("contentType", "text/html")
+              .put("encoding", "UTF-8"), result);
+        }, testContext);
+  }
+
+  @Test
+  @DisplayName("Expect partial metadata transition for a raw response configured action")
+  void partialMetadataGivenConfiguredActionWhenResponseHasMetadata(VertxTestContext testContext,
+      Vertx vertx) throws Throwable {
+    // given, when
+    String endpointPath = "/api/non-json";
+
+    String responseBody = "<html>Hello</html>";
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(responseBody)
+            .withHeader("Content-Type", "text/html")));
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), endpointPath);
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(endpointPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions)
+            .setResponseType("raw"), ACTION_ALIAS);
+
+    // then
+    verifyExecution(tested, clientRequest, FRAGMENT,
+        fragmentResult -> {
+          assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
+          JsonObject result = fragmentResult.getFragment().getPayload().getJsonObject("_result");
+          assertNotNull(result);
+          assertEquals(new JsonObject().put("body", responseBody)
+              .put("contentType", "text/html"), result);
+        }, testContext);
   }
 
   @Test
