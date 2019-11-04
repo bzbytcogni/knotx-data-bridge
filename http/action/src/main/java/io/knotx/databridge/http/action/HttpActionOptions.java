@@ -30,6 +30,7 @@ public class HttpActionOptions {
   private WebClientOptions webClientOptions;
   private EndpointOptions endpointOptions;
   private long requestTimeoutMs;
+  private String responseType = "json";
 
   public HttpActionOptions() {
     init();
@@ -91,6 +92,44 @@ public class HttpActionOptions {
    */
   public HttpActionOptions setRequestTimeoutMs(long requestTimeoutMs) {
     this.requestTimeoutMs = requestTimeoutMs;
+    return this;
+  }
+
+  public String getResponseType() {
+    return responseType;
+  }
+
+  /**
+   * Configures the expected type of response the endpoint will return. Currently supported:
+   *<ul>
+   *   <li>
+   *     {@code json}
+   *     <p>
+   *       The response is appended to `_response` key of action's payload as parsed {@link JsonObject JsonObject}/{@link io.vertx.core.json.JsonArray JsonArray}.
+   *     </p>
+   *   </li>
+   *   <li>
+   *     {@code raw}
+   *     <p>
+   *       The response is appended to `_response` key of action's payload as a {@link JsonObject JsonObject} in the following format:
+   *       <pre>
+   *         {
+   *           "body": "<i>raw response body of the endpoint</i>",
+   *           "contentType": "<i>{@code Content-Type} header value (if any)</i>",
+   *           "encoding": "<i>encoding of the body (if could be determined)</i>
+   *         }
+   *       </pre>
+   *     </p>
+   *   </li>
+   *</ul>
+   *
+   * By default it is set to {@code json}.
+   *
+   * @param responseType - expected response type
+   * @return a reference to this, so the API can be used fluently
+   */
+  public HttpActionOptions setResponseType(String responseType) {
+    this.responseType = responseType;
     return this;
   }
 
