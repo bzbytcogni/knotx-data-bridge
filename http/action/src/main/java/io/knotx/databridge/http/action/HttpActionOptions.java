@@ -29,6 +29,7 @@ public class HttpActionOptions {
 
   private WebClientOptions webClientOptions;
   private EndpointOptions endpointOptions;
+  private ResponseOptions responseOptions;
   private long requestTimeoutMs;
   private String responseType = "json";
 
@@ -78,6 +79,15 @@ public class HttpActionOptions {
     return this;
   }
 
+  public ResponseOptions getResponseOptions() {
+    return responseOptions;
+  }
+
+  public HttpActionOptions setResponseOptions(ResponseOptions responseOptions) {
+    this.responseOptions = responseOptions;
+    return this;
+  }
+
   public long getRequestTimeoutMs() {
     return requestTimeoutMs;
   }
@@ -101,7 +111,7 @@ public class HttpActionOptions {
 
   /**
    * Configures the expected type of response the endpoint will return. Currently supported:
-   *<ul>
+   * <ul>
    *   <li>
    *     {@code json}
    *     <p>
@@ -121,8 +131,8 @@ public class HttpActionOptions {
    *       </pre>
    *     </p>
    *   </li>
-   *</ul>
-   *
+   * </ul>
+   * <p>
    * By default it is set to {@code json}.
    *
    * @param responseType - expected response type
@@ -138,6 +148,7 @@ public class HttpActionOptions {
     return "HttpActionOptions{" +
         "webClientOptions=" + webClientOptions +
         ", endpointOptions=" + endpointOptions +
+        ", responseOptions=" + responseOptions +
         ", requestTimeoutMs=" + requestTimeoutMs +
         '}';
   }
