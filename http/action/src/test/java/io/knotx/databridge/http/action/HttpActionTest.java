@@ -355,7 +355,8 @@ class HttpActionTest {
     verifyExecution(tested, clientRequest, FRAGMENT,
         fragmentResult -> {
           assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
-          JsonObject result = fragmentResult.getFragment().getPayload().getJsonObject("_result");
+          JsonObject result = fragmentResult.getFragment().getPayload()
+              .getJsonObject("httpAction").getJsonObject("_result");
           assertNotNull(result);
           assertEquals(new JsonObject().put("body", responseBody), result);
         }, testContext);
@@ -391,7 +392,8 @@ class HttpActionTest {
     verifyExecution(tested, clientRequest, FRAGMENT,
         fragmentResult -> {
           assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
-          JsonObject result = fragmentResult.getFragment().getPayload().getJsonObject("_result");
+          JsonObject result = fragmentResult.getFragment().getPayload()
+              .getJsonObject("httpAction").getJsonObject("_result");
           assertNotNull(result);
           assertEquals(new JsonObject().put("body", responseBody)
               .put("contentType", "text/html")
@@ -429,7 +431,8 @@ class HttpActionTest {
     verifyExecution(tested, clientRequest, FRAGMENT,
         fragmentResult -> {
           assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
-          JsonObject result = fragmentResult.getFragment().getPayload().getJsonObject("_result");
+          JsonObject result = fragmentResult.getFragment().getPayload()
+              .getJsonObject("httpAction").getJsonObject("_result");
           assertNotNull(result);
           assertEquals(new JsonObject().put("body", responseBody)
               .put("contentType", "text/html"), result);
