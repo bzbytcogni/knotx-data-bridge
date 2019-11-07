@@ -23,10 +23,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import static io.knotx.databridge.http.action.HttpAction.TIMEOUT_TRANSITION;
 import static io.knotx.fragments.handler.api.domain.FragmentResult.ERROR_TRANSITION;
 import static io.knotx.fragments.handler.api.domain.FragmentResult.SUCCESS_TRANSITION;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.knotx.fragments.api.Fragment;
@@ -39,12 +36,15 @@ import io.knotx.fragments.handler.api.domain.payload.ActionResponseError;
 import io.knotx.server.api.context.ClientRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.MultiMap;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
@@ -438,6 +438,225 @@ class HttpActionTest {
               .put("contentType", "text/html"), result);
         }, testContext);
   }
+
+  @Test
+  @DisplayName("Expect proper JSON body when header Content-Type equal to application/json is given")
+  void jsonBodyGivenWithApplicationJsonContentTypeHeader(VertxTestContext testContext, Vertx vertx) throws Throwable {
+    String endpointPath = "/api/valid-application-json";
+    String responseBody = "{\n" +
+        "  \"id\": 21762532,\n" +
+        "  \"url\": \"http://knotx.io\",\n" +
+        "  \"label\": \"Product\"\n" +
+        "}";
+    Set<String> predicates = new HashSet<>();
+    predicates.add("JSON");
+
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+       .willReturn(aResponse().withBody(responseBody)
+           .withHeader("Content-Type", "application/json")));
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), endpointPath);
+
+    EndpointOptions endpointOptions = new EndpointOptions();
+    endpointOptions.setPath(endpointPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    ResponseOptions responseOptions = new ResponseOptions()
+        .setPredicates(predicates)
+        .setForceJson(false);
+
+    HttpActionOptions options = new HttpActionOptions()
+        .setEndpointOptions(endpointOptions)
+        .setResponseOptions(responseOptions);
+    HttpAction tested = new HttpAction(vertx, options, ACTION_ALIAS);
+
+    verifyExecution(tested, clientRequest, FRAGMENT,
+        fragmentResult -> {
+          assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
+          JsonObject result = fragmentResult.getFragment().getPayload()
+              .getJsonObject("httpAction").getJsonObject("_result");
+          assertNotNull(result);
+          assertEquals(new JsonObject()
+              .put("id", 21762532)
+              .put("url", "http://knotx.io")
+              .put("label", "Product"), result);
+        }, testContext);
+  }
+
+  @Test
+  @DisplayName("Error expected when invalid JSON body provided when application/json in Content-Type header is given")
+  void invalidJsonBodyGivenWithApplicationJsonContentTypeHeader(VertxTestContext testContext, Vertx vertx) throws Throwable {
+    String endpointPath = "/api/invalid-json-json-header";
+    String responseBody = "{\n" +
+        "  id: 21762532,\n" +
+        "  \"url\": \"http://knotx.io\",\n" +
+        "  \"label\": \"Product\"\n";
+    Set<String> predicates = new HashSet<>();
+    predicates.add("JSON");
+
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(responseBody)
+            .withHeader("Content-Type", "application/json")));
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), endpointPath);
+
+    EndpointOptions endpointOptions = new EndpointOptions();
+    endpointOptions.setPath(endpointPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    ResponseOptions responseOptions = new ResponseOptions()
+        .setPredicates(predicates)
+        .setForceJson(false);
+
+    HttpActionOptions options = new HttpActionOptions()
+        .setEndpointOptions(endpointOptions)
+        .setResponseOptions(responseOptions);
+    HttpAction tested = new HttpAction(vertx, options, ACTION_ALIAS);
+
+    verifyExecution(tested, clientRequest, FRAGMENT,
+        fragmentResult -> {
+          assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
+        }, testContext);
+  }
+
+  @Test
+  @DisplayName("Expected error transition when Content-Type not equal to application/json and forceJson set to true")
+  void shouldFailWhenJsonForceAndInvalidJsonBodyAndNoApplicationJson(VertxTestContext testContext, Vertx vertx) throws Throwable {
+    String endpointPath = "/api/invalid-json-force-json";
+    String responseBody = "{\n" +
+        "  id: 21762532,\n" +
+        "  \"url\": \"http://knotx.io\",\n" +
+        "  \"label\": \"Product\"\n";
+    Set<String> predicates = new HashSet<>();
+    predicates.add("JSON");
+
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(responseBody)
+            .withHeader("Content-Type", "text/html")));
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), endpointPath);
+
+    EndpointOptions endpointOptions = new EndpointOptions();
+    endpointOptions.setPath(endpointPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    ResponseOptions responseOptions = new ResponseOptions()
+        .setPredicates(predicates)
+        .setForceJson(true);
+
+    HttpActionOptions options = new HttpActionOptions()
+        .setEndpointOptions(endpointOptions)
+        .setResponseOptions(responseOptions);
+    HttpAction tested = new HttpAction(vertx, options, ACTION_ALIAS);
+
+    verifyExecution(tested, clientRequest, FRAGMENT,
+        fragmentResult -> {
+          assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
+        }, testContext);
+  }
+
+  @Test
+  @DisplayName("Expected error transition when Content-Type not equal to application/json and JSON response predicate provided")
+  void errorTransitionWhenJsonExpectedAndContentTypeNotEqualToApplicationJson(VertxTestContext testContext, Vertx vertx)
+      throws Throwable {
+    String endpointPath = "/api/not-application-json";
+    String responseBody = "{\n" +
+        "  \"id\": 21762532,\n" +
+        "  \"url\": \"http://knotx.io\",\n" +
+        "  \"label\": \"Product\"\n" +
+        "}";
+    Set<String> predicates = new HashSet<>();
+    predicates.add("JSON");
+
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(responseBody)
+            .withHeader("Content-Type", "text/html")));
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), endpointPath);
+
+    EndpointOptions endpointOptions = new EndpointOptions();
+    endpointOptions.setPath(endpointPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    ResponseOptions responseOptions = new ResponseOptions()
+        .setPredicates(predicates)
+        .setForceJson(false);
+
+    HttpActionOptions options = new HttpActionOptions()
+        .setEndpointOptions(endpointOptions)
+        .setResponseOptions(responseOptions);
+    HttpAction tested = new HttpAction(vertx, options, ACTION_ALIAS);
+
+    verifyExecution(tested, clientRequest, FRAGMENT,
+        fragmentResult -> {
+          assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
+        }, testContext);
+
+  }
+
+  @Test
+  @DisplayName("Expected valid JSON response when JSON response predicate given and forceJson set to true")
+  void validJsonResponseWhenForceJsonAndNoContentType(VertxTestContext testContext, Vertx vertx) throws Throwable {
+    String endpointPath = "/api/not-application-json";
+    String responseBody = "{\n" +
+        "  \"id\": 21762532,\n" +
+        "  \"url\": \"http://knotx.io\",\n" +
+        "  \"label\": \"Product\"\n" +
+        "}";
+    Set<String> predicates = new HashSet<>();
+    predicates.add("JSON");
+
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(responseBody)
+            .withHeader("Content-Type", "text/html")));
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), endpointPath);
+
+    EndpointOptions endpointOptions = new EndpointOptions();
+    endpointOptions.setPath(endpointPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    ResponseOptions responseOptions = new ResponseOptions()
+        .setPredicates(predicates)
+        .setForceJson(true);
+
+    HttpActionOptions options = new HttpActionOptions()
+        .setEndpointOptions(endpointOptions)
+        .setResponseOptions(responseOptions);
+    HttpAction tested = new HttpAction(vertx, options, ACTION_ALIAS);
+
+    verifyExecution(tested, clientRequest, FRAGMENT,
+        fragmentResult -> {
+          assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
+          JsonObject result = fragmentResult.getFragment().getPayload()
+              .getJsonObject("httpAction").getJsonObject("_result");
+          assertNotNull(result);
+          assertEquals(new JsonObject()
+              .put("id", 21762532)
+              .put("url", "http://knotx.io")
+              .put("label", "Product"), result);
+        }, testContext);
+  }
+
+  //todo proper json when no response predicates provided - by default as json
+  //todo treat as json when forceJson set to true and no response predicate provided - proper json given
+  //todo invalid json when forceJson set to true
+  //todo treat as raw text when no response predicates provided
 
   @Test
   @DisplayName("Expect error transition when endpoint times out")
