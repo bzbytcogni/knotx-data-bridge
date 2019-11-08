@@ -15,16 +15,6 @@
  */
 package io.knotx.databridge.http.action;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.matching;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
-import static io.knotx.databridge.http.action.HttpAction.TIMEOUT_TRANSITION;
-import static io.knotx.fragments.handler.api.domain.FragmentResult.ERROR_TRANSITION;
-import static io.knotx.fragments.handler.api.domain.FragmentResult.SUCCESS_TRANSITION;
-import static org.junit.jupiter.api.Assertions.*;
-
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.knotx.fragments.api.Fragment;
 import io.knotx.fragments.handler.api.domain.FragmentContext;
@@ -42,6 +32,14 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.MultiMap;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -49,15 +47,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
-import org.junit.Rule;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.rules.ExpectedException;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static io.knotx.databridge.http.action.HttpAction.TIMEOUT_TRANSITION;
+import static io.knotx.fragments.handler.api.domain.FragmentResult.ERROR_TRANSITION;
+import static io.knotx.fragments.handler.api.domain.FragmentResult.SUCCESS_TRANSITION;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(VertxExtension.class)
 @ExtendWith(MockitoExtension.class)
@@ -137,7 +132,7 @@ class HttpActionTest {
               .getJsonObject(ACTION_ALIAS));
       assertTrue(payload.getResponse()
           .isSuccess());
-      assertEquals(new JsonObject(VALID_JSON_RESPONSE_BODY), payload.getResult());
+      assertEquals(VALID_JSON_RESPONSE_BODY, payload.getResult());
     }, testContext);
   }
 
@@ -159,7 +154,7 @@ class HttpActionTest {
               .getJsonObject(ACTION_ALIAS));
       assertTrue(payload.getResponse()
           .isSuccess());
-      assertEquals(new JsonArray(VALID_JSON_ARRAY_RESPONSE_BODY), payload.getResult());
+      assertEquals(VALID_JSON_ARRAY_RESPONSE_BODY, payload.getResult());
     }, testContext);
   }
 
@@ -325,7 +320,7 @@ class HttpActionTest {
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
-        fragmentResult -> assertEquals(ERROR_TRANSITION, fragmentResult.getTransition()),
+        fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
 
@@ -530,10 +525,9 @@ class HttpActionTest {
         .setResponseOptions(responseOptions);
     HttpAction tested = new HttpAction(vertx, options, ACTION_ALIAS);
 
-    verifyExecution(tested, clientRequest, FRAGMENT,
-        fragmentResult -> {
-          assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
-        }, testContext);
+    assertThrows(ReplyException.class, () -> {
+      verifyExecution(tested, clientRequest, FRAGMENT, null, testContext);
+    });
 
   }
 

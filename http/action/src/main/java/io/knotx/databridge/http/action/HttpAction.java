@@ -15,6 +15,7 @@
  */
 package io.knotx.databridge.http.action;
 
+import com.sun.org.apache.bcel.internal.generic.ARETURN;
 import io.knotx.commons.http.request.AllowedHeadersFilter;
 import io.knotx.commons.http.request.DataObjectsUtil;
 import io.knotx.commons.http.request.MultiMapCollector;
@@ -51,6 +52,7 @@ import io.vertx.reactivex.ext.web.client.WebClient;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.sql.Struct;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
@@ -123,7 +125,7 @@ public class HttpAction implements Action {
         .timeout(httpActionOptions.getRequestTimeoutMs());
 
     ResponsePredicate noApplicationJson = ResponsePredicate.create(ResponsePredicate.JSON, result -> {
-      return new ReplyException(ReplyFailure.RECIPIENT_FAILURE, result.message());
+      throw new ReplyException(ReplyFailure.RECIPIENT_FAILURE, result.message());
     });
 
     if (httpActionOptions.getResponseOptions().getPredicates().contains(JSON) &&
@@ -244,11 +246,22 @@ public class HttpAction implements Action {
   }
 
   private ActionPayload handleSuccessResponse(EndpointResponse response, ActionRequest request) {
-    if (httpActionOptions.getResponseOptions().isForceJson()) {
+    if (httpActionOptions.getResponseOptions().isForceJson() ||
+        httpActionOptions.getResponseOptions().getPredicates().contains(JSON)) {
+      return ActionPayload.success(request, bodyToJson(response.getBody().toString()));
+    } else if (isApplicationJsonGiven(response)) {
       return ActionPayload.success(request, bodyToJson(response.getBody().toString()));
     } else {
       return ActionPayload.success(request, response.getBody().toString());
     }
+  }
+
+  private boolean isApplicationJsonGiven(EndpointResponse endpointResponse) {
+    String contentType = endpointResponse.getHeaders().get("Content-Type");
+    if (contentType != null) {
+      return contentType.contains("application/json");
+    }
+    return false;
   }
 
   private Object bodyToJson(String responseBody) {
