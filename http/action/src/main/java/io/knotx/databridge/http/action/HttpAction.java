@@ -15,17 +15,6 @@
  */
 package io.knotx.databridge.http.action;
 
-import static io.netty.handler.codec.http.HttpStatusClass.CLIENT_ERROR;
-import static io.netty.handler.codec.http.HttpStatusClass.SERVER_ERROR;
-import static io.netty.handler.codec.http.HttpStatusClass.SUCCESS;
-
-import java.util.List;
-import java.util.concurrent.TimeoutException;
-import java.util.regex.Pattern;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
-
 import io.knotx.commons.http.request.AllowedHeadersFilter;
 import io.knotx.commons.http.request.DataObjectsUtil;
 import io.knotx.commons.http.request.MultiMapCollector;
@@ -45,17 +34,29 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.ReplyException;
+import io.vertx.core.eventbus.ReplyFailure;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.client.HttpRequest;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
+
+import static io.netty.handler.codec.http.HttpStatusClass.*;
 
 public class HttpAction implements Action {
 
@@ -66,6 +67,8 @@ public class HttpAction implements Action {
   private static final String METADATA_STATUS_CODE_KEY = "statusCode";
   private static final String PLACEHOLDER_PREFIX_PAYLOAD = "payload";
   private static final String PLACEHOLDER_PREFIX_CONFIG = "config";
+  private static final String DEFAULT_RESPONSE_TYPE = "json";
+  private static final String JSON = "JSON";
 
   private final EndpointOptions endpointOptions;
   private final WebClient webClient;
@@ -118,6 +121,15 @@ public class HttpAction implements Action {
         .request(HttpMethod.GET, endpointOptions.getPort(), endpointOptions.getDomain(),
             endpointRequest.getPath())
         .timeout(httpActionOptions.getRequestTimeoutMs());
+
+    ResponsePredicate noApplicationJson = ResponsePredicate.create(ResponsePredicate.JSON, result -> {
+      return new ReplyException(ReplyFailure.RECIPIENT_FAILURE, result.message());
+    });
+
+    if (httpActionOptions.getResponseOptions().getPredicates().contains(JSON) &&
+        !httpActionOptions.getResponseOptions().isForceJson()) {
+      request.expect(io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate.newInstance(noApplicationJson));
+    }
 
     endpointRequest.getHeaders().entries()
         .forEach(entry -> request.putHeader(entry.getKey(), entry.getValue()));
@@ -232,7 +244,11 @@ public class HttpAction implements Action {
   }
 
   private ActionPayload handleSuccessResponse(EndpointResponse response, ActionRequest request) {
-    return ActionPayload.success(request, bodyToJson(response.getBody().toString()));
+    if (httpActionOptions.getResponseOptions().isForceJson()) {
+      return ActionPayload.success(request, bodyToJson(response.getBody().toString()));
+    } else {
+      return ActionPayload.success(request, response.getBody().toString());
+    }
   }
 
   private Object bodyToJson(String responseBody) {

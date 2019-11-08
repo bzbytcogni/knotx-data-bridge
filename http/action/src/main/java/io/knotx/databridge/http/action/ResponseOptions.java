@@ -28,6 +28,7 @@ public class ResponseOptions {
   private boolean forceJson;
 
   public ResponseOptions() {
+    this.predicates = new HashSet<>();
   }
 
   public ResponseOptions(ResponseOptions other) {
