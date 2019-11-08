@@ -15,7 +15,6 @@
  */
 package io.knotx.databridge.http.action;
 
-import com.sun.org.apache.bcel.internal.generic.ARETURN;
 import io.knotx.commons.http.request.AllowedHeadersFilter;
 import io.knotx.commons.http.request.DataObjectsUtil;
 import io.knotx.commons.http.request.MultiMapCollector;
@@ -52,9 +51,7 @@ import io.vertx.reactivex.ext.web.client.WebClient;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.sql.Struct;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 

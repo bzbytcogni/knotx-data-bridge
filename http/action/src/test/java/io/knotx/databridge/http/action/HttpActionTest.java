@@ -320,7 +320,7 @@ class HttpActionTest {
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
-        fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
+        fragmentResult -> assertEquals(ERROR_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
 
