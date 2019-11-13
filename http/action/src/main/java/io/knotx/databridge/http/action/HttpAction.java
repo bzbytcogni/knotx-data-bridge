@@ -51,7 +51,9 @@ import io.vertx.reactivex.ext.web.client.WebClient;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
@@ -124,16 +126,35 @@ public class HttpAction implements Action {
     ResponsePredicate noApplicationJson = ResponsePredicate.create(ResponsePredicate.JSON, result -> {
       throw new ReplyException(ReplyFailure.RECIPIENT_FAILURE, result.message());
     });
-
     if (httpActionOptions.getResponseOptions().getPredicates().contains(JSON) &&
         !httpActionOptions.getResponseOptions().isForceJson()) {
       request.expect(io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate.newInstance(noApplicationJson));
     }
-
+    attachResponsePredicatesToRequest(request, httpActionOptions.getResponseOptions().getPredicates());
     endpointRequest.getHeaders().entries()
         .forEach(entry -> request.putHeader(entry.getKey(), entry.getValue()));
 
     return request.rxSend();
+  }
+
+  private void attachResponsePredicatesToRequest(HttpRequest<Buffer> request, Set<String> predicates) {
+    predicates.forEach(predicate -> {
+      if (!JSON.equals(predicate)) {
+        request.expect(getResponsePredicateByName(predicate));
+      }
+    });
+  }
+
+  private io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate getResponsePredicateByName(String predicateName) {
+    Class predicateClass = io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate.class;
+    io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate responsePredicate = null;
+    try {
+      Field predicateField = predicateClass.getField(predicateName);
+      responsePredicate = (io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate) predicateField.get(this);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      LOGGER.error("Cannot access ResponsePredicate identified by: {}", predicateName);
+    }
+    return responsePredicate;
   }
 
   private EndpointRequest buildRequest(FragmentContext context) {
