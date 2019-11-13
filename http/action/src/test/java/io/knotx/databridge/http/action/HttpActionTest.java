@@ -309,22 +309,6 @@ class HttpActionTest {
   }
 
   @Test
-  @DisplayName("Expect error transition when endpoint returned not valid JSON")
-  void errorTransitionWhenResponseIsNotJson(VertxTestContext testContext,
-      Vertx vertx) throws Throwable {
-    // given, when
-    HttpAction tested = successAction(vertx, "<html>Hello</html>");
-    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
-        MultiMap.caseInsensitiveMultiMap()
-            .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
-
-    // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
-        fragmentResult -> assertEquals(ERROR_TRANSITION, fragmentResult.getTransition()),
-        testContext);
-  }
-
-  @Test
   @DisplayName("Expect response body for a raw response configured action")
   void successTransitionGivenConfiguredActionWhenResponseIsNotJson(VertxTestContext testContext,
       Vertx vertx) throws Throwable {
