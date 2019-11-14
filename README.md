@@ -1,4 +1,6 @@
 [![Build Status](https://dev.azure.com/knotx/Knotx/_apis/build/status/Knotx.knotx-data-bridge?branchName=master)](https://dev.azure.com/knotx/Knotx/_build/latest?definitionId=11&branchName=master)
+[![CodeFactor](https://www.codefactor.io/repository/github/knotx/knotx-template-engine/badge)](https://www.codefactor.io/repository/github/knotx/knotx-template-engine)
+[![codecov](https://codecov.io/gh/Knotx/knotx-data-bridge/branch/master/graph/badge.svg)](https://codecov.io/gh/Knotx/knotx-data-bridge)
 
 # Knot.x Data Bridge
 Data Bridge module contains [**Actions**](https://github.com/Knotx/knotx-fragments/tree/master/handler/api#action)
