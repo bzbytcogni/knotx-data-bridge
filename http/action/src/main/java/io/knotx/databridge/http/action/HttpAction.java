@@ -68,7 +68,6 @@ public class HttpAction implements Action {
   private static final String METADATA_STATUS_CODE_KEY = "statusCode";
   private static final String PLACEHOLDER_PREFIX_PAYLOAD = "payload";
   private static final String PLACEHOLDER_PREFIX_CONFIG = "config";
-  private static final String DEFAULT_RESPONSE_TYPE = "json";
   private static final String JSON = "JSON";
 
   private final EndpointOptions endpointOptions;
