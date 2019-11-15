@@ -126,8 +126,7 @@ public class HttpAction implements Action {
     ResponsePredicate noApplicationJson = ResponsePredicate.create(ResponsePredicate.JSON, result -> {
       throw new ReplyException(ReplyFailure.RECIPIENT_FAILURE, result.message());
     });
-    if (httpActionOptions.getResponseOptions().getPredicates().contains(JSON) &&
-        !httpActionOptions.getResponseOptions().isForceJson()) {
+    if (httpActionOptions.getResponseOptions().getPredicates().contains(JSON)) {
       request.expect(io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate.newInstance(noApplicationJson));
     }
     attachResponsePredicatesToRequest(request, httpActionOptions.getResponseOptions().getPredicates());

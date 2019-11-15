@@ -15,6 +15,20 @@
  */
 package io.knotx.databridge.http.action;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.matching;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static io.knotx.databridge.http.action.HttpAction.TIMEOUT_TRANSITION;
+import static io.knotx.fragments.handler.api.domain.FragmentResult.ERROR_TRANSITION;
+import static io.knotx.fragments.handler.api.domain.FragmentResult.SUCCESS_TRANSITION;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.knotx.fragments.api.Fragment;
 import io.knotx.fragments.handler.api.domain.FragmentContext;
@@ -25,6 +39,7 @@ import io.knotx.fragments.handler.api.domain.payload.ActionResponse;
 import io.knotx.fragments.handler.api.domain.payload.ActionResponseError;
 import io.knotx.server.api.context.ClientRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.reactivex.exceptions.CompositeException;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.json.JsonArray;
@@ -32,27 +47,24 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.MultiMap;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
-
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
-
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
-import static io.knotx.databridge.http.action.HttpAction.TIMEOUT_TRANSITION;
-import static io.knotx.fragments.handler.api.domain.FragmentResult.ERROR_TRANSITION;
-import static io.knotx.fragments.handler.api.domain.FragmentResult.SUCCESS_TRANSITION;
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 @ExtendWith(VertxExtension.class)
 @ExtendWith(MockitoExtension.class)
@@ -71,7 +83,52 @@ class HttpActionTest {
 
   private static final String ACTION_ALIAS = "httpAction";
 
+  private static final String JSON_BODY = "{\n" +
+      "  \"id\": 21762532,\n" +
+      "  \"url\": \"http://knotx.io\",\n" +
+      "  \"label\": \"Product\"\n" +
+      "}";
+
+  private static final String RAW_BODY = "<html>Hello</html>";
+
+  private static final String APPLICATION_JSON = "application/json";
+
+  private static final String APPLICATION_TEXT = "application/text";
+
+  private static final String JSON = "JSON";
+
   private WireMockServer wireMockServer;
+
+  private static final VertxTestContext TEST_CONTEXT = new VertxTestContext();
+
+  public static Stream<Arguments> dataExpectSuccessTransitionAndJsonBody() { //todo combine both succeeding test cases into one
+    return Stream.of( //Content-Type, forceJson, JSON predicate, Body, VertxTestContext
+        Arguments.of(APPLICATION_JSON, false, null, JSON_BODY),
+        Arguments.of(APPLICATION_TEXT, true, null, JSON_BODY),
+        Arguments.of(APPLICATION_JSON, false, JSON, JSON_BODY)
+    );
+  }
+
+  public static Stream<Arguments> dataExpectSuccessTransitionAndTextBody() {
+    return Stream.of( //Content-Type, forceJson, JSON predicate, Body
+        Arguments.of(APPLICATION_TEXT, false, null, JSON_BODY)
+    );
+  }
+
+  public static Stream<Arguments> dataExpectErrorTransitionAndNullBody() {
+    return Stream.of( //Content-Type, forceJson, JSON predicate, Body
+        Arguments.of(APPLICATION_JSON, false, null, RAW_BODY),
+        Arguments.of(APPLICATION_TEXT, true, null, RAW_BODY),
+        Arguments.of(APPLICATION_JSON, false, JSON, RAW_BODY)
+    );
+  }
+
+  public static Stream<Arguments> dataExpectExceptionAndNullBody() {
+    return Stream.of(
+        Arguments.of(APPLICATION_TEXT, false, JSON, JSON_BODY),
+        Arguments.of(APPLICATION_TEXT, true, JSON, JSON_BODY)
+    );
+  }
 
   @BeforeEach
   void setUp() {
@@ -308,17 +365,17 @@ class HttpActionTest {
         testContext);
   }
 
-  @Test
-  @DisplayName("Expect response body for a raw response configured action")
-  void successTransitionGivenConfiguredActionWhenResponseIsNotJson(VertxTestContext testContext,
-      Vertx vertx) throws Throwable {
-    // given, when
-    String endpointPath = "/api/non-json";
+  @ParameterizedTest(name = "Expect success transition and response as JSON")
+  @MethodSource("dataExpectSuccessTransitionAndJsonBody")
+  void testSuccessTransitionsExpectedAndResponseAsJson(String contentType, boolean forceJson,
+      String jsonPredicate, String responseBody, VertxTestContext testContext, Vertx vertx)
+      throws Throwable {
+    String endpointPath = "/api/success-json";
     Set<String> predicates = new HashSet<>();
 
-    String responseBody = "<html>Hello</html>";
     wireMockServer.stubFor(get(urlEqualTo(endpointPath))
-        .willReturn(aResponse().withBody(responseBody)));
+        .willReturn(aResponse().withBody(responseBody)
+            .withHeader("Content-Type", contentType)));
 
     ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
         MultiMap.caseInsensitiveMultiMap(), endpointPath);
@@ -329,237 +386,144 @@ class HttpActionTest {
         .setPort(wireMockServer.port())
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
+    Optional.ofNullable(jsonPredicate).ifPresent(predicates::add);
     ResponseOptions responseOptions = new ResponseOptions()
-        .setPredicates(predicates);
+        .setPredicates(predicates)
+        .setForceJson(forceJson);
 
     HttpAction tested = new HttpAction(vertx,
         new HttpActionOptions()
             .setEndpointOptions(endpointOptions)
-            .setResponseOptions(responseOptions)
-            .setResponseType("raw"), ACTION_ALIAS);
+            .setResponseOptions(responseOptions),
+        ACTION_ALIAS);
 
-    // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
-        fragmentResult -> {
-          assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
-          String result = fragmentResult.getFragment().getPayload()
-              .getJsonObject("httpAction").getString("_result");
-          assertNotNull(result);
-          assertEquals(responseBody, result);
-        }, testContext);
+    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+      assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
+      JsonObject result = fragmentResult.getFragment().getPayload()
+          .getJsonObject("httpAction").getJsonObject("_result");
+      assertEquals(new JsonObject()
+          .put("id", 21762532)
+          .put("url", "http://knotx.io")
+          .put("label", "Product"), result);
+    }, testContext);
   }
 
-  @Test
-  @DisplayName("Expect proper JSON body when header Content-Type equal to application/json is given")
-  void jsonBodyGivenWithApplicationJsonContentTypeHeader(VertxTestContext testContext, Vertx vertx) throws Throwable {
-    String endpointPath = "/api/valid-application-json";
-    String responseBody = "{\n" +
-        "  \"id\": 21762532,\n" +
-        "  \"url\": \"http://knotx.io\",\n" +
-        "  \"label\": \"Product\"\n" +
-        "}";
-    Set<String> predicates = new HashSet<>();
-    predicates.add("JSON");
-
-    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
-       .willReturn(aResponse().withBody(responseBody)
-           .withHeader("Content-Type", "application/json")));
-
-    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
-        MultiMap.caseInsensitiveMultiMap(), endpointPath);
-
-    EndpointOptions endpointOptions = new EndpointOptions();
-    endpointOptions.setPath(endpointPath)
-        .setDomain("localhost")
-        .setPort(wireMockServer.port())
-        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
-
-    ResponseOptions responseOptions = new ResponseOptions()
-        .setPredicates(predicates)
-        .setForceJson(false);
-
-    HttpActionOptions options = new HttpActionOptions()
-        .setEndpointOptions(endpointOptions)
-        .setResponseOptions(responseOptions);
-    HttpAction tested = new HttpAction(vertx, options, ACTION_ALIAS);
-
-    verifyExecution(tested, clientRequest, FRAGMENT,
-        fragmentResult -> {
-          assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
-          JsonObject result = fragmentResult.getFragment().getPayload()
-              .getJsonObject("httpAction").getJsonObject("_result");
-          assertNotNull(result);
-          assertEquals(new JsonObject()
-              .put("id", 21762532)
-              .put("url", "http://knotx.io")
-              .put("label", "Product"), result);
-        }, testContext);
-  }
-
-  @Test
-  @DisplayName("Error expected when invalid JSON body provided when application/json in Content-Type header is given")
-  void invalidJsonBodyGivenWithApplicationJsonContentTypeHeader(VertxTestContext testContext, Vertx vertx) throws Throwable {
-    String endpointPath = "/api/invalid-json-json-header";
-    String responseBody = "{\n" +
-        "  id: 21762532,\n" +
-        "  \"url\": \"http://knotx.io\",\n" +
-        "  \"label\": \"Product\"\n";
-    Set<String> predicates = new HashSet<>();
-    predicates.add("JSON");
-
-    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
-        .willReturn(aResponse().withBody(responseBody)
-            .withHeader("Content-Type", "application/json")));
-
-    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
-        MultiMap.caseInsensitiveMultiMap(), endpointPath);
-
-    EndpointOptions endpointOptions = new EndpointOptions();
-    endpointOptions.setPath(endpointPath)
-        .setDomain("localhost")
-        .setPort(wireMockServer.port())
-        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
-
-    ResponseOptions responseOptions = new ResponseOptions()
-        .setPredicates(predicates)
-        .setForceJson(false);
-
-    HttpActionOptions options = new HttpActionOptions()
-        .setEndpointOptions(endpointOptions)
-        .setResponseOptions(responseOptions);
-    HttpAction tested = new HttpAction(vertx, options, ACTION_ALIAS);
-
-    verifyExecution(tested, clientRequest, FRAGMENT,
-        fragmentResult -> {
-          assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
-        }, testContext);
-  }
-
-  @Test
-  @DisplayName("Expected error transition when Content-Type not equal to application/json and forceJson set to true")
-  void shouldFailWhenJsonForceAndInvalidJsonBodyAndNoApplicationJson(VertxTestContext testContext, Vertx vertx) throws Throwable {
-    String endpointPath = "/api/invalid-json-force-json";
-    String responseBody = "{\n" +
-        "  id: 21762532,\n" +
-        "  \"url\": \"http://knotx.io\",\n" +
-        "  \"label\": \"Product\"\n";
-    Set<String> predicates = new HashSet<>();
-    predicates.add("JSON");
-
-    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
-        .willReturn(aResponse().withBody(responseBody)
-            .withHeader("Content-Type", "text/html")));
-
-    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
-        MultiMap.caseInsensitiveMultiMap(), endpointPath);
-
-    EndpointOptions endpointOptions = new EndpointOptions();
-    endpointOptions.setPath(endpointPath)
-        .setDomain("localhost")
-        .setPort(wireMockServer.port())
-        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
-
-    ResponseOptions responseOptions = new ResponseOptions()
-        .setPredicates(predicates)
-        .setForceJson(true);
-
-    HttpActionOptions options = new HttpActionOptions()
-        .setEndpointOptions(endpointOptions)
-        .setResponseOptions(responseOptions);
-    HttpAction tested = new HttpAction(vertx, options, ACTION_ALIAS);
-
-    verifyExecution(tested, clientRequest, FRAGMENT,
-        fragmentResult -> {
-          assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
-        }, testContext);
-  }
-
-  @Test
-  @DisplayName("Expected error transition when Content-Type not equal to application/json and JSON response predicate provided")
-  void errorTransitionWhenJsonExpectedAndContentTypeNotEqualToApplicationJson(VertxTestContext testContext, Vertx vertx)
+  @ParameterizedTest(name = "Expect success transition and response as raw text")
+  @MethodSource("dataExpectSuccessTransitionAndTextBody")
+  void testSuccessTransitionExpectedAndResponseAsRawText(String contentType, boolean forceJson,
+      String jsonPredicate, String responseBody, VertxTestContext testContext, Vertx vertx)
       throws Throwable {
-    String endpointPath = "/api/not-application-json";
-    String responseBody = "{\n" +
-        "  \"id\": 21762532,\n" +
-        "  \"url\": \"http://knotx.io\",\n" +
-        "  \"label\": \"Product\"\n" +
-        "}";
+    String endpointPath = "/api/success-text";
     Set<String> predicates = new HashSet<>();
-    predicates.add("JSON");
 
     wireMockServer.stubFor(get(urlEqualTo(endpointPath))
         .willReturn(aResponse().withBody(responseBody)
-            .withHeader("Content-Type", "text/html")));
+            .withHeader("Content-Type", contentType)));
 
     ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
         MultiMap.caseInsensitiveMultiMap(), endpointPath);
 
-    EndpointOptions endpointOptions = new EndpointOptions();
-    endpointOptions.setPath(endpointPath)
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(endpointPath)
         .setDomain("localhost")
         .setPort(wireMockServer.port())
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
+    Optional.ofNullable(jsonPredicate).ifPresent(predicates::add);
     ResponseOptions responseOptions = new ResponseOptions()
         .setPredicates(predicates)
-        .setForceJson(false);
+        .setForceJson(forceJson);
 
-    HttpActionOptions options = new HttpActionOptions()
-        .setEndpointOptions(endpointOptions)
-        .setResponseOptions(responseOptions);
-    HttpAction tested = new HttpAction(vertx, options, ACTION_ALIAS);
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions)
+            .setResponseOptions(responseOptions),
+        ACTION_ALIAS);
 
-    assertThrows(ReplyException.class, () -> {
-      verifyExecution(tested, clientRequest, FRAGMENT, null, testContext);
-    });
-
+    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+      assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
+      String result = (String) fragmentResult.getFragment().getPayload().getJsonObject("httpAction")
+          .getMap().get("_result");
+      assertEquals(JSON_BODY, result);
+    }, testContext);
   }
 
-  @Test
-  @DisplayName("Expected valid JSON response when JSON response predicate given and forceJson set to true")
-  void validJsonResponseWhenForceJsonAndNoContentType(VertxTestContext testContext, Vertx vertx) throws Throwable {
-    String endpointPath = "/api/not-application-json";
-    String responseBody = "{\n" +
-        "  \"id\": 21762532,\n" +
-        "  \"url\": \"http://knotx.io\",\n" +
-        "  \"label\": \"Product\"\n" +
-        "}";
+  @ParameterizedTest(name = "Expect error transition and no response")
+  @MethodSource("dataExpectErrorTransitionAndNullBody")
+  void testErrorResponseAndNoResponse(String contentType, boolean forceJson, String jsonPredicate,
+      String responseBody, VertxTestContext testContext, Vertx vertx) throws Throwable {
+    String endpointPath = "/api/error-no-response";
     Set<String> predicates = new HashSet<>();
-    predicates.add("JSON");
 
     wireMockServer.stubFor(get(urlEqualTo(endpointPath))
         .willReturn(aResponse().withBody(responseBody)
-            .withHeader("Content-Type", "text/html")));
+            .withHeader("Content-Type", contentType)));
 
     ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
         MultiMap.caseInsensitiveMultiMap(), endpointPath);
 
-    EndpointOptions endpointOptions = new EndpointOptions();
-    endpointOptions.setPath(endpointPath)
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(endpointPath)
         .setDomain("localhost")
         .setPort(wireMockServer.port())
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
+    Optional.ofNullable(jsonPredicate).ifPresent(predicates::add);
     ResponseOptions responseOptions = new ResponseOptions()
         .setPredicates(predicates)
-        .setForceJson(true);
+        .setForceJson(forceJson);
 
-    HttpActionOptions options = new HttpActionOptions()
-        .setEndpointOptions(endpointOptions)
-        .setResponseOptions(responseOptions);
-    HttpAction tested = new HttpAction(vertx, options, ACTION_ALIAS);
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions)
+            .setResponseOptions(responseOptions),
+        ACTION_ALIAS);
 
-    verifyExecution(tested, clientRequest, FRAGMENT,
-        fragmentResult -> {
-          assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
-          JsonObject result = fragmentResult.getFragment().getPayload()
-              .getJsonObject("httpAction").getJsonObject("_result");
-          assertNotNull(result);
-          assertEquals(new JsonObject()
-              .put("id", 21762532)
-              .put("url", "http://knotx.io")
-              .put("label", "Product"), result);
-        }, testContext);
+    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+      assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
+      Object result = fragmentResult.getFragment().getPayload().getJsonObject("httpAction").getMap()
+          .get("_result");
+      assertNull(result);
+    }, testContext);
+  }
+
+  @ParameterizedTest(name = "Expect exception and no response")
+  @MethodSource("dataExpectExceptionAndNullBody")
+  void testExpectExceptionAndNoResponse(String contentType, boolean forceJson, String jsonPredicate,
+      String responseBody, VertxTestContext testContext, Vertx vertx) throws Throwable {
+    String endpointPath = "/api/exception-no-response";
+    Set<String> predicates = new HashSet<>();
+
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(responseBody)
+            .withHeader("Content-Type", contentType)));
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), endpointPath);
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(endpointPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    Optional.ofNullable(jsonPredicate).ifPresent(predicates::add);
+    ResponseOptions responseOptions = new ResponseOptions()
+        .setPredicates(predicates)
+        .setForceJson(forceJson);
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions)
+            .setResponseOptions(responseOptions),
+        ACTION_ALIAS);
+
+    verifyFailingExecution(tested, clientRequest, FRAGMENT, error -> {
+      assertTrue(error instanceof CompositeException);
+      CompositeException exception = (CompositeException) error;
+      assertEquals(1, exception.getExceptions().size());
+      assertTrue(exception.getExceptions().get(0) instanceof ReplyException);
+    }, testContext);
   }
 
   @Test
@@ -843,15 +807,38 @@ class HttpActionTest {
         new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
   }
 
-  private void verifyExecution(HttpAction tested, ClientRequest clientRequest, Fragment fragment,
-      Consumer<FragmentResult> assertions,
+  private void verifyFailingExecution(HttpAction tested, ClientRequest clientRequest,
+      Fragment fragment,
+      Consumer<Throwable> failureAssertions,
       VertxTestContext testContext) throws Throwable {
-    tested.apply(new FragmentContext(fragment, clientRequest),
-        testContext.succeeding(result -> {
-          testContext.verify(() -> assertions.accept(result));
-          testContext.completeNow();
-        }));
+    try {
+      tested.apply(new FragmentContext(fragment, clientRequest),
+          testContext.failing(error -> {
+            testContext.verify(() -> failureAssertions.accept(error));
+            testContext.completeNow();
+          }));
+    } catch (RuntimeException e) {
+      throw e;
+    }
+    //then
+    assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
+    if (testContext.failed()) {
+      throw testContext.causeOfFailure();
+    }
+  }
 
+  private void verifyExecution(HttpAction tested, ClientRequest clientRequest, Fragment fragment,
+      Consumer<FragmentResult> successAssertions,
+      VertxTestContext testContext) throws Throwable {
+    try {
+      tested.apply(new FragmentContext(fragment, clientRequest),
+          testContext.succeeding(result -> {
+            testContext.verify(() -> successAssertions.accept(result));
+            testContext.completeNow();
+          }));
+    } catch (RuntimeException e) {
+      throw e;
+    }
     //then
     assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
     if (testContext.failed()) {
