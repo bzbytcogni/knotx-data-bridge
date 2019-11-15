@@ -28,6 +28,7 @@ import io.knotx.server.api.context.ClientRequest;
 import io.knotx.server.common.placeholders.PlaceholdersResolver;
 import io.knotx.server.common.placeholders.SourceDefinitions;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.spdy.SpdyRstStreamFrame;
 import io.reactivex.Single;
 import io.reactivex.exceptions.Exceptions;
 import io.vertx.core.AsyncResult;
@@ -74,6 +75,7 @@ public class HttpAction implements Action {
   private final WebClient webClient;
   private final String actionAlias;
   private final HttpActionOptions httpActionOptions;
+  private final ResponsePredicatesProvider predicatesProvider;
 
   HttpAction(Vertx vertx, HttpActionOptions httpActionOptions, String actionAlias) {
     this.httpActionOptions = httpActionOptions;
@@ -81,6 +83,7 @@ public class HttpAction implements Action {
         httpActionOptions.getWebClientOptions());
     this.endpointOptions = httpActionOptions.getEndpointOptions();
     this.actionAlias = actionAlias;
+    predicatesProvider = new ResponsePredicatesProvider();
   }
 
   @Override
@@ -138,21 +141,9 @@ public class HttpAction implements Action {
   private void attachResponsePredicatesToRequest(HttpRequest<Buffer> request, Set<String> predicates) {
     predicates.forEach(predicate -> {
       if (!JSON.equals(predicate)) {
-        request.expect(getResponsePredicateByName(predicate));
+        request.expect(predicatesProvider.get(predicate));
       }
     });
-  }
-
-  private io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate getResponsePredicateByName(String predicateName) {
-    Class predicateClass = io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate.class;
-    io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate responsePredicate = null;
-    try {
-      Field predicateField = predicateClass.getField(predicateName);
-      responsePredicate = (io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate) predicateField.get(this);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      LOGGER.error("Cannot access ResponsePredicate identified by: {}", predicateName);
-    }
-    return responsePredicate;
   }
 
   private EndpointRequest buildRequest(FragmentContext context) {
