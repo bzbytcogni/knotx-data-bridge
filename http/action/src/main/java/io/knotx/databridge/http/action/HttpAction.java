@@ -15,6 +15,10 @@
  */
 package io.knotx.databridge.http.action;
 
+import static io.netty.handler.codec.http.HttpStatusClass.CLIENT_ERROR;
+import static io.netty.handler.codec.http.HttpStatusClass.SERVER_ERROR;
+import static io.netty.handler.codec.http.HttpStatusClass.SUCCESS;
+
 import io.knotx.commons.http.request.AllowedHeadersFilter;
 import io.knotx.commons.http.request.DataObjectsUtil;
 import io.knotx.commons.http.request.MultiMapCollector;
@@ -28,7 +32,6 @@ import io.knotx.server.api.context.ClientRequest;
 import io.knotx.server.common.placeholders.PlaceholdersResolver;
 import io.knotx.server.common.placeholders.SourceDefinitions;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.spdy.SpdyRstStreamFrame;
 import io.reactivex.Single;
 import io.reactivex.exceptions.Exceptions;
 import io.vertx.core.AsyncResult;
@@ -49,16 +52,12 @@ import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.client.HttpRequest;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
-
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
-
-import static io.netty.handler.codec.http.HttpStatusClass.*;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class HttpAction implements Action {
 
