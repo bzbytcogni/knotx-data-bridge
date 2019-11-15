@@ -31,7 +31,7 @@ public class HttpActionOptions {
   private EndpointOptions endpointOptions;
   private ResponseOptions responseOptions;
   private long requestTimeoutMs;
-  private String responseType = "json"; //todo do wyjebania
+  private String responseType = "json";
 
   public HttpActionOptions() {
     init();
