@@ -52,6 +52,12 @@ public class ResponseOptions {
     return predicates;
   }
 
+  /**
+   * Sets Vert.x response predicates
+   *
+   * @param predicates - Vert.x response predicates
+   * @return a reference to this, so the API can be used fluently
+   */
   public ResponseOptions setPredicates(Set<String> predicates) {
     this.predicates = predicates;
     return this;
@@ -61,6 +67,12 @@ public class ResponseOptions {
     return forceJson;
   }
 
+  /**
+   * Sets forceJson - it determines if response body should be parsed as json
+   *
+   * @param forceJson - determines if response body should be parsed as json or not
+   * @return a reference to this, so the API can be used fluently
+   */
   public ResponseOptions setForceJson(boolean forceJson) {
     this.forceJson = forceJson;
     return this;
