@@ -16,6 +16,7 @@
 package io.knotx.databridge.http.action;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate;
 import java.util.stream.Stream;
@@ -23,7 +24,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-public class ResponsePredicatesProviderTest {
+class ResponsePredicatesProviderTest {
 
   private static final String STATUS_200 = "SC_OK";
 
@@ -31,9 +32,13 @@ public class ResponsePredicatesProviderTest {
 
   private static final String JSON = "JSON";
 
+  private static final String NON_EXISTING = "NON_EXISTING";
+
+  private static final String SC_OK_LOWER_CASE = "sc_ok";
+
   private ResponsePredicatesProvider predicatesProvider = new ResponsePredicatesProvider();
 
-  public static Stream<Arguments> dataResponsePredicates() {
+  static Stream<Arguments> dataResponsePredicates() {
     return Stream.of(
         Arguments.of(STATUS_200, ResponsePredicate.SC_OK),
         Arguments.of(STATUS_404, ResponsePredicate.SC_NOT_FOUND),
@@ -41,9 +46,25 @@ public class ResponsePredicatesProviderTest {
     );
   }
 
+  static Stream<Arguments> dataNonExistingPredicates() {
+    return Stream.of(
+        Arguments.of(NON_EXISTING),
+        Arguments.of(SC_OK_LOWER_CASE)
+    );
+  }
+
   @ParameterizedTest(name = "Expect valid response predicate")
   @MethodSource("dataResponsePredicates")
-  void shouldReturnValidResponsePredicate(String name, ResponsePredicate expectedPredicate) {
+  void shouldReturnValidResponsePredicate(String name, ResponsePredicate expectedPredicate)
+      throws Throwable {
     assertEquals(expectedPredicate, predicatesProvider.get(name));
+  }
+
+  @ParameterizedTest(name = "Should throw exception when nonexisting predicate requested")
+  @MethodSource("dataNonExistingPredicates")
+  void shouldThrowExceptionWhenNonExistingPredicateRequested(String predicate) {
+    assertThrows(NoSuchFieldException.class, () -> {
+      predicatesProvider.get(predicate);
+    });
   }
 }
