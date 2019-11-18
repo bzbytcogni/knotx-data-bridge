@@ -42,6 +42,7 @@ dependencies {
     testImplementation(group = "org.mockito", name = "mockito-core")
     testImplementation(group = "org.mockito", name = "mockito-junit-jupiter")
     testImplementation(group = "com.github.tomakehurst", name = "wiremock")
+    testImplementation("org.junit.jupiter:junit-jupiter-params")
 }
 
 tasks {

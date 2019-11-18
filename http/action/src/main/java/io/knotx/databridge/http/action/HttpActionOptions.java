@@ -29,6 +29,7 @@ public class HttpActionOptions {
 
   private WebClientOptions webClientOptions;
   private EndpointOptions endpointOptions;
+  private ResponseOptions responseOptions;
   private long requestTimeoutMs;
 
   public HttpActionOptions() {
@@ -42,6 +43,7 @@ public class HttpActionOptions {
 
   private void init() {
     webClientOptions = new WebClientOptions();
+    responseOptions = new ResponseOptions();
     requestTimeoutMs = DEFAULT_REQUEST_TIMEOUT;
   }
 
@@ -77,6 +79,15 @@ public class HttpActionOptions {
     return this;
   }
 
+  public ResponseOptions getResponseOptions() {
+    return responseOptions;
+  }
+
+  public HttpActionOptions setResponseOptions(ResponseOptions responseOptions) {
+    this.responseOptions = responseOptions;
+    return this;
+  }
+
   public long getRequestTimeoutMs() {
     return requestTimeoutMs;
   }
@@ -99,6 +110,7 @@ public class HttpActionOptions {
     return "HttpActionOptions{" +
         "webClientOptions=" + webClientOptions +
         ", endpointOptions=" + endpointOptions +
+        ", responseOptions=" + responseOptions +
         ", requestTimeoutMs=" + requestTimeoutMs +
         '}';
   }

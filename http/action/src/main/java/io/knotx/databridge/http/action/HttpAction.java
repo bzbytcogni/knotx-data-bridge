@@ -19,13 +19,6 @@ import static io.netty.handler.codec.http.HttpStatusClass.CLIENT_ERROR;
 import static io.netty.handler.codec.http.HttpStatusClass.SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpStatusClass.SUCCESS;
 
-import java.util.List;
-import java.util.concurrent.TimeoutException;
-import java.util.regex.Pattern;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
-
 import io.knotx.commons.http.request.AllowedHeadersFilter;
 import io.knotx.commons.http.request.DataObjectsUtil;
 import io.knotx.commons.http.request.MultiMapCollector;
@@ -45,17 +38,26 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.ReplyException;
+import io.vertx.core.eventbus.ReplyFailure;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.client.HttpRequest;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class HttpAction implements Action {
 
@@ -66,11 +68,13 @@ public class HttpAction implements Action {
   private static final String METADATA_STATUS_CODE_KEY = "statusCode";
   private static final String PLACEHOLDER_PREFIX_PAYLOAD = "payload";
   private static final String PLACEHOLDER_PREFIX_CONFIG = "config";
+  private static final String JSON = "JSON";
 
   private final EndpointOptions endpointOptions;
   private final WebClient webClient;
   private final String actionAlias;
   private final HttpActionOptions httpActionOptions;
+  private final ResponsePredicatesProvider predicatesProvider;
 
   HttpAction(Vertx vertx, HttpActionOptions httpActionOptions, String actionAlias) {
     this.httpActionOptions = httpActionOptions;
@@ -78,6 +82,7 @@ public class HttpAction implements Action {
         httpActionOptions.getWebClientOptions());
     this.endpointOptions = httpActionOptions.getEndpointOptions();
     this.actionAlias = actionAlias;
+    predicatesProvider = new ResponsePredicatesProvider();
   }
 
   @Override
@@ -119,10 +124,33 @@ public class HttpAction implements Action {
             endpointRequest.getPath())
         .timeout(httpActionOptions.getRequestTimeoutMs());
 
+    ResponsePredicate noApplicationJson = ResponsePredicate
+        .create(ResponsePredicate.JSON, result -> {
+          throw new ReplyException(ReplyFailure.RECIPIENT_FAILURE, result.message());
+        });
+    if (httpActionOptions.getResponseOptions().getPredicates().contains(JSON)) {
+      request.expect(io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate
+          .newInstance(noApplicationJson));
+    }
+    attachResponsePredicatesToRequest(request,
+        httpActionOptions.getResponseOptions().getPredicates());
     endpointRequest.getHeaders().entries()
         .forEach(entry -> request.putHeader(entry.getKey(), entry.getValue()));
 
     return request.rxSend();
+  }
+
+  private void attachResponsePredicatesToRequest(HttpRequest<Buffer> request,
+      Set<String> predicates) {
+    predicates.forEach(predicate -> {
+      if (!JSON.equals(predicate)) {
+        try {
+          request.expect(predicatesProvider.get(predicate));
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+          LOGGER.error("Cannot access ResponsePredicate identified by: {}", predicate);
+        }
+      }
+    });
   }
 
   private EndpointRequest buildRequest(FragmentContext context) {
@@ -232,7 +260,22 @@ public class HttpAction implements Action {
   }
 
   private ActionPayload handleSuccessResponse(EndpointResponse response, ActionRequest request) {
-    return ActionPayload.success(request, bodyToJson(response.getBody().toString()));
+    if (httpActionOptions.getResponseOptions().isForceJson() ||
+        httpActionOptions.getResponseOptions().getPredicates().contains(JSON)) {
+      return ActionPayload.success(request, bodyToJson(response.getBody().toString()));
+    } else if (isApplicationJsonGiven(response)) {
+      return ActionPayload.success(request, bodyToJson(response.getBody().toString()));
+    } else {
+      return ActionPayload.success(request, response.getBody().toString());
+    }
+  }
+
+  private boolean isApplicationJsonGiven(EndpointResponse endpointResponse) {
+    String contentType = endpointResponse.getHeaders().get("Content-Type");
+    if (contentType != null) {
+      return contentType.contains("application/json");
+    }
+    return false;
   }
 
   private Object bodyToJson(String responseBody) {
