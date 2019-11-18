@@ -99,23 +99,21 @@ class HttpActionTest {
 
   private WireMockServer wireMockServer;
 
-  private static final VertxTestContext TEST_CONTEXT = new VertxTestContext();
-
-  public static Stream<Arguments> dataExpectSuccessTransitionAndJsonBody() { //todo combine both succeeding test cases into one
-    return Stream.of( //Content-Type, forceJson, JSON predicate, Body, VertxTestContext
+  static Stream<Arguments> dataExpectSuccessTransitionAndJsonBody() {
+    return Stream.of( //Content-Type, forceJson, JSON predicate, Body,
         Arguments.of(APPLICATION_JSON, false, null, JSON_BODY),
         Arguments.of(APPLICATION_TEXT, true, null, JSON_BODY),
         Arguments.of(APPLICATION_JSON, false, JSON, JSON_BODY)
     );
   }
 
-  public static Stream<Arguments> dataExpectSuccessTransitionAndTextBody() {
+  static Stream<Arguments> dataExpectSuccessTransitionAndTextBody() {
     return Stream.of( //Content-Type, forceJson, JSON predicate, Body
         Arguments.of(APPLICATION_TEXT, false, null, JSON_BODY)
     );
   }
 
-  public static Stream<Arguments> dataExpectErrorTransitionAndNullBody() {
+  static Stream<Arguments> dataExpectErrorTransitionAndNullBody() {
     return Stream.of( //Content-Type, forceJson, JSON predicate, Body
         Arguments.of(APPLICATION_JSON, false, null, RAW_BODY),
         Arguments.of(APPLICATION_TEXT, true, null, RAW_BODY),
@@ -123,7 +121,7 @@ class HttpActionTest {
     );
   }
 
-  public static Stream<Arguments> dataExpectExceptionAndNullBody() {
+  static Stream<Arguments> dataExpectExceptionAndNullBody() {
     return Stream.of(
         Arguments.of(APPLICATION_TEXT, false, JSON, JSON_BODY),
         Arguments.of(APPLICATION_TEXT, true, JSON, JSON_BODY)
