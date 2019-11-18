@@ -124,23 +124,31 @@ public class HttpAction implements Action {
             endpointRequest.getPath())
         .timeout(httpActionOptions.getRequestTimeoutMs());
 
-    ResponsePredicate noApplicationJson = ResponsePredicate.create(ResponsePredicate.JSON, result -> {
-      throw new ReplyException(ReplyFailure.RECIPIENT_FAILURE, result.message());
-    });
+    ResponsePredicate noApplicationJson = ResponsePredicate
+        .create(ResponsePredicate.JSON, result -> {
+          throw new ReplyException(ReplyFailure.RECIPIENT_FAILURE, result.message());
+        });
     if (httpActionOptions.getResponseOptions().getPredicates().contains(JSON)) {
-      request.expect(io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate.newInstance(noApplicationJson));
+      request.expect(io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate
+          .newInstance(noApplicationJson));
     }
-    attachResponsePredicatesToRequest(request, httpActionOptions.getResponseOptions().getPredicates());
+    attachResponsePredicatesToRequest(request,
+        httpActionOptions.getResponseOptions().getPredicates());
     endpointRequest.getHeaders().entries()
         .forEach(entry -> request.putHeader(entry.getKey(), entry.getValue()));
 
     return request.rxSend();
   }
 
-  private void attachResponsePredicatesToRequest(HttpRequest<Buffer> request, Set<String> predicates) {
+  private void attachResponsePredicatesToRequest(HttpRequest<Buffer> request,
+      Set<String> predicates) {
     predicates.forEach(predicate -> {
       if (!JSON.equals(predicate)) {
-        request.expect(predicatesProvider.get(predicate));
+        try {
+          request.expect(predicatesProvider.get(predicate));
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+          LOGGER.error("Cannot access ResponsePredicate identified by: {}", predicate);
+        }
       }
     });
   }

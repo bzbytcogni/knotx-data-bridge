@@ -27,16 +27,12 @@ public class ResponsePredicatesProvider {
   }
 
   public io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate get(
-      String predicateName) {
+      String predicateName) throws NoSuchFieldException, IllegalAccessException {
     Class predicateClass = io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate.class;
     io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate responsePredicate = null;
-    try {
-      Field predicateField = predicateClass.getField(predicateName);
-      responsePredicate = (io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate) predicateField
-          .get(this);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      LOGGER.error("Cannot access ResponsePredicate identified by: {}", predicateName);
-    }
+    Field predicateField = predicateClass.getField(predicateName);
+    responsePredicate = (io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate) predicateField
+        .get(this);
     return responsePredicate;
   }
 }
