@@ -124,13 +124,14 @@ public class HttpAction implements Action {
             endpointRequest.getPath())
         .timeout(httpActionOptions.getRequestTimeoutMs());
 
-    ResponsePredicate noApplicationJson = ResponsePredicate
-        .create(ResponsePredicate.JSON, result -> {
-          throw new ReplyException(ReplyFailure.RECIPIENT_FAILURE, result.message());
-        });
     if (httpActionOptions.getResponseOptions().getPredicates().contains(JSON)) {
+      ResponsePredicate isJsonResponse = ResponsePredicate
+          .create(ResponsePredicate.JSON, result -> {
+            throw new ReplyException(ReplyFailure.RECIPIENT_FAILURE, result.message());
+          });
+
       request.expect(io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate
-          .newInstance(noApplicationJson));
+          .newInstance(isJsonResponse));
     }
     attachResponsePredicatesToRequest(request,
         httpActionOptions.getResponseOptions().getPredicates());
@@ -145,7 +146,7 @@ public class HttpAction implements Action {
     predicates.forEach(predicate -> {
       if (!JSON.equals(predicate)) {
         try {
-          request.expect(predicatesProvider.get(predicate));
+          request.expect(predicatesProvider.fromName(predicate));
         } catch (NoSuchFieldException | IllegalAccessException e) {
           LOGGER.error("Cannot access ResponsePredicate identified by: {}", predicate);
         }
