@@ -16,7 +16,7 @@
 
 plugins {
     java
-    id("io.knotx.publish-all-composite") version "0.1.1"
+    id("io.knotx.publish-all-composite") version "0.1.3"
 }
 
 subprojects {
