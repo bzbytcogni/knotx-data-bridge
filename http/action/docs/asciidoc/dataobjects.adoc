@@ -50,10 +50,27 @@ Configures the amount of time in milliseconds after which if the request does no
  data within, _timeout transition will be returned. Setting zero or a negative value disables
  the timeout. By default it is set to <code>0</code>.
 +++
+|[[responseOptions]]`@responseOptions`|`link:dataobjects.html#ResponseOptions[ResponseOptions]`|-
 |[[webClientOptions]]`@webClientOptions`|`link:dataobjects.html#WebClientOptions[WebClientOptions]`|+++
 Set the <code>WebClientOptions</code> used by the HTTP client to communicate with remote http
  endpoint. See https://vertx.io/docs/vertx-web-client/dataobjects.html#WebClientOptions for
  the details what can be configured.
++++
+|===
+
+[[ResponseOptions]]
+== ResponseOptions
+
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[forceJson]]`@forceJson`|`Boolean`|+++
+Sets forceJson - it determines if response body should be parsed as json
++++
+|[[predicates]]`@predicates`|`Array of String`|+++
+Sets Vert.x response predicates
 +++
 |===
 

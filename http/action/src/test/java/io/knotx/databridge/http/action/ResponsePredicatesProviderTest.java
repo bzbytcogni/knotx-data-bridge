@@ -57,14 +57,14 @@ class ResponsePredicatesProviderTest {
   @MethodSource("dataResponsePredicates")
   void shouldReturnValidResponsePredicate(String name, ResponsePredicate expectedPredicate)
       throws Throwable {
-    assertEquals(expectedPredicate, predicatesProvider.get(name));
+    assertEquals(expectedPredicate, predicatesProvider.fromName(name));
   }
 
   @ParameterizedTest(name = "Should throw exception when nonexisting predicate requested")
   @MethodSource("dataNonExistingPredicates")
   void shouldThrowExceptionWhenNonExistingPredicateRequested(String predicate) {
     assertThrows(NoSuchFieldException.class, () -> {
-      predicatesProvider.get(predicate);
+      predicatesProvider.fromName(predicate);
     });
   }
 }
