@@ -143,15 +143,15 @@ public class HttpAction implements Action {
 
   private void attachResponsePredicatesToRequest(HttpRequest<Buffer> request,
       Set<String> predicates) {
-    predicates.forEach(predicate -> {
-      if (!JSON.equals(predicate)) {
-        try {
-          request.expect(predicatesProvider.fromName(predicate));
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-          LOGGER.error("Cannot access ResponsePredicate identified by: {}", predicate);
-        }
-      }
-    });
+    predicates.stream()
+        .filter(p -> !JSON.equals(p))
+        .forEach(p -> {
+          try {
+            request.expect(predicatesProvider.fromName(p));
+          } catch (NoSuchFieldException | IllegalAccessException e) {
+            LOGGER.error("Cannot access ResponsePredicate identified by: {}", p);
+          }
+        });
   }
 
   private EndpointRequest buildRequest(FragmentContext context) {
@@ -264,14 +264,14 @@ public class HttpAction implements Action {
     if (httpActionOptions.getResponseOptions().isForceJson() ||
         httpActionOptions.getResponseOptions().getPredicates().contains(JSON)) {
       return ActionPayload.success(request, bodyToJson(response.getBody().toString()));
-    } else if (isApplicationJsonGiven(response)) {
+    } else if (isContentTypeHeaderJson(response)) {
       return ActionPayload.success(request, bodyToJson(response.getBody().toString()));
     } else {
       return ActionPayload.success(request, response.getBody().toString());
     }
   }
 
-  private boolean isApplicationJsonGiven(EndpointResponse endpointResponse) {
+  private boolean isContentTypeHeaderJson(EndpointResponse endpointResponse) {
     String contentType = endpointResponse.getHeaders().get("Content-Type");
     if (contentType != null) {
       return contentType.contains("application/json");

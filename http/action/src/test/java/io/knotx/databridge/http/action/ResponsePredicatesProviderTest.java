@@ -42,14 +42,14 @@ class ResponsePredicatesProviderTest {
     return Stream.of(
         Arguments.of(STATUS_200, ResponsePredicate.SC_OK),
         Arguments.of(STATUS_404, ResponsePredicate.SC_NOT_FOUND),
-        Arguments.of(JSON, ResponsePredicate.JSON)
+        Arguments.of(JSON, ResponsePredicate.JSON),
+        Arguments.of(SC_OK_LOWER_CASE, ResponsePredicate.SC_OK)
     );
   }
 
   static Stream<Arguments> dataNonExistingPredicates() {
     return Stream.of(
-        Arguments.of(NON_EXISTING),
-        Arguments.of(SC_OK_LOWER_CASE)
+        Arguments.of(NON_EXISTING)
     );
   }
 

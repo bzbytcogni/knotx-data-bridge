@@ -24,13 +24,12 @@ public class ResponsePredicatesProvider {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ResponsePredicatesProvider.class);
 
+  private static final Class PREDICATE_CLASS = io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate.class;
+
   public ResponsePredicate fromName(
       String predicateName) throws NoSuchFieldException, IllegalAccessException {
-    Class predicateClass = io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate.class;
     io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate responsePredicate = null;
-    Field predicateField = predicateClass.getField(predicateName);
-    responsePredicate = (io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate) predicateField
-        .get(this);
-    return responsePredicate;
+    Field predicateField = PREDICATE_CLASS.getField(predicateName.toUpperCase());
+    return (io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate) predicateField.get(this);
   }
 }

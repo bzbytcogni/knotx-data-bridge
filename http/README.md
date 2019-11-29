@@ -48,11 +48,12 @@ actions {
 are necessary to perform http request 
 - `responseOptions` config is responsible for handling incoming request properly. Here we can specify `predicates` - it's array
 containing Vert.x response predicates, to get more familiar with it, please visit [this page](https://vertx.io/blog/http-response-validation-with-the-vert-x-web-client/).
+You may find all available predicates [here].(https://vertx.io/docs/apidocs/io/vertx/ext/web/client/predicate/ResponsePredicate.html)
 Providing `JSON` predicate causes `Content-Type` check - when `Content-Type` won't be equal to `application/json` we'll get
 error transition. We can also specify `forceJson` param. When `Content-Type` won't be equal to `application/json` and `forceJson`
 is true, response will be processed as json. If it won't be json, request ends with error transition.
 
-Table below shows default behaviour of HttpAction depending on provided `responseOptions` config and response:
+Table below shows the behaviour of HttpAction depending on provided `responseOptions` config and response:
 
 | Content-Type     | forceJSON | JSON predicate | Body | Transition | Response |
 | ---------------- |:---------:| --------------:|  ---:|  ---------:| --------:|
