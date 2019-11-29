@@ -15,6 +15,7 @@
  */
 package io.knotx.databridge.http.action;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.matching;
@@ -514,7 +515,6 @@ class HttpActionTest {
     wireMockServer.stubFor(get(urlEqualTo(endpointPath))
         .willReturn(aResponse().withBody(VALID_JSON_RESPONSE_BODY)));
 
-
     ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
         MultiMap.caseInsensitiveMultiMap(), clientRequestPath);
 
@@ -622,8 +622,7 @@ class HttpActionTest {
         }));
 
     //then
-    Assertions.fail("Should fail");
-    assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
+    assertThat(testContext.awaitCompletion(5, TimeUnit.SECONDS)).isTrue();
     if (testContext.failed()) {
       throw testContext.causeOfFailure();
     }
