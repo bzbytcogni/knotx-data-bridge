@@ -57,13 +57,13 @@ Table below shows default behaviour of HttpAction depending on provided `respons
 | Content-Type     | forceJSON | JSON predicate | Body | Transition | Response |
 | ---------------- |:---------:| --------------:|  ---:|  ---------:| --------:|
 | application/json | false     | -              | JSON | _success   | JSON     |
-| application/json | false     | -              | RAW  | _error     | -        |
-| application/text | false     | -              | JSON | _success   | text     |
 | application/text | true      | -              | JSON | _success   | JSON     |
-| application/text | true      | -              | RAW  | _error     | -        |
 | application/json | false     | JSON           | JSON | _success   | JSON     |
-| application/text | false     | JSON           | JSON | _error     | -        |
+| application/text | false     | -              | JSON | _success   | text     |
+| application/json | false     | -              | RAW  | _error     | -        |
+| application/text | true      | -              | RAW  | _error     | -        |
 | application/json | false     | JSON           | RAW  | _error     | -        |
+| application/text | false     | JSON           | JSON | _error     | -        |
 | application/text | true      | JSON           | JSON | _error     | -        |
 
 ### Detailed configuration
