@@ -411,9 +411,7 @@ class HttpActionTest {
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
-        fragmentResult -> {
-          assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
-        },
+        fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
 
   }
@@ -512,7 +510,6 @@ class HttpActionTest {
 
     wireMockServer.stubFor(get(urlEqualTo(endpointPath))
         .willReturn(aResponse().withBody(VALID_JSON_RESPONSE_BODY)));
-
 
     ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
         MultiMap.caseInsensitiveMultiMap(), clientRequestPath);
@@ -614,14 +611,12 @@ class HttpActionTest {
       VertxTestContext testContext) throws Throwable {
     tested.apply(new FragmentContext(fragment, clientRequest),
         testContext.succeeding(result -> {
-          testContext.verify(() -> {
-            assertions.accept(result);
-          });
+          testContext.verify(() -> assertions.accept(result));
           testContext.completeNow();
         }));
 
     //then
-    assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
+    assertTrue(testContext.awaitCompletion(60, TimeUnit.SECONDS));
     if (testContext.failed()) {
       throw testContext.causeOfFailure();
     }

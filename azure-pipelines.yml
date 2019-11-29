@@ -38,11 +38,17 @@ steps:
           ./pull-all.sh -r ../../$(workspaceDir) -b $(System.PullRequest.SourceBranch) -a
         fi
     displayName: "Clone all repositories"
-  - task: CmdLine@2
+  - task: Gradle@2
     inputs:
-      script: |
-        cd knotx-aggregator/development
-        ./build-stack.sh -r ../../$(workspaceDir)
+      gradleWrapperFile: '$(workspaceDir)/knotx-stack/gradlew'
+      workingDirectory: '$(workspaceDir)/knotx-stack'
+      tasks: 'publish-local-all'
+    displayName: "Build Stack dependencies"
+  - task: Gradle@2
+    inputs:
+      gradleWrapperFile: '$(workspaceDir)/knotx-stack/gradlew'
+      workingDirectory: '$(workspaceDir)/knotx-stack'
+      tasks: 'build'
     displayName: "Build Stack"
   - task: Maven@3
     inputs:
