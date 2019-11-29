@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -60,6 +61,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.MultiMap;
+import rx.Single;
 
 @ExtendWith(VertxExtension.class)
 @ExtendWith(MockitoExtension.class)
@@ -562,6 +564,28 @@ class HttpActionTest {
         FRAGMENT.appendPayload("thumbnail", new JsonObject().put("extension", "png")),
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
+  }
+
+  @Test
+  @DisplayName("Expect endpoint called with placeholders in payload resolved with values from FragmentContext clientRequest request uri")
+  void testLongWorkingMethod() throws InterruptedException {
+    Thread.sleep(6000);
+    fail("Expected failure");
+  }
+
+  @Test
+  @DisplayName("Expect endpoint called with placeholders in payload resolved with values from FragmentContext clientRequest request uri")
+  void testLongWorkingMethodAsync(VertxTestContext testContext) throws Throwable {
+    Single.just(6000)
+        .delay(6, TimeUnit.SECONDS)
+        .subscribe(
+            success -> testContext.failNow(new IllegalStateException()),
+            error -> testContext.failNow(new IllegalStateException())
+    );
+    assertThat(testContext.awaitCompletion(5, TimeUnit.SECONDS)).isTrue();
+    if (testContext.failed()) {
+      throw testContext.causeOfFailure();
+    }
   }
 
   private HttpAction successAction(Vertx vertx, String responseBody) {
