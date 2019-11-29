@@ -28,7 +28,21 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.regex.Pattern;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
 import com.github.tomakehurst.wiremock.WireMockServer;
+
 import io.knotx.fragments.api.Fragment;
 import io.knotx.fragments.handler.api.domain.FragmentContext;
 import io.knotx.fragments.handler.api.domain.FragmentResult;
@@ -44,17 +58,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.MultiMap;
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.regex.Pattern;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 
 @ExtendWith(VertxExtension.class)
 @ExtendWith(MockitoExtension.class)
@@ -70,10 +73,6 @@ class HttpActionTest {
   private static final String ACTION_ALIAS = "httpAction";
 
   private WireMockServer wireMockServer;
-
-  private static void accept(FragmentResult fragmentResult) {
-    assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
-  }
 
   @BeforeEach
   void setUp() {
@@ -411,7 +410,10 @@ class HttpActionTest {
         clientRequestHeaders, HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT, HttpActionTest::accept, testContext);
+    verifyExecution(tested, clientRequest, FRAGMENT,
+        fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
+        testContext);
+
   }
 
   @Test
