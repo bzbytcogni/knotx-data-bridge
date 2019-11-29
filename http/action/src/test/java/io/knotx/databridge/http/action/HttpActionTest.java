@@ -15,7 +15,6 @@
  */
 package io.knotx.databridge.http.action;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.matching;
@@ -28,24 +27,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.regex.Pattern;
-
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-
 import io.knotx.fragments.api.Fragment;
 import io.knotx.fragments.handler.api.domain.FragmentContext;
 import io.knotx.fragments.handler.api.domain.FragmentResult;
@@ -61,7 +44,17 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.MultiMap;
-import rx.Single;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.regex.Pattern;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 @ExtendWith(VertxExtension.class)
 @ExtendWith(MockitoExtension.class)
@@ -77,6 +70,10 @@ class HttpActionTest {
   private static final String ACTION_ALIAS = "httpAction";
 
   private WireMockServer wireMockServer;
+
+  private static void accept(FragmentResult fragmentResult) {
+    assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
+  }
 
   @BeforeEach
   void setUp() {
@@ -414,12 +411,7 @@ class HttpActionTest {
         clientRequestHeaders, HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
-        fragmentResult -> {
-          assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
-        },
-        testContext);
-
+    verifyExecution(tested, clientRequest, FRAGMENT, HttpActionTest::accept, testContext);
   }
 
   @Test
@@ -566,28 +558,6 @@ class HttpActionTest {
         testContext);
   }
 
-  @Test
-  @DisplayName("Expect endpoint called with placeholders in payload resolved with values from FragmentContext clientRequest request uri")
-  void testLongWorkingMethod() throws InterruptedException {
-    Thread.sleep(6000);
-    fail("Expected failure");
-  }
-
-  @Test
-  @DisplayName("Expect endpoint called with placeholders in payload resolved with values from FragmentContext clientRequest request uri")
-  void testLongWorkingMethodAsync(VertxTestContext testContext) throws Throwable {
-    Single.just(6000)
-        .delay(6, TimeUnit.SECONDS)
-        .subscribe(
-            success -> testContext.failNow(new IllegalStateException()),
-            error -> testContext.failNow(new IllegalStateException())
-    );
-    assertThat(testContext.awaitCompletion(5, TimeUnit.SECONDS)).isTrue();
-    if (testContext.failed()) {
-      throw testContext.causeOfFailure();
-    }
-  }
-
   private HttpAction successAction(Vertx vertx, String responseBody) {
     return getHttpAction(vertx, HttpActionTest.VALID_REQUEST_PATH, responseBody,
         HttpResponseStatus.OK.code(), null);
@@ -639,14 +609,12 @@ class HttpActionTest {
       VertxTestContext testContext) throws Throwable {
     tested.apply(new FragmentContext(fragment, clientRequest),
         testContext.succeeding(result -> {
-          testContext.verify(() -> {
-            assertions.accept(result);
-          });
+          testContext.verify(() -> assertions.accept(result));
           testContext.completeNow();
         }));
 
     //then
-    assertThat(testContext.awaitCompletion(5, TimeUnit.SECONDS)).isTrue();
+    assertTrue(testContext.awaitCompletion(60, TimeUnit.SECONDS));
     if (testContext.failed()) {
       throw testContext.causeOfFailure();
     }

@@ -42,7 +42,6 @@ dependencies {
     testImplementation(group = "org.mockito", name = "mockito-core")
     testImplementation(group = "org.mockito", name = "mockito-junit-jupiter")
     testImplementation(group = "com.github.tomakehurst", name = "wiremock")
-    testImplementation(group = "org.assertj", name = "assertj-core", version = "3.14.0")
 }
 
 tasks {
