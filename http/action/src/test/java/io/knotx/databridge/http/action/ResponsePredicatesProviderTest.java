@@ -15,14 +15,15 @@
  */
 package io.knotx.databridge.http.action;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate;
-import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.stream.Stream;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ResponsePredicatesProviderTest {
 
@@ -63,7 +64,7 @@ class ResponsePredicatesProviderTest {
   @ParameterizedTest(name = "Should throw exception when nonexisting predicate requested")
   @MethodSource("dataNonExistingPredicates")
   void shouldThrowExceptionWhenNonExistingPredicateRequested(String predicate) {
-    assertThrows(NoSuchFieldException.class, () -> {
+    assertThrows(IllegalArgumentException.class, () -> {
       predicatesProvider.fromName(predicate);
     });
   }

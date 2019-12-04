@@ -141,17 +141,10 @@ public class HttpAction implements Action {
     return request.rxSend();
   }
 
-  private void attachResponsePredicatesToRequest(HttpRequest<Buffer> request,
-      Set<String> predicates) {
+  private void attachResponsePredicatesToRequest(HttpRequest<Buffer> request, Set<String> predicates) {
     predicates.stream()
         .filter(p -> !JSON.equals(p))
-        .forEach(p -> {
-          try {
-            request.expect(predicatesProvider.fromName(p));
-          } catch (NoSuchFieldException | IllegalAccessException e) {
-            LOGGER.error("Cannot access ResponsePredicate identified by: {}", p);
-          }
-        });
+        .forEach(p -> request.expect(predicatesProvider.fromName(p)));
   }
 
   private EndpointRequest buildRequest(FragmentContext context) {

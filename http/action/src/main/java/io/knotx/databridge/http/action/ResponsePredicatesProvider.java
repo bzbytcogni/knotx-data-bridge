@@ -18,6 +18,7 @@ package io.knotx.databridge.http.action;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate;
+
 import java.lang.reflect.Field;
 
 public class ResponsePredicatesProvider {
@@ -25,10 +26,14 @@ public class ResponsePredicatesProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(ResponsePredicatesProvider.class);
   private static final Class PREDICATE_CLASS = io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate.class;
 
-  public ResponsePredicate fromName(
-      String predicateName) throws NoSuchFieldException, IllegalAccessException {
-    io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate responsePredicate = null;
-    Field predicateField = PREDICATE_CLASS.getField(predicateName.toUpperCase());
-    return (io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate) predicateField.get(this);
+  public ResponsePredicate fromName(String predicateName) {
+    try {
+      Field predicateField = PREDICATE_CLASS.getField(predicateName.toUpperCase());
+      return (io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate) predicateField.get(this);
+    } catch (ReflectiveOperationException e) {
+      LOGGER.error("Predicate with name {} does not exist", predicateName);
+      throw new IllegalArgumentException(e.getMessage());
+    }
+
   }
 }

@@ -23,11 +23,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import static io.knotx.databridge.http.action.HttpAction.TIMEOUT_TRANSITION;
 import static io.knotx.fragments.handler.api.domain.FragmentResult.ERROR_TRANSITION;
 import static io.knotx.fragments.handler.api.domain.FragmentResult.SUCCESS_TRANSITION;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.knotx.fragments.api.Fragment;
@@ -66,6 +62,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import javax.xml.transform.sax.SAXResult;
+
 @ExtendWith(VertxExtension.class)
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.WARN)
@@ -80,6 +78,7 @@ class HttpActionTest {
   private static final String APPLICATION_JSON = "application/json";
   private static final String APPLICATION_TEXT = "application/text";
   private static final String JSON = "JSON";
+  private static final String NOT_EXISTING_PREDICATE = "not existing predicate";
   private static final String JSON_BODY = "{\n" +
       "  \"id\": 21762532,\n" +
       "  \"url\": \"http://knotx.io\",\n" +
@@ -514,6 +513,41 @@ class HttpActionTest {
   }
 
   @Test
+  @DisplayName("Expect IllegalArgumentException when not existing predicate provided")
+  void expectErrorWhenNotExistingPredicateProvided(VertxTestContext testContext, Vertx vertx) throws Throwable {
+    String endpointPath = "/api/exception-wrong-predicate";
+    Set<String> predicates = new HashSet<>();
+    predicates.add(NOT_EXISTING_PREDICATE);
+
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(JSON_BODY)
+            .withHeader("Content-Type", APPLICATION_JSON)));
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), endpointPath);
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(endpointPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    ResponseOptions responseOptions = new ResponseOptions()
+        .setPredicates(predicates)
+        .setForceJson(false);
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions)
+            .setResponseOptions(responseOptions),
+        ACTION_ALIAS);
+
+    verifyFailingExecution(tested, clientRequest, FRAGMENT, error -> {
+      assertTrue(error instanceof IllegalArgumentException);
+    }, testContext);
+  }
+
+  @Test
   @DisplayName("Expect error transition when endpoint times out")
   void errorTransitionWhenEndpointTimesOut(VertxTestContext testContext, Vertx vertx)
       throws Throwable {
@@ -798,15 +832,11 @@ class HttpActionTest {
       Fragment fragment,
       Consumer<Throwable> failureAssertions,
       VertxTestContext testContext) throws Throwable {
-    try {
-      tested.apply(new FragmentContext(fragment, clientRequest),
-          testContext.failing(error -> {
-            testContext.verify(() -> failureAssertions.accept(error));
-            testContext.completeNow();
-          }));
-    } catch (RuntimeException e) {
-      throw e;
-    }
+    tested.apply(new FragmentContext(fragment, clientRequest),
+        testContext.failing(error -> {
+          testContext.verify(() -> failureAssertions.accept(error));
+          testContext.completeNow();
+        }));
     //then
     assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
     if (testContext.failed()) {
@@ -817,15 +847,11 @@ class HttpActionTest {
   private void verifyExecution(HttpAction tested, ClientRequest clientRequest, Fragment fragment,
       Consumer<FragmentResult> successAssertions,
       VertxTestContext testContext) throws Throwable {
-    try {
-      tested.apply(new FragmentContext(fragment, clientRequest),
-          testContext.succeeding(result -> {
-            testContext.verify(() -> successAssertions.accept(result));
-            testContext.completeNow();
-          }));
-    } catch (RuntimeException e) {
-      throw e;
-    }
+    tested.apply(new FragmentContext(fragment, clientRequest),
+        testContext.succeeding(result -> {
+          testContext.verify(() -> successAssertions.accept(result));
+          testContext.completeNow();
+        }));
     //then
     assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
     if (testContext.failed()) {
