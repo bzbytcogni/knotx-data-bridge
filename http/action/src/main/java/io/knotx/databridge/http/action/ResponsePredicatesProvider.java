@@ -23,7 +23,6 @@ import java.lang.reflect.Field;
 public class ResponsePredicatesProvider {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ResponsePredicatesProvider.class);
-
   private static final Class PREDICATE_CLASS = io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate.class;
 
   public ResponsePredicate fromName(

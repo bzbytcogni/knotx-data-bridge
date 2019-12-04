@@ -72,31 +72,20 @@ import org.mockito.quality.Strictness;
 class HttpActionTest {
 
   private static final String VALID_REQUEST_PATH = "/valid-service";
-
   private static final String VALID_JSON_RESPONSE_BODY = "{ \"data\": \"service response\"}";
-
   private static final String VALID_JSON_ARRAY_RESPONSE_BODY = "[ \"first service response\", \" second service response\"]";
-
   private static final String VALID_EMPTY_RESPONSE_BODY = "";
-
-  private static final Fragment FRAGMENT = new Fragment("type", new JsonObject(), "expectedBody");
-
   private static final String ACTION_ALIAS = "httpAction";
-
+  private static final String RAW_BODY = "<html>Hello</html>";
+  private static final String APPLICATION_JSON = "application/json";
+  private static final String APPLICATION_TEXT = "application/text";
+  private static final String JSON = "JSON";
   private static final String JSON_BODY = "{\n" +
       "  \"id\": 21762532,\n" +
       "  \"url\": \"http://knotx.io\",\n" +
       "  \"label\": \"Product\"\n" +
       "}";
-
-  private static final String RAW_BODY = "<html>Hello</html>";
-
-  private static final String APPLICATION_JSON = "application/json";
-
-  private static final String APPLICATION_TEXT = "application/text";
-
-  private static final String JSON = "JSON";
-
+  private static final Fragment FRAGMENT = new Fragment("type", new JsonObject(), "expectedBody");
   private WireMockServer wireMockServer;
 
   static Stream<Arguments> dataExpectSuccessTransitionAndJsonBody() {

@@ -69,12 +69,18 @@ public class HttpAction implements Action {
   private static final String PLACEHOLDER_PREFIX_PAYLOAD = "payload";
   private static final String PLACEHOLDER_PREFIX_CONFIG = "config";
   private static final String JSON = "JSON";
+  private static final String APPLICATION_JSON = "application/json";
+  private static final String CONTENT_TYPE = "Content-Type";
 
   private final EndpointOptions endpointOptions;
   private final WebClient webClient;
   private final String actionAlias;
   private final HttpActionOptions httpActionOptions;
   private final ResponsePredicatesProvider predicatesProvider;
+  private static final ResponsePredicate IS_JSON_RESPONSE = ResponsePredicate
+      .create(ResponsePredicate.JSON, result -> {
+        throw new ReplyException(ReplyFailure.RECIPIENT_FAILURE, result.message());
+      });
 
   HttpAction(Vertx vertx, HttpActionOptions httpActionOptions, String actionAlias) {
     this.httpActionOptions = httpActionOptions;
@@ -125,13 +131,7 @@ public class HttpAction implements Action {
         .timeout(httpActionOptions.getRequestTimeoutMs());
 
     if (httpActionOptions.getResponseOptions().getPredicates().contains(JSON)) {
-      ResponsePredicate isJsonResponse = ResponsePredicate
-          .create(ResponsePredicate.JSON, result -> {
-            throw new ReplyException(ReplyFailure.RECIPIENT_FAILURE, result.message());
-          });
-
-      request.expect(io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate
-          .newInstance(isJsonResponse));
+      request.expect(io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate.newInstance(IS_JSON_RESPONSE));
     }
     attachResponsePredicatesToRequest(request,
         httpActionOptions.getResponseOptions().getPredicates());
@@ -272,11 +272,8 @@ public class HttpAction implements Action {
   }
 
   private boolean isContentTypeHeaderJson(EndpointResponse endpointResponse) {
-    String contentType = endpointResponse.getHeaders().get("Content-Type");
-    if (contentType != null) {
-      return contentType.contains("application/json");
-    }
-    return false;
+    String contentType = endpointResponse.getHeaders().get(CONTENT_TYPE);
+    return contentType != null && contentType.contains(APPLICATION_JSON);
   }
 
   private Object bodyToJson(String responseBody) {
