@@ -79,24 +79,6 @@ public class ResponseOptions {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ResponseOptions that = (ResponseOptions) o;
-    return forceJson == that.forceJson &&
-        Objects.equals(predicates, that.predicates);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(predicates, forceJson);
-  }
-
-  @Override
   public String toString() {
     return "ResponseOptions{" +
         "predicates=" + predicates +
