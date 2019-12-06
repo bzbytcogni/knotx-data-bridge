@@ -72,6 +72,7 @@ public class HttpAction implements Action {
   private static final String APPLICATION_JSON = "application/json";
   private static final String CONTENT_TYPE = "Content-Type";
   private final boolean isJsonPredicate;
+  private final boolean isForceJson;
 
   private final EndpointOptions endpointOptions;
   private final WebClient webClient;
@@ -91,6 +92,7 @@ public class HttpAction implements Action {
     this.actionAlias = actionAlias;
     predicatesProvider = new ResponsePredicatesProvider();
     this.isJsonPredicate = this.httpActionOptions.getResponseOptions().getPredicates().contains(JSON);
+    this.isForceJson = httpActionOptions.getResponseOptions().isForceJson();
   }
 
   @Override
@@ -256,8 +258,7 @@ public class HttpAction implements Action {
   }
 
   private ActionPayload handleSuccessResponse(EndpointResponse response, ActionRequest request) {
-    if (httpActionOptions.getResponseOptions().isForceJson() ||
-        httpActionOptions.getResponseOptions().getPredicates().contains(JSON)) {
+    if (isForceJson || isJsonPredicate) {
       return ActionPayload.success(request, bodyToJson(response.getBody().toString()));
     } else if (isContentTypeHeaderJson(response)) {
       return ActionPayload.success(request, bodyToJson(response.getBody().toString()));
