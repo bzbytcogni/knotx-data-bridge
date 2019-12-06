@@ -71,6 +71,7 @@ public class HttpAction implements Action {
   private static final String JSON = "JSON";
   private static final String APPLICATION_JSON = "application/json";
   private static final String CONTENT_TYPE = "Content-Type";
+  private final boolean isJsonPredicate;
 
   private final EndpointOptions endpointOptions;
   private final WebClient webClient;
@@ -89,6 +90,7 @@ public class HttpAction implements Action {
     this.endpointOptions = httpActionOptions.getEndpointOptions();
     this.actionAlias = actionAlias;
     predicatesProvider = new ResponsePredicatesProvider();
+    this.isJsonPredicate = this.httpActionOptions.getResponseOptions().getPredicates().contains(JSON);
   }
 
   @Override
@@ -130,7 +132,7 @@ public class HttpAction implements Action {
             endpointRequest.getPath())
         .timeout(httpActionOptions.getRequestTimeoutMs());
 
-    if (httpActionOptions.getResponseOptions().getPredicates().contains(JSON)) {
+    if (isJsonPredicate) {
       request.expect(io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate.newInstance(IS_JSON_RESPONSE));
     }
     attachResponsePredicatesToRequest(request,
