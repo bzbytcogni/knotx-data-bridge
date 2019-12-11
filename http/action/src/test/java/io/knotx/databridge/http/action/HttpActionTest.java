@@ -51,6 +51,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -120,6 +121,11 @@ class HttpActionTest {
   void setUp() {
     this.wireMockServer = new WireMockServer(options().dynamicPort());
     this.wireMockServer.start();
+  }
+
+  @AfterEach
+  void tearDown() {
+    this.wireMockServer.stop();
   }
 
   @Test
