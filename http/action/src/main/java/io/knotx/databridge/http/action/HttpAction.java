@@ -321,7 +321,7 @@ public class HttpAction implements Action {
     JsonObject headers = new JsonObject();
     response.getHeaders().entries().forEach(h -> headers.put(h.getKey(), h.getValue()));
     actionLogger.info(METADATA_STATUS_CODE_KEY, String.valueOf(response.getStatusCode()));
-    actionLogger.info(RESPONSE_BODY, response.getBody().toJsonObject());
+    actionLogger.info(RESPONSE_BODY, response.getBody().toJson());
     actionLogger.info(METADATA_STATUS_MESSAGE_KEY, response.getStatusMessage());
     actionLogger.info(RESPONSE_HEADERS, headers);
     actionLogger.info(REQUEST_BODY, request.toJson());

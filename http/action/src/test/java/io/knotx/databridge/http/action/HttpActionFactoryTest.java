@@ -44,6 +44,7 @@ public class HttpActionFactoryTest {
   void shouldCreateHttpActionWhenProperlyConfigured(Vertx vertx) {
     HttpActionFactory actionFactory = new HttpActionFactory();
     JsonObject config = new JsonObject();
+    config.put("logLevel", "info");
     assertTrue(actionFactory.create("", config, vertx, null) instanceof HttpAction);
   }
 }
