@@ -23,10 +23,15 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import static io.knotx.databridge.http.action.HttpAction.TIMEOUT_TRANSITION;
 import static io.knotx.fragments.handler.api.domain.FragmentResult.ERROR_TRANSITION;
 import static io.knotx.fragments.handler.api.domain.FragmentResult.SUCCESS_TRANSITION;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.knotx.fragments.api.Fragment;
+import io.knotx.fragments.handler.api.actionlog.ActionLogLevel;
 import io.knotx.fragments.handler.api.domain.FragmentContext;
 import io.knotx.fragments.handler.api.domain.FragmentResult;
 import io.knotx.fragments.handler.api.domain.payload.ActionPayload;
@@ -63,8 +68,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import javax.xml.transform.sax.SAXResult;
-
 @ExtendWith(VertxExtension.class)
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.WARN)
@@ -87,6 +90,7 @@ class HttpActionTest {
       "}";
   private static final Fragment FRAGMENT = new Fragment("type", new JsonObject(), "expectedBody");
   private WireMockServer wireMockServer;
+  private ActionLogLevel actionLogLevel = ActionLogLevel.INFO;
 
   static Stream<Arguments> dataExpectSuccessTransitionAndJsonBody() {
     return Stream.of( //Content-Type, forceJson, JSON predicate, Body,
@@ -387,7 +391,7 @@ class HttpActionTest {
         new HttpActionOptions()
             .setEndpointOptions(endpointOptions)
             .setResponseOptions(responseOptions),
-        ACTION_ALIAS);
+        ACTION_ALIAS, actionLogLevel);
 
     verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
       assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
@@ -430,7 +434,7 @@ class HttpActionTest {
         new HttpActionOptions()
             .setEndpointOptions(endpointOptions)
             .setResponseOptions(responseOptions),
-        ACTION_ALIAS);
+        ACTION_ALIAS, actionLogLevel);
 
     verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
       assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
@@ -469,7 +473,7 @@ class HttpActionTest {
         new HttpActionOptions()
             .setEndpointOptions(endpointOptions)
             .setResponseOptions(responseOptions),
-        ACTION_ALIAS);
+        ACTION_ALIAS, actionLogLevel);
 
     verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
       assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
@@ -508,7 +512,7 @@ class HttpActionTest {
         new HttpActionOptions()
             .setEndpointOptions(endpointOptions)
             .setResponseOptions(responseOptions),
-        ACTION_ALIAS);
+        ACTION_ALIAS, actionLogLevel);
 
     verifyFailingExecution(tested, clientRequest, FRAGMENT, error -> {
       assertTrue(error instanceof CompositeException);
@@ -520,7 +524,8 @@ class HttpActionTest {
 
   @Test
   @DisplayName("Expect IllegalArgumentException when not existing predicate provided")
-  void expectErrorWhenNotExistingPredicateProvided(VertxTestContext testContext, Vertx vertx) throws Throwable {
+  void expectErrorWhenNotExistingPredicateProvided(VertxTestContext testContext, Vertx vertx)
+      throws Throwable {
     String endpointPath = "/api/exception-wrong-predicate";
     Set<String> predicates = new HashSet<>();
     predicates.add(NOT_EXISTING_PREDICATE);
@@ -546,7 +551,7 @@ class HttpActionTest {
         new HttpActionOptions()
             .setEndpointOptions(endpointOptions)
             .setResponseOptions(responseOptions),
-        ACTION_ALIAS);
+        ACTION_ALIAS, actionLogLevel);
 
     verifyFailingExecution(tested, clientRequest, FRAGMENT, error -> {
       assertTrue(error instanceof IllegalArgumentException);
@@ -573,7 +578,7 @@ class HttpActionTest {
     HttpAction tested = new HttpAction(vertx,
         new HttpActionOptions()
             .setEndpointOptions(endpointOptions)
-            .setRequestTimeoutMs(requestTimeoutMs), ACTION_ALIAS);
+            .setRequestTimeoutMs(requestTimeoutMs), ACTION_ALIAS, actionLogLevel);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
@@ -597,7 +602,7 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, actionLogLevel);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
@@ -687,7 +692,7 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, actionLogLevel);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
@@ -719,7 +724,7 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, actionLogLevel);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
@@ -749,7 +754,7 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, actionLogLevel);
 
     // then
     verifyExecution(tested, clientRequest, FRAGMENT,
@@ -779,7 +784,7 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, actionLogLevel);
 
     // then
     verifyExecution(tested, clientRequest,
@@ -813,7 +818,7 @@ class HttpActionTest {
         .setAllowedRequestHeaders(Collections.singleton("requestHeader"));
 
     return new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, actionLogLevel);
   }
 
   private HttpAction getHttpActionWithAdditionalHeaders(Vertx vertx,
@@ -831,7 +836,7 @@ class HttpActionTest {
         .setAdditionalHeaders(additionalHeaders);
 
     return new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, actionLogLevel);
   }
 
   private void verifyFailingExecution(HttpAction tested, ClientRequest clientRequest,

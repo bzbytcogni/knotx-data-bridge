@@ -24,6 +24,8 @@ import io.knotx.commons.http.request.DataObjectsUtil;
 import io.knotx.commons.http.request.MultiMapCollector;
 import io.knotx.fragments.api.Fragment;
 import io.knotx.fragments.handler.api.Action;
+import io.knotx.fragments.handler.api.actionlog.ActionLogLevel;
+import io.knotx.fragments.handler.api.actionlog.ActionLogger;
 import io.knotx.fragments.handler.api.domain.FragmentContext;
 import io.knotx.fragments.handler.api.domain.FragmentResult;
 import io.knotx.fragments.handler.api.domain.payload.ActionPayload;
@@ -66,11 +68,15 @@ public class HttpAction implements Action {
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpAction.class);
   private static final String METADATA_HEADERS_KEY = "headers";
   private static final String METADATA_STATUS_CODE_KEY = "statusCode";
+  private static final String METADATA_STATUS_MESSAGE_KEY = "statusMessage";
   private static final String PLACEHOLDER_PREFIX_PAYLOAD = "payload";
   private static final String PLACEHOLDER_PREFIX_CONFIG = "config";
   private static final String JSON = "JSON";
   private static final String APPLICATION_JSON = "application/json";
   private static final String CONTENT_TYPE = "Content-Type";
+  private static final String RESPONSE_BODY = "responseBody";
+  private static final String RESPONSE_HEADERS = "responseHeaders";
+  private static final String REQUEST_BODY = "requestBody";
   private final boolean isJsonPredicate;
   private final boolean isForceJson;
 
@@ -79,20 +85,24 @@ public class HttpAction implements Action {
   private final String actionAlias;
   private final HttpActionOptions httpActionOptions;
   private final ResponsePredicatesProvider predicatesProvider;
+  private final ActionLogger actionLogger;
   private static final ResponsePredicate IS_JSON_RESPONSE = ResponsePredicate
       .create(ResponsePredicate.JSON, result -> {
         throw new ReplyException(ReplyFailure.RECIPIENT_FAILURE, result.message());
       });
 
-  HttpAction(Vertx vertx, HttpActionOptions httpActionOptions, String actionAlias) {
+  HttpAction(Vertx vertx, HttpActionOptions httpActionOptions, String actionAlias,
+      ActionLogLevel actionLogLevel) {
     this.httpActionOptions = httpActionOptions;
     this.webClient = WebClient.create(io.vertx.reactivex.core.Vertx.newInstance(vertx),
         httpActionOptions.getWebClientOptions());
     this.endpointOptions = httpActionOptions.getEndpointOptions();
     this.actionAlias = actionAlias;
     predicatesProvider = new ResponsePredicatesProvider();
-    this.isJsonPredicate = this.httpActionOptions.getResponseOptions().getPredicates().contains(JSON);
+    this.isJsonPredicate = this.httpActionOptions.getResponseOptions().getPredicates()
+        .contains(JSON);
     this.isForceJson = httpActionOptions.getResponseOptions().isForceJson();
+    this.actionLogger = ActionLogger.create(actionAlias, actionLogLevel);
   }
 
   @Override
@@ -135,7 +145,8 @@ public class HttpAction implements Action {
         .timeout(httpActionOptions.getRequestTimeoutMs());
 
     if (isJsonPredicate) {
-      request.expect(io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate.newInstance(IS_JSON_RESPONSE));
+      request.expect(io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate
+          .newInstance(IS_JSON_RESPONSE));
     }
     attachResponsePredicatesToRequest(request,
         httpActionOptions.getResponseOptions().getPredicates());
@@ -145,7 +156,8 @@ public class HttpAction implements Action {
     return request.rxSend();
   }
 
-  private void attachResponsePredicatesToRequest(HttpRequest<Buffer> request, Set<String> predicates) {
+  private void attachResponsePredicatesToRequest(HttpRequest<Buffer> request,
+      Set<String> predicates) {
     predicates.stream()
         .filter(p -> !JSON.equals(p))
         .forEach(p -> request.expect(predicatesProvider.fromName(p)));
@@ -233,7 +245,7 @@ public class HttpAction implements Action {
 
     Fragment fragment = fragmentContext.getFragment();
     fragment.appendPayload(actionAlias, payload.toJson());
-    return Single.just(new FragmentResult(fragment, transition));
+    return Single.just(new FragmentResult(fragment, transition, actionLogger.toLog().toJson()));
   }
 
   private ActionRequest createActionRequest(EndpointRequest endpointRequest) {
@@ -250,6 +262,7 @@ public class HttpAction implements Action {
 
   private ActionPayload handleErrorResponse(ActionRequest request, String statusCode,
       String statusMessage) {
+    logOnError(request, statusCode, statusMessage);
     return ActionPayload.error(request, statusCode, statusMessage);
   }
 
@@ -258,6 +271,7 @@ public class HttpAction implements Action {
   }
 
   private ActionPayload handleSuccessResponse(EndpointResponse response, ActionRequest request) {
+    logOnSuccess(response, request);
     if (isForceJson || isJsonPredicate) {
       return ActionPayload.success(request, bodyToJson(response.getBody().toString()));
     } else if (isContentTypeHeaderJson(response)) {
@@ -301,6 +315,22 @@ public class HttpAction implements Action {
       );
     });
     return responseHeaders;
+  }
+
+  private void logOnSuccess(EndpointResponse response, ActionRequest request) {
+    JsonObject headers = new JsonObject();
+    response.getHeaders().entries().forEach(h -> headers.put(h.getKey(), h.getValue()));
+    actionLogger.info(METADATA_STATUS_CODE_KEY, String.valueOf(response.getStatusCode()));
+    actionLogger.info(RESPONSE_BODY, response.getBody().toJsonObject());
+    actionLogger.info(METADATA_STATUS_MESSAGE_KEY, response.getStatusMessage());
+    actionLogger.info(RESPONSE_HEADERS, headers);
+    actionLogger.info(REQUEST_BODY, request.toJson());
+  }
+
+  private void logOnError(ActionRequest request, String statusCode, String statusMessage) {
+    actionLogger.error(METADATA_STATUS_CODE_KEY, statusCode);
+    actionLogger.error(METADATA_STATUS_MESSAGE_KEY, statusMessage);
+    actionLogger.error(REQUEST_BODY, request.toJson());
   }
 
 }
