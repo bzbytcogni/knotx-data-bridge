@@ -559,6 +559,104 @@ class HttpActionTest {
   }
 
   @Test
+  @DisplayName("expect success transition and action log should contain info level messages")
+  void actionLogShouldContainInfoLevelMessages(VertxTestContext testContext, Vertx vertx)
+      throws Throwable {
+    String endpointPath = "/api/info-action-log";
+
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(JSON_BODY)
+            .withHeader("Content-Type", APPLICATION_JSON)));
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), endpointPath);
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(endpointPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions),
+        ACTION_ALIAS, ActionLogLevel.INFO);
+
+    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+      assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
+      JsonObject logs = JsonObject.mapFrom(fragmentResult.getNodeLog().getMap().get("logs"));
+      assertEquals("200 OK", logs.getMap().get("statusCode"));
+      assertEquals(APPLICATION_JSON,
+          logs.getJsonObject("responseHeaders").getString("Content-Type"));
+      assertEquals("Product", logs.getJsonObject("responseBody").getString("label"));
+    }, testContext);
+  }
+
+  @Test
+  @DisplayName("Expect success transition and action log should contain error level messages")
+  void actionLogShouldContainErrorLevelMessages(VertxTestContext testContext, Vertx vertx)
+      throws Throwable {
+    String endpointPath = "/api/error-action-log";
+
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(JSON_BODY)
+            .withHeader("Content-Type", APPLICATION_JSON)));
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), endpointPath);
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(endpointPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions),
+        ACTION_ALIAS, ActionLogLevel.ERROR);
+
+    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+      assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
+      JsonObject logs = JsonObject.mapFrom(fragmentResult.getNodeLog().getMap().get("logs"));
+      assertEquals(0, logs.size());
+    }, testContext);
+  }
+
+  @Test
+  @DisplayName("Expect error transition and error level logs")
+  void expectErrorTransitionAndErrorLevelLogs(VertxTestContext testContext, Vertx vertx)
+      throws Throwable {
+    int requestTimeoutMs = 1000;
+    wireMockServer.stubFor(get(urlEqualTo(VALID_REQUEST_PATH))
+        .willReturn(aResponse().withFixedDelay(2 * requestTimeoutMs)));
+
+    ClientRequest clientRequest = new ClientRequest();
+    clientRequest.setHeaders(MultiMap.caseInsensitiveMultiMap());
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(VALID_REQUEST_PATH)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port());
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions)
+            .setRequestTimeoutMs(requestTimeoutMs), ACTION_ALIAS, actionLogLevel);
+
+    // then
+    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+      assertEquals(TIMEOUT_TRANSITION, fragmentResult.getTransition());
+      assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
+      JsonObject logs = JsonObject.mapFrom(fragmentResult.getNodeLog().getMap().get("logs"));
+      assertEquals(3, logs.size());
+      assertTrue(logs.containsKey("statusCode"));
+      assertTrue(logs.containsKey("statusMessage"));
+      assertTrue(logs.containsKey("requestBody"));
+    }, testContext);
+  }
+
+  @Test
   @DisplayName("Expect error transition when endpoint times out")
   void errorTransitionWhenEndpointTimesOut(VertxTestContext testContext, Vertx vertx)
       throws Throwable {
