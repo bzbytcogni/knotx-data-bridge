@@ -3,6 +3,8 @@ All notable changes to `knotx-data-bridge` will be documented in this file.
 
 ## Unreleased
 List of changes that are finished but not yet released in any final version.
+
+## Version 2.1.0
 - [PR-58](https://github.com/Knotx/knotx-data-bridge/pull/58) - HTTP response body validation for content-type
 
 ## 2.0.0
