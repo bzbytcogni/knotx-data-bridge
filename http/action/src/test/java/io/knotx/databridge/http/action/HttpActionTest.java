@@ -584,11 +584,10 @@ class HttpActionTest {
 
     verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
       assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
-      JsonObject logs = JsonObject.mapFrom(fragmentResult.getNodeLog().getMap().get("logs"));
-      assertEquals("200 OK", logs.getMap().get("statusCode"));
-      assertEquals(APPLICATION_JSON,
-          logs.getJsonObject("responseHeaders").getString("Content-Type"));
-      assertEquals("Product", logs.getJsonObject("responseBody").getString("label"));
+      JsonObject actionPayload = JsonObject.mapFrom(
+          fragmentResult.getNodeLog().getJsonObject("logs").getJsonObject("actionPayload"));
+      assertEquals(true, actionPayload.getJsonObject("response").getBoolean("success"));
+      assertEquals(new JsonObject(JSON_BODY), actionPayload.getJsonObject("result"));
     }, testContext);
   }
 
@@ -648,11 +647,11 @@ class HttpActionTest {
     verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
       assertEquals(TIMEOUT_TRANSITION, fragmentResult.getTransition());
       assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
-      JsonObject logs = JsonObject.mapFrom(fragmentResult.getNodeLog().getMap().get("logs"));
-      assertEquals(3, logs.size());
-      assertTrue(logs.containsKey("statusCode"));
-      assertTrue(logs.containsKey("statusMessage"));
-      assertTrue(logs.containsKey("requestBody"));
+      JsonObject actionPayload = JsonObject.mapFrom(
+          fragmentResult.getNodeLog().getJsonObject("logs").getJsonObject("actionPayload"));
+      assertNull(actionPayload.getJsonObject("result"));
+      assertEquals("408 Request Timeout",
+          actionPayload.getJsonObject("response").getJsonObject("error").getString("code"));
     }, testContext);
   }
 

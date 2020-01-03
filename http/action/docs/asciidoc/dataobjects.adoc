@@ -42,11 +42,11 @@ Sets the HTTP <code>port</code> the external service
 [frame="topbot"]
 |===
 ^|Name | Type ^| Description
-|[[actionLogLevel]]`@actionLogLevel`|`String`|+++
-Set level of action logs.
-+++
 |[[endpointOptions]]`@endpointOptions`|`link:dataobjects.html#EndpointOptions[EndpointOptions]`|+++
 Set the details of the remote http endpoint location.
++++
+|[[logLevel]]`@logLevel`|`String`|+++
+Set level of action logs.
 +++
 |[[requestTimeoutMs]]`@requestTimeoutMs`|`Number (long)`|+++
 Configures the amount of time in milliseconds after which if the request does not return any

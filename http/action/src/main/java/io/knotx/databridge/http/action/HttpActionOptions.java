@@ -31,7 +31,7 @@ public class HttpActionOptions {
   private EndpointOptions endpointOptions;
   private ResponseOptions responseOptions;
   private long requestTimeoutMs;
-  private String actionLogLevel;
+  private String logLevel;
 
   public HttpActionOptions() {
     init();
@@ -106,18 +106,18 @@ public class HttpActionOptions {
     return this;
   }
 
-  public String getActionLogLevel() {
-    return actionLogLevel;
+  public String getLogLevel() {
+    return logLevel;
   }
 
   /**
    * Set level of action logs.
    *
-   * @param actionLogLevel alevel of action logs
+   * @param logLevel alevel of action logs
    * @return a reference to this, so the API can be used fluently
    */
-  public HttpActionOptions setActionLogLevel(String actionLogLevel) {
-    this.actionLogLevel = actionLogLevel;
+  public HttpActionOptions setLogLevel(String logLevel) {
+    this.logLevel = logLevel;
     return this;
   }
 
@@ -128,6 +128,7 @@ public class HttpActionOptions {
         ", endpointOptions=" + endpointOptions +
         ", responseOptions=" + responseOptions +
         ", requestTimeoutMs=" + requestTimeoutMs +
+        ", logLevel=" + logLevel +
         '}';
   }
 }

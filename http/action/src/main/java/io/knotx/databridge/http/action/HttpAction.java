@@ -68,15 +68,12 @@ public class HttpAction implements Action {
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpAction.class);
   private static final String METADATA_HEADERS_KEY = "headers";
   private static final String METADATA_STATUS_CODE_KEY = "statusCode";
-  private static final String METADATA_STATUS_MESSAGE_KEY = "statusMessage";
   private static final String PLACEHOLDER_PREFIX_PAYLOAD = "payload";
   private static final String PLACEHOLDER_PREFIX_CONFIG = "config";
   private static final String JSON = "JSON";
   private static final String APPLICATION_JSON = "application/json";
   private static final String CONTENT_TYPE = "Content-Type";
-  private static final String RESPONSE_BODY = "responseBody";
-  private static final String RESPONSE_HEADERS = "responseHeaders";
-  private static final String REQUEST_BODY = "requestBody";
+  private static final String ACTION_PAYLOAD = "actionPayload";
   private final boolean isJsonPredicate;
   private final boolean isForceJson;
 
@@ -262,7 +259,7 @@ public class HttpAction implements Action {
 
   private ActionPayload handleErrorResponse(ActionRequest request, String statusCode,
       String statusMessage) {
-    logOnError(request, statusCode, statusMessage);
+    logOnError(ActionPayload.error(request, statusCode, statusMessage));
     return ActionPayload.error(request, statusCode, statusMessage);
   }
 
@@ -271,10 +268,8 @@ public class HttpAction implements Action {
   }
 
   private ActionPayload handleSuccessResponse(EndpointResponse response, ActionRequest request) {
-    logOnSuccess(response, request);
-    if (isForceJson || isJsonPredicate) {
-      return ActionPayload.success(request, bodyToJson(response.getBody().toString()));
-    } else if (isContentTypeHeaderJson(response)) {
+    logOnSuccess(ActionPayload.success(request, bodyToJson(response.getBody().toString())));
+    if (isForceJson || isJsonPredicate || isContentTypeHeaderJson(response)) {
       return ActionPayload.success(request, bodyToJson(response.getBody().toString()));
     } else {
       return ActionPayload.success(request, response.getBody().toString());
@@ -317,19 +312,11 @@ public class HttpAction implements Action {
     return responseHeaders;
   }
 
-  private void logOnSuccess(EndpointResponse response, ActionRequest request) {
-    JsonObject headers = new JsonObject();
-    response.getHeaders().entries().forEach(h -> headers.put(h.getKey(), h.getValue()));
-    actionLogger.info(METADATA_STATUS_CODE_KEY, String.valueOf(response.getStatusCode()));
-    actionLogger.info(RESPONSE_BODY, response.getBody().toJson());
-    actionLogger.info(METADATA_STATUS_MESSAGE_KEY, response.getStatusMessage());
-    actionLogger.info(RESPONSE_HEADERS, headers);
-    actionLogger.info(REQUEST_BODY, request.toJson());
+  private void logOnSuccess(ActionPayload actionPayload) {
+    actionLogger.info(ACTION_PAYLOAD, JsonObject.mapFrom(actionPayload));
   }
 
-  private void logOnError(ActionRequest request, String statusCode, String statusMessage) {
-    actionLogger.error(METADATA_STATUS_CODE_KEY, statusCode);
-    actionLogger.error(METADATA_STATUS_MESSAGE_KEY, statusMessage);
-    actionLogger.error(REQUEST_BODY, request.toJson());
+  private void logOnError(ActionPayload actionPayload) {
+    actionLogger.error(ACTION_PAYLOAD, JsonObject.mapFrom(actionPayload));
   }
 }
