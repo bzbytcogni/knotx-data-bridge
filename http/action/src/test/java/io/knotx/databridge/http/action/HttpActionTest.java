@@ -88,7 +88,7 @@ class HttpActionTest {
       "  \"url\": \"http://knotx.io\",\n" +
       "  \"label\": \"Product\"\n" +
       "}";
-  private static final Fragment FRAGMENT = new Fragment("type", new JsonObject(), "expectedBody");
+  //  private static final Fragment FRAGMENT = new Fragment("type", new JsonObject(), "expectedBody");
   private WireMockServer wireMockServer;
   private ActionLogLevel actionLogLevel = ActionLogLevel.INFO;
 
@@ -143,7 +143,7 @@ class HttpActionTest {
         MultiMap.caseInsensitiveMultiMap(), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -159,7 +159,7 @@ class HttpActionTest {
             .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertTrue(
             fragmentResult.getFragment()
                 .getPayload()
@@ -178,7 +178,7 @@ class HttpActionTest {
             .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       ActionPayload payload = new ActionPayload(
           fragmentResult.getFragment()
               .getPayload()
@@ -200,7 +200,7 @@ class HttpActionTest {
             .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       ActionPayload payload = new ActionPayload(
           fragmentResult.getFragment()
               .getPayload()
@@ -222,8 +222,8 @@ class HttpActionTest {
             .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
-        fragmentResult -> assertEquals(FRAGMENT.getBody(), fragmentResult.getFragment()
+    verifyExecution(tested, clientRequest, createFragment(),
+        fragmentResult -> assertEquals(createFragment().getBody(), fragmentResult.getFragment()
             .getBody()),
         testContext);
   }
@@ -239,7 +239,7 @@ class HttpActionTest {
             .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       ActionPayload payload = new ActionPayload(
           fragmentResult.getFragment()
               .getPayload()
@@ -267,7 +267,7 @@ class HttpActionTest {
         MultiMap.caseInsensitiveMultiMap(), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       ActionPayload payload = new ActionPayload(
           fragmentResult.getFragment()
               .getPayload()
@@ -298,7 +298,7 @@ class HttpActionTest {
             .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       ActionPayload payload = new ActionPayload(
           fragmentResult.getFragment()
               .getPayload()
@@ -327,7 +327,7 @@ class HttpActionTest {
             .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       ActionPayload payload = new ActionPayload(
           fragmentResult.getFragment()
               .getPayload()
@@ -356,7 +356,7 @@ class HttpActionTest {
             .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(ERROR_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -393,15 +393,16 @@ class HttpActionTest {
             .setResponseOptions(responseOptions),
         ACTION_ALIAS, actionLogLevel);
 
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
-      assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
-      JsonObject result = fragmentResult.getFragment().getPayload()
-          .getJsonObject("httpAction").getJsonObject("_result");
-      assertEquals(new JsonObject()
-          .put("id", 21762532)
-          .put("url", "http://knotx.io")
-          .put("label", "Product"), result);
-    }, testContext);
+    verifyExecution(tested, clientRequest, new Fragment("type", new JsonObject(), "expectedBody"),
+        fragmentResult -> {
+          assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
+          JsonObject result = fragmentResult.getFragment().getPayload()
+              .getJsonObject("httpAction").getJsonObject("_result");
+          assertEquals(new JsonObject()
+              .put("id", 21762532)
+              .put("url", "http://knotx.io")
+              .put("label", "Product"), result);
+        }, testContext);
   }
 
   @ParameterizedTest(name = "Expect success transition and response as raw text")
@@ -436,7 +437,7 @@ class HttpActionTest {
             .setResponseOptions(responseOptions),
         ACTION_ALIAS, actionLogLevel);
 
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
       String result = (String) fragmentResult.getFragment().getPayload().getJsonObject("httpAction")
           .getMap().get("_result");
@@ -446,7 +447,7 @@ class HttpActionTest {
 
   @ParameterizedTest(name = "Expect error transition and no response")
   @MethodSource("dataExpectErrorTransitionAndNullBody")
-  void testErrorResponseAndNoResponse(String contentType, boolean forceJson, String jsonPredicate,
+  void testErrorTransitionAndNoResponse(String contentType, boolean forceJson, String jsonPredicate,
       String responseBody, VertxTestContext testContext, Vertx vertx) throws Throwable {
     String endpointPath = "/api/error-no-response";
     Set<String> predicates = new HashSet<>();
@@ -475,12 +476,12 @@ class HttpActionTest {
             .setResponseOptions(responseOptions),
         ACTION_ALIAS, actionLogLevel);
 
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
-      assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
-      Object result = fragmentResult.getFragment().getPayload().getJsonObject("httpAction").getMap()
-          .get("_result");
-      assertNull(result);
-    }, testContext);
+    verifyExecution(tested, clientRequest, new Fragment("type", new JsonObject(), "expectedBody"),
+        fragmentResult -> {
+          assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
+          JsonObject result = fragmentResult.getFragment().getPayload();
+          assertEquals(new JsonObject(), result);
+        }, testContext);
   }
 
   @ParameterizedTest(name = "Expect exception and no response")
@@ -514,7 +515,7 @@ class HttpActionTest {
             .setResponseOptions(responseOptions),
         ACTION_ALIAS, actionLogLevel);
 
-    verifyFailingExecution(tested, clientRequest, FRAGMENT, error -> {
+    verifyFailingExecution(tested, clientRequest, createFragment(), error -> {
       assertTrue(error instanceof CompositeException);
       CompositeException exception = (CompositeException) error;
       assertEquals(1, exception.getExceptions().size());
@@ -553,7 +554,7 @@ class HttpActionTest {
             .setResponseOptions(responseOptions),
         ACTION_ALIAS, actionLogLevel);
 
-    verifyFailingExecution(tested, clientRequest, FRAGMENT, error -> {
+    verifyFailingExecution(tested, clientRequest, createFragment(), error -> {
       assertTrue(error instanceof IllegalArgumentException);
     }, testContext);
   }
@@ -582,12 +583,12 @@ class HttpActionTest {
             .setEndpointOptions(endpointOptions),
         ACTION_ALIAS, ActionLogLevel.INFO);
 
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
-      JsonObject actionPayload = JsonObject.mapFrom(
-          fragmentResult.getNodeLog().getJsonObject("logs").getJsonObject("actionPayload"));
-      assertEquals(true, actionPayload.getJsonObject("response").getBoolean("success"));
-      assertEquals(new JsonObject(JSON_BODY), actionPayload.getJsonObject("result"));
+      JsonObject logs = fragmentResult.getNodeLog().getJsonObject("logs");
+      assertEquals(new JsonObject(JSON_BODY), logs.getJsonObject("_result"));
+      assertNotNull(logs.getString("rawBody"));
+      assertNotNull(logs.getJsonObject("_response"));
     }, testContext);
   }
 
@@ -615,7 +616,7 @@ class HttpActionTest {
             .setEndpointOptions(endpointOptions),
         ACTION_ALIAS, ActionLogLevel.ERROR);
 
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
       JsonObject logs = JsonObject.mapFrom(fragmentResult.getNodeLog().getMap().get("logs"));
       assertEquals(0, logs.size());
@@ -644,14 +645,14 @@ class HttpActionTest {
             .setRequestTimeoutMs(requestTimeoutMs), ACTION_ALIAS, actionLogLevel);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       assertEquals(TIMEOUT_TRANSITION, fragmentResult.getTransition());
       assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
-      JsonObject actionPayload = JsonObject.mapFrom(
-          fragmentResult.getNodeLog().getJsonObject("logs").getJsonObject("actionPayload"));
-      assertNull(actionPayload.getJsonObject("result"));
-      assertEquals("408 Request Timeout",
-          actionPayload.getJsonObject("response").getJsonObject("error").getString("code"));
+      JsonObject logs = fragmentResult.getNodeLog().getJsonObject("logs");
+      assertNull(logs.getJsonObject("_result"));
+      assertNull(logs.getString("rawBody"));
+      assertNotNull(logs.getJsonObject("_request"));
+      assertTrue(logs.getJsonObject("_response").containsKey("error"));
     }, testContext);
   }
 
@@ -678,7 +679,7 @@ class HttpActionTest {
             .setRequestTimeoutMs(requestTimeoutMs), ACTION_ALIAS, actionLogLevel);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(TIMEOUT_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -702,7 +703,7 @@ class HttpActionTest {
         new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, actionLogLevel);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(ERROR_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -721,7 +722,7 @@ class HttpActionTest {
         clientRequestHeaders, HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -740,7 +741,7 @@ class HttpActionTest {
         clientRequestHeaders, HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
 
@@ -760,7 +761,7 @@ class HttpActionTest {
     ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
         clientRequestHeaders, HttpActionTest.VALID_REQUEST_PATH);
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -792,7 +793,7 @@ class HttpActionTest {
         new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, actionLogLevel);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -824,7 +825,7 @@ class HttpActionTest {
         new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, actionLogLevel);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -854,7 +855,7 @@ class HttpActionTest {
         new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, actionLogLevel);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -885,7 +886,7 @@ class HttpActionTest {
 
     // then
     verifyExecution(tested, clientRequest,
-        FRAGMENT.appendPayload("thumbnail", new JsonObject().put("extension", "png")),
+        createFragment().appendPayload("thumbnail", new JsonObject().put("extension", "png")),
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -974,5 +975,9 @@ class HttpActionTest {
     clientRequest.setHeaders(headers);
     clientRequest.setParams(clientRequestParams);
     return clientRequest;
+  }
+
+  private Fragment createFragment() {
+    return new Fragment("type", new JsonObject(), "expectedBody");
   }
 }
