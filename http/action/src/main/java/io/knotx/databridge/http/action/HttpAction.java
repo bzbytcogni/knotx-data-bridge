@@ -55,6 +55,7 @@ import io.vertx.reactivex.ext.web.client.HttpRequest;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
@@ -82,7 +83,7 @@ public class HttpAction implements Action {
   private final String actionAlias;
   private final HttpActionOptions httpActionOptions;
   private final ResponsePredicatesProvider predicatesProvider;
-  private final ActionLogger actionLogger;
+  private final ActionLogLevel logLevel;
   private static final ResponsePredicate IS_JSON_RESPONSE = ResponsePredicate
       .create(ResponsePredicate.JSON, result -> {
         throw new ReplyException(ReplyFailure.RECIPIENT_FAILURE, result.message());
@@ -99,32 +100,43 @@ public class HttpAction implements Action {
     this.isJsonPredicate = this.httpActionOptions.getResponseOptions().getPredicates()
         .contains(JSON);
     this.isForceJson = httpActionOptions.getResponseOptions().isForceJson();
-    this.actionLogger = ActionLogger.create(actionAlias, actionLogLevel);
+    this.logLevel = actionLogLevel;
   }
 
   @Override
   public void apply(FragmentContext fragmentContext,
       Handler<AsyncResult<FragmentResult>> resultHandler) {
-    Single<FragmentResult> result = process(fragmentContext);
+    final ActionLogger actionLogger = ActionLogger.create(actionAlias, logLevel);
+    Single<FragmentResult> result = process(fragmentContext, actionLogger);
     result.subscribe(onSuccess -> {
       Future<FragmentResult> resultFuture = Future.succeededFuture(onSuccess);
       resultFuture.setHandler(resultHandler);
     }, onError -> {
-      Future<FragmentResult> resultFuture = Future.failedFuture(onError);
+      final Future<FragmentResult> resultFuture;
+      if (onError instanceof DecodeException) {
+        actionLogger.error(onError);
+        resultFuture = Future.succeededFuture(
+            new FragmentResult(fragmentContext.getFragment(), FragmentResult.ERROR_TRANSITION,
+                actionLogger.toLog().toJson()));
+      } else {
+        resultFuture = Future.failedFuture(onError);
+      }
       resultFuture.setHandler(resultHandler);
     });
   }
 
-  private Single<FragmentResult> process(FragmentContext fragmentContext) {
+  private Single<FragmentResult> process(FragmentContext fragmentContext,
+      ActionLogger actionLogger) {
     return Single.just(fragmentContext)
-        .map(this::buildRequest)
+        .map((ctx) -> buildRequest(ctx, actionLogger))
         .flatMap(
             request -> callEndpoint(request)
                 .doOnSuccess(resp -> logResponse(request, resp))
                 .map(EndpointResponse::fromHttpResponse)
                 .onErrorReturn(this::handleTimeout)
                 .map(resp -> Pair.of(request, resp)))
-        .flatMap(pair -> getFragmentResult(fragmentContext, pair.getLeft(), pair.getRight()));
+        .flatMap(pair -> getFragmentResult(fragmentContext, pair.getLeft(), pair.getRight(),
+            actionLogger));
   }
 
   private EndpointResponse handleTimeout(Throwable throwable) {
@@ -160,11 +172,13 @@ public class HttpAction implements Action {
         .forEach(p -> request.expect(predicatesProvider.fromName(p)));
   }
 
-  private EndpointRequest buildRequest(FragmentContext context) {
+  private EndpointRequest buildRequest(FragmentContext context, ActionLogger actionLogger) {
     ClientRequest clientRequest = context.getClientRequest();
     SourceDefinitions sourceDefinitions = buildSourceDefinitions(context, clientRequest);
     String path = PlaceholdersResolver.resolve(endpointOptions.getPath(), sourceDefinitions);
     MultiMap requestHeaders = getRequestHeaders(clientRequest);
+    actionLogger.info("_request", new JsonObject().put("path", path)
+        .put("requestHeaders", JsonObject.mapFrom(requestHeaders)));
     return new EndpointRequest(path, requestHeaders);
   }
 
@@ -219,21 +233,19 @@ public class HttpAction implements Action {
   }
 
   private Single<FragmentResult> getFragmentResult(FragmentContext fragmentContext,
-      EndpointRequest endpointRequest, EndpointResponse endpointResponse) {
+      EndpointRequest endpointRequest, EndpointResponse endpointResponse,
+      ActionLogger actionLogger) {
     String transition = FragmentResult.ERROR_TRANSITION;
 
     ActionRequest request = createActionRequest(endpointRequest);
     ActionPayload payload;
     if (SUCCESS.contains(endpointResponse.getStatusCode().code())) {
-      try {
-        payload = handleSuccessResponse(endpointResponse, request);
-        transition = FragmentResult.SUCCESS_TRANSITION;
-      } catch (DecodeException e) {
-        payload = handleInvalidResponseBodyFormat(request, e);
-      }
+      actionLogger.info("rawBody", endpointResponse.getBody().toString());
+      payload = handleSuccessResponse(endpointResponse, request, actionLogger);
+      transition = FragmentResult.SUCCESS_TRANSITION;
     } else {
       payload = handleErrorResponse(request, endpointResponse.getStatusCode().toString(),
-          endpointResponse.getStatusMessage());
+          endpointResponse.getStatusMessage(), actionLogger);
       if (isTimeout(endpointResponse)) {
         transition = TIMEOUT_TRANSITION;
       }
@@ -258,17 +270,34 @@ public class HttpAction implements Action {
   }
 
   private ActionPayload handleErrorResponse(ActionRequest request, String statusCode,
-      String statusMessage) {
-    logOnError(ActionPayload.error(request, statusCode, statusMessage));
+      String statusMessage, ActionLogger actionLogger) {
+    ActionPayload payload = ActionPayload.error(request, statusCode, statusMessage);
+    Optional.ofNullable(payload.getResponse())
+        .ifPresent(resp -> actionLogger.error("_response", resp.toJson()));
+    Optional.ofNullable(payload.getResult()).ifPresent(result -> {
+      if (result instanceof JsonObject) {
+        actionLogger.info("_result", (JsonObject) result);
+      } else if (result instanceof JsonArray) {
+        actionLogger.info("_result", (JsonArray) result);
+      }
+    });
     return ActionPayload.error(request, statusCode, statusMessage);
   }
 
-  private ActionPayload handleInvalidResponseBodyFormat(ActionRequest request, DecodeException e) {
-    return ActionPayload.error(request, "Response body is not a valid JSON!", e.getMessage());
-  }
-
-  private ActionPayload handleSuccessResponse(EndpointResponse response, ActionRequest request) {
-    logOnSuccess(ActionPayload.success(request, bodyToJson(response.getBody().toString())));
+  private ActionPayload handleSuccessResponse(EndpointResponse response, ActionRequest request,
+      ActionLogger actionLogger) {
+    ActionPayload payload = ActionPayload
+        .success(request, bodyToJson(response.getBody().toString()));
+    Optional.ofNullable(payload.getResponse())
+        .ifPresent(resp -> actionLogger.info("_response", resp.toJson()));
+    Optional.ofNullable(payload.getResult())
+        .ifPresent(result -> {
+          if (result instanceof JsonObject) {
+            actionLogger.info("_result", (JsonObject) result);
+          } else if (result instanceof JsonArray) {
+            actionLogger.info("_result", (JsonArray) result);
+          }
+        });
     if (isForceJson || isJsonPredicate || isContentTypeHeaderJson(response)) {
       return ActionPayload.success(request, bodyToJson(response.getBody().toString()));
     } else {
@@ -310,13 +339,5 @@ public class HttpAction implements Action {
       );
     });
     return responseHeaders;
-  }
-
-  private void logOnSuccess(ActionPayload actionPayload) {
-    actionLogger.info(ACTION_PAYLOAD, JsonObject.mapFrom(actionPayload));
-  }
-
-  private void logOnError(ActionPayload actionPayload) {
-    actionLogger.error(ACTION_PAYLOAD, JsonObject.mapFrom(actionPayload));
   }
 }
