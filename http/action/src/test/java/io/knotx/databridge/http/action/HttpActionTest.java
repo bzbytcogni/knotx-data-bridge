@@ -64,6 +64,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.platform.commons.util.StringUtils;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -88,7 +89,7 @@ class HttpActionTest {
       "  \"url\": \"http://knotx.io\",\n" +
       "  \"label\": \"Product\"\n" +
       "}";
-  //  private static final Fragment FRAGMENT = new Fragment("type", new JsonObject(), "expectedBody");
+
   private WireMockServer wireMockServer;
   private ActionLogLevel actionLogLevel = ActionLogLevel.INFO;
 
@@ -515,11 +516,13 @@ class HttpActionTest {
             .setResponseOptions(responseOptions),
         ACTION_ALIAS, actionLogLevel);
 
-    verifyFailingExecution(tested, clientRequest, createFragment(), error -> {
-      assertTrue(error instanceof CompositeException);
-      CompositeException exception = (CompositeException) error;
-      assertEquals(1, exception.getExceptions().size());
-      assertTrue(exception.getExceptions().get(0) instanceof ReplyException);
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
+      assertNotNull(fragmentResult);
+      assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
+      assertEquals(new JsonObject(), fragmentResult.getFragment().getPayload());
+      JsonObject logs = fragmentResult.getNodeLog().getJsonObject("logs");
+      assertEquals(CompositeException.class.getCanonicalName(),
+          logs.getJsonObject("error").getString("className"));
     }, testContext);
   }
 
@@ -554,8 +557,15 @@ class HttpActionTest {
             .setResponseOptions(responseOptions),
         ACTION_ALIAS, actionLogLevel);
 
-    verifyFailingExecution(tested, clientRequest, createFragment(), error -> {
-      assertTrue(error instanceof IllegalArgumentException);
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
+      assertNotNull(fragmentResult);
+      assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
+      assertEquals(new JsonObject(), fragmentResult.getFragment().getPayload());
+      JsonObject logs = fragmentResult.getNodeLog().getJsonObject("logs");
+      assertEquals(IllegalArgumentException.class.getCanonicalName(),
+          logs.getJsonObject("error").getString("className"));
+      assertEquals(NOT_EXISTING_PREDICATE,
+          logs.getJsonObject("error").getString("message").toLowerCase());
     }, testContext);
   }
 
@@ -586,9 +596,9 @@ class HttpActionTest {
     verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
       JsonObject logs = fragmentResult.getNodeLog().getJsonObject("logs");
-      assertEquals(new JsonObject(JSON_BODY), logs.getJsonObject("_result"));
+      assertEquals(new JsonObject(JSON_BODY), logs.getJsonObject("result"));
       assertNotNull(logs.getString("rawBody"));
-      assertNotNull(logs.getJsonObject("_response"));
+      assertNotNull(logs.getJsonObject("response"));
     }, testContext);
   }
 
@@ -649,10 +659,10 @@ class HttpActionTest {
       assertEquals(TIMEOUT_TRANSITION, fragmentResult.getTransition());
       assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
       JsonObject logs = fragmentResult.getNodeLog().getJsonObject("logs");
-      assertNull(logs.getJsonObject("_result"));
+      assertNull(logs.getJsonObject("result"));
       assertNull(logs.getString("rawBody"));
       assertNotNull(logs.getJsonObject("_request"));
-      assertTrue(logs.getJsonObject("_response").containsKey("error"));
+      assertTrue(logs.getJsonObject("response").containsKey("error"));
     }, testContext);
   }
 

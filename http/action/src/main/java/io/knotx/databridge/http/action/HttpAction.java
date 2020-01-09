@@ -15,6 +15,7 @@
  */
 package io.knotx.databridge.http.action;
 
+import static io.knotx.fragments.handler.api.domain.FragmentResult.ERROR_TRANSITION;
 import static io.netty.handler.codec.http.HttpStatusClass.CLIENT_ERROR;
 import static io.netty.handler.codec.http.HttpStatusClass.SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpStatusClass.SUCCESS;
@@ -43,7 +44,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.eventbus.ReplyFailure;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -55,7 +55,6 @@ import io.vertx.reactivex.ext.web.client.HttpRequest;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
@@ -74,7 +73,9 @@ public class HttpAction implements Action {
   private static final String JSON = "JSON";
   private static final String APPLICATION_JSON = "application/json";
   private static final String CONTENT_TYPE = "Content-Type";
-  private static final String ACTION_PAYLOAD = "actionPayload";
+  private static final String RESULT = "result";
+  private static final String RESPONSE = "response";
+  private static final String ERROR = "error";
   private final boolean isJsonPredicate;
   private final boolean isForceJson;
 
@@ -90,7 +91,7 @@ public class HttpAction implements Action {
       });
 
   HttpAction(Vertx vertx, HttpActionOptions httpActionOptions, String actionAlias,
-      ActionLogLevel actionLogLevel) {
+      ActionLogLevel logLevel) {
     this.httpActionOptions = httpActionOptions;
     this.webClient = WebClient.create(io.vertx.reactivex.core.Vertx.newInstance(vertx),
         httpActionOptions.getWebClientOptions());
@@ -100,7 +101,7 @@ public class HttpAction implements Action {
     this.isJsonPredicate = this.httpActionOptions.getResponseOptions().getPredicates()
         .contains(JSON);
     this.isForceJson = httpActionOptions.getResponseOptions().isForceJson();
-    this.logLevel = actionLogLevel;
+    this.logLevel = logLevel;
   }
 
   @Override
@@ -113,14 +114,10 @@ public class HttpAction implements Action {
       resultFuture.setHandler(resultHandler);
     }, onError -> {
       final Future<FragmentResult> resultFuture;
-      if (onError instanceof DecodeException) {
-        actionLogger.error(onError);
-        resultFuture = Future.succeededFuture(
-            new FragmentResult(fragmentContext.getFragment(), FragmentResult.ERROR_TRANSITION,
-                actionLogger.toLog().toJson()));
-      } else {
-        resultFuture = Future.failedFuture(onError);
-      }
+      actionLogger.error(onError);
+      resultFuture = Future.succeededFuture(
+          new FragmentResult(fragmentContext.getFragment(), FragmentResult.ERROR_TRANSITION,
+              actionLogger.toLog().toJson()));
       resultFuture.setHandler(resultHandler);
     });
   }
@@ -235,7 +232,7 @@ public class HttpAction implements Action {
   private Single<FragmentResult> getFragmentResult(FragmentContext fragmentContext,
       EndpointRequest endpointRequest, EndpointResponse endpointResponse,
       ActionLogger actionLogger) {
-    String transition = FragmentResult.ERROR_TRANSITION;
+    String transition = ERROR_TRANSITION;
 
     ActionRequest request = createActionRequest(endpointRequest);
     ActionPayload payload;
@@ -272,32 +269,21 @@ public class HttpAction implements Action {
   private ActionPayload handleErrorResponse(ActionRequest request, String statusCode,
       String statusMessage, ActionLogger actionLogger) {
     ActionPayload payload = ActionPayload.error(request, statusCode, statusMessage);
-    Optional.ofNullable(payload.getResponse())
-        .ifPresent(resp -> actionLogger.error("_response", resp.toJson()));
-    Optional.ofNullable(payload.getResult()).ifPresent(result -> {
-      if (result instanceof JsonObject) {
-        actionLogger.info("_result", (JsonObject) result);
-      } else if (result instanceof JsonArray) {
-        actionLogger.info("_result", (JsonArray) result);
-      }
-    });
-    return ActionPayload.error(request, statusCode, statusMessage);
+    actionLogger.error(RESPONSE, payload.getResponse().toJson());
+    return payload;
   }
 
   private ActionPayload handleSuccessResponse(EndpointResponse response, ActionRequest request,
       ActionLogger actionLogger) {
     ActionPayload payload = ActionPayload
         .success(request, bodyToJson(response.getBody().toString()));
-    Optional.ofNullable(payload.getResponse())
-        .ifPresent(resp -> actionLogger.info("_response", resp.toJson()));
-    Optional.ofNullable(payload.getResult())
-        .ifPresent(result -> {
-          if (result instanceof JsonObject) {
-            actionLogger.info("_result", (JsonObject) result);
-          } else if (result instanceof JsonArray) {
-            actionLogger.info("_result", (JsonArray) result);
-          }
-        });
+    actionLogger.info(RESPONSE, payload.getResponse().toJson());
+    Object result = payload.getResult();
+    if (result instanceof JsonObject) {
+      actionLogger.info(RESULT, (JsonObject) result);
+    } else if (result instanceof JsonArray) {
+      actionLogger.info(RESULT, (JsonArray) result);
+    }
     if (isForceJson || isJsonPredicate || isContentTypeHeaderJson(response)) {
       return ActionPayload.success(request, bodyToJson(response.getBody().toString()));
     } else {
