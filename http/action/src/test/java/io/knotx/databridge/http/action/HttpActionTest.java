@@ -42,7 +42,7 @@ import io.knotx.server.api.context.ClientRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.exceptions.CompositeException;
 import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.ReplyException;
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
@@ -64,7 +64,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.platform.commons.util.StringUtils;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -632,6 +631,40 @@ class HttpActionTest {
       assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
       JsonObject logs = JsonObject.mapFrom(fragmentResult.getNodeLog().getMap().get("logs"));
       assertEquals(new JsonObject(), logs);
+    }, testContext);
+  }
+
+  @Test
+  @DisplayName("Logs should contain DecodeException messages when service responds with invalid json when json expected")
+  void logsShouldContainErrorMessagesWhenErrorOccurred(VertxTestContext testContext, Vertx vertx)
+      throws Throwable {
+    String endpointPath = "/api/invalid-api-response";
+
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(RAW_BODY)
+            .withHeader("Content-Type", APPLICATION_JSON)));
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), endpointPath);
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(endpointPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions),
+        ACTION_ALIAS, ActionLogLevel.INFO);
+
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
+      assertNotNull(fragmentResult);
+      assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
+      assertEquals(new JsonObject(), fragmentResult.getFragment().getPayload());
+      JsonObject logs = fragmentResult.getNodeLog().getJsonObject("logs");
+      assertEquals(DecodeException.class.getCanonicalName(),
+          logs.getJsonObject("error").getString("className"));
     }, testContext);
   }
 
