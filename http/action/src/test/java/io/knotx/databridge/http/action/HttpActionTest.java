@@ -627,9 +627,11 @@ class HttpActionTest {
         ACTION_ALIAS, ActionLogLevel.ERROR);
 
     verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
+      assertNotNull(fragmentResult);
+      assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
       assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
       JsonObject logs = JsonObject.mapFrom(fragmentResult.getNodeLog().getMap().get("logs"));
-      assertEquals(0, logs.size());
+      assertEquals(new JsonObject(), logs);
     }, testContext);
   }
 
