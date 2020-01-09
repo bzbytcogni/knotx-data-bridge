@@ -75,7 +75,7 @@ public class HttpAction implements Action {
   private static final String CONTENT_TYPE = "Content-Type";
   private static final String RESULT = "result";
   private static final String RESPONSE = "response";
-  private static final String ERROR = "error";
+  private static final String REQUEST = "request";
   private final boolean isJsonPredicate;
   private final boolean isForceJson;
 
@@ -174,7 +174,7 @@ public class HttpAction implements Action {
     SourceDefinitions sourceDefinitions = buildSourceDefinitions(context, clientRequest);
     String path = PlaceholdersResolver.resolve(endpointOptions.getPath(), sourceDefinitions);
     MultiMap requestHeaders = getRequestHeaders(clientRequest);
-    actionLogger.info("_request", new JsonObject().put("path", path)
+    actionLogger.info(REQUEST, new JsonObject().put("path", path)
         .put("requestHeaders", JsonObject.mapFrom(requestHeaders)));
     return new EndpointRequest(path, requestHeaders);
   }

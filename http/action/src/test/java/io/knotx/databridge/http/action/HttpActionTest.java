@@ -696,7 +696,7 @@ class HttpActionTest {
       JsonObject logs = fragmentResult.getNodeLog().getJsonObject("logs");
       assertNull(logs.getJsonObject("result"));
       assertNull(logs.getString("rawBody"));
-      assertNotNull(logs.getJsonObject("_request"));
+      assertNotNull(logs.getJsonObject("request"));
       assertTrue(logs.getJsonObject("response").containsKey("error"));
     }, testContext);
   }
