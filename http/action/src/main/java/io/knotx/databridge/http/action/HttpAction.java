@@ -176,6 +176,12 @@ public class HttpAction implements Action {
         .request(HttpMethod.GET, endpointOptions.getPort(), endpointOptions.getDomain(),
             endpointRequest.getPath())
         .timeout(httpActionOptions.getRequestTimeoutMs());
+
+    if (isJsonPredicate) {
+      request.expect(io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate.newInstance(IS_JSON_RESPONSE));
+    }
+    attachResponsePredicatesToRequest(request,
+        httpActionOptions.getResponseOptions().getPredicates());
     endpointRequest.getHeaders().entries()
         .forEach(entry -> request.putHeader(entry.getKey(), entry.getValue()));
     return request;
@@ -216,7 +222,6 @@ public class HttpAction implements Action {
       LOGGER.trace("{} {} -> Got response {}, headers[{}]",
           getResponseData(endpointRequest, resp));
     }
-//    actionLogger.info(RESPONSE, JsonObject.mapFrom(getResponseData(endpointRequest, resp)));
   }
 
   private boolean isHttpErrorResponse(HttpResponseData resp) {
@@ -350,4 +355,5 @@ public class HttpAction implements Action {
     });
     return responseHeaders;
   }
+
 }
