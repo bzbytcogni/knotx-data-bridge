@@ -88,6 +88,7 @@ class HttpActionTest {
       "  \"url\": \"http://knotx.io\",\n" +
       "  \"label\": \"Product\"\n" +
       "}";
+  private static final JsonObject EMPTY_JSON = new JsonObject();
 
   private WireMockServer wireMockServer;
   private ActionLogLevel actionLogLevel = ActionLogLevel.INFO;
@@ -445,9 +446,10 @@ class HttpActionTest {
     }, testContext);
   }
 
-  @ParameterizedTest(name = "Expect error transition and no response")
+  @ParameterizedTest(name = "Expect _error transition and empty payload")
   @MethodSource("dataExpectErrorTransitionAndNullBody")
-  void testErrorTransitionAndNoResponse(String contentType, boolean forceJson, String jsonPredicate,
+  void testErrorTransitionAndEmptyPayload(String contentType, boolean forceJson,
+      String jsonPredicate,
       String responseBody, VertxTestContext testContext, Vertx vertx) throws Throwable {
     String endpointPath = "/api/error-no-response";
     Set<String> predicates = new HashSet<>();
@@ -476,15 +478,15 @@ class HttpActionTest {
             .setResponseOptions(responseOptions),
         ACTION_ALIAS, actionLogLevel);
 
-    verifyExecution(tested, clientRequest, new Fragment("type", new JsonObject(), "expectedBody"),
+    verifyExecution(tested, clientRequest, new Fragment("type", EMPTY_JSON, "expectedBody"),
         fragmentResult -> {
           assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
           JsonObject result = fragmentResult.getFragment().getPayload();
-          assertEquals(new JsonObject(), result);
+          assertEquals(EMPTY_JSON, result);
         }, testContext);
   }
 
-  @ParameterizedTest(name = "Expect exception and no response")
+  @ParameterizedTest(name = "Expect _error transition, empty payload and error message in logs")
   @MethodSource("dataExpectExceptionAndNullBody")
   void testExpectExceptionAndNoResponse(String contentType, boolean forceJson, String jsonPredicate,
       String responseBody, VertxTestContext testContext, Vertx vertx) throws Throwable {
@@ -518,7 +520,7 @@ class HttpActionTest {
     verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       assertNotNull(fragmentResult);
       assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
-      assertEquals(new JsonObject(), fragmentResult.getFragment().getPayload());
+      assertEquals(EMPTY_JSON, fragmentResult.getFragment().getPayload());
       JsonObject logs = fragmentResult.getNodeLog().getJsonObject("logs");
       assertEquals(CompositeException.class.getCanonicalName(),
           logs.getJsonObject("error").getString("className"));
@@ -559,12 +561,10 @@ class HttpActionTest {
     verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       assertNotNull(fragmentResult);
       assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
-      assertEquals(new JsonObject(), fragmentResult.getFragment().getPayload());
+      assertEquals(EMPTY_JSON, fragmentResult.getFragment().getPayload());
       JsonObject logs = fragmentResult.getNodeLog().getJsonObject("logs");
-      assertEquals(IllegalArgumentException.class.getCanonicalName(),
+      assertEquals(CompositeException.class.getCanonicalName(),
           logs.getJsonObject("error").getString("className"));
-      assertEquals(NOT_EXISTING_PREDICATE,
-          logs.getJsonObject("error").getString("message").toLowerCase());
     }, testContext);
   }
 
@@ -630,7 +630,7 @@ class HttpActionTest {
       assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
       assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
       JsonObject logs = JsonObject.mapFrom(fragmentResult.getNodeLog().getMap().get("logs"));
-      assertEquals(new JsonObject(), logs);
+      assertEquals(EMPTY_JSON, logs);
     }, testContext);
   }
 
@@ -661,7 +661,7 @@ class HttpActionTest {
     verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       assertNotNull(fragmentResult);
       assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
-      assertEquals(new JsonObject(), fragmentResult.getFragment().getPayload());
+      assertEquals(EMPTY_JSON, fragmentResult.getFragment().getPayload());
       JsonObject logs = fragmentResult.getNodeLog().getJsonObject("logs");
       assertEquals(DecodeException.class.getCanonicalName(),
           logs.getJsonObject("error").getString("className"));
@@ -1023,6 +1023,6 @@ class HttpActionTest {
   }
 
   private Fragment createFragment() {
-    return new Fragment("type", new JsonObject(), "expectedBody");
+    return new Fragment("type", EMPTY_JSON, "expectedBody");
   }
 }

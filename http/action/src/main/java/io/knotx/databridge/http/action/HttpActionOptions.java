@@ -15,9 +15,12 @@
  */
 package io.knotx.databridge.http.action;
 
+import static io.knotx.fragments.handler.api.actionlog.ActionLogLevel.ERROR;
+
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClientOptions;
+import java.util.Optional;
 
 /**
  * HTTP Action configuration
@@ -40,6 +43,7 @@ public class HttpActionOptions {
   public HttpActionOptions(JsonObject json) {
     init();
     HttpActionOptionsConverter.fromJson(json, this);
+    logLevel = Optional.ofNullable(logLevel).orElse(ERROR.getLevel());
   }
 
   private void init() {
