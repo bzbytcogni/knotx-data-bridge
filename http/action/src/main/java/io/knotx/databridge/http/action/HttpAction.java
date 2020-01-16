@@ -76,6 +76,7 @@ public class HttpAction implements Action {
   private static final String RESULT = "result";
   private static final String RESPONSE = "response";
   private static final String REQUEST = "request";
+  private static final String RAW_BODY = "rawBody";
   private final boolean isJsonPredicate;
   private final boolean isForceJson;
 
@@ -131,8 +132,7 @@ public class HttpAction implements Action {
             request -> invokeEndpoint(request)
                 .doOnSuccess(resp -> {
                   logResponse(request, new HttpResponseData(null, String.valueOf(resp.statusCode()),
-                          resp.statusMessage(), resp.headers().toString(), resp.trailers().toString()),
-                      actionLogger);
+                      resp.statusMessage(), resp.headers(), resp.trailers()), actionLogger);
                 })
                 .doOnError(actionLogger::error)
                 .map(EndpointResponse::fromHttpResponse)
@@ -159,8 +159,10 @@ public class HttpAction implements Action {
   }
 
   private void logRequest(ActionLogger actionLogger, EndpointRequest request) {
+    JsonObject headers = new JsonObject();
+    request.getHeaders().entries().forEach(e -> headers.put(e.getKey(), e.getValue()));
     actionLogger.info(REQUEST, new JsonObject().put("path", request.getPath())
-        .put("requestHeaders", JsonObject.mapFrom(request.getHeaders())));
+        .put("requestHeaders", headers));
   }
 
   private EndpointResponse handleTimeout(Throwable throwable) {
@@ -178,7 +180,8 @@ public class HttpAction implements Action {
         .timeout(httpActionOptions.getRequestTimeoutMs());
 
     if (isJsonPredicate) {
-      request.expect(io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate.newInstance(IS_JSON_RESPONSE));
+      request.expect(io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate
+          .newInstance(IS_JSON_RESPONSE));
     }
     attachResponsePredicatesToRequest(request,
         httpActionOptions.getResponseOptions().getPredicates());
@@ -215,13 +218,13 @@ public class HttpAction implements Action {
 
   private void logResponse(EndpointRequest endpointRequest, HttpResponseData resp,
       ActionLogger actionLogger) {
+    JsonObject responseData = getResponseData(endpointRequest, resp);
     if (isHttpErrorResponse(resp)) {
-      LOGGER.error("{} {} -> Error response {}, headers[{}]",
-          getResponseData(endpointRequest, resp));
+      LOGGER.error("{} {} -> Error response {}, headers[{}]", responseData);
     } else if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("{} {} -> Got response {}, headers[{}]",
-          getResponseData(endpointRequest, resp));
+      LOGGER.trace("{} {} -> Got response {}, headers[{}]", responseData);
     }
+    actionLogger.info(RESPONSE, responseData);
   }
 
   private boolean isHttpErrorResponse(HttpResponseData resp) {
@@ -229,13 +232,10 @@ public class HttpAction implements Action {
         .contains(Integer.parseInt(resp.getStatusCode()));
   }
 
-  private Object[] getResponseData(EndpointRequest request, HttpResponseData responseData) {
-    return Stream.of(new Object[]{
-        HttpMethod.GET,
-        toUrl(request)
-    }, responseData.toLog())
-        .flatMap(Stream::of)
-        .toArray();
+  private JsonObject getResponseData(EndpointRequest request, HttpResponseData responseData) {
+    JsonObject json = responseData.toJson();
+    return json.put("httpMethod", HttpMethod.GET)
+        .put("requestPath", toUrl(request));
   }
 
   private String toUrl(EndpointRequest request) {
@@ -266,7 +266,7 @@ public class HttpAction implements Action {
     ActionRequest request = createActionRequest(endpointRequest);
     ActionPayload payload;
     if (SUCCESS.contains(endpointResponse.getStatusCode().code())) {
-      actionLogger.info("rawBody", endpointResponse.getBody().toString());
+      actionLogger.info(RAW_BODY, endpointResponse.getBody().toString());
       payload = handleSuccessResponse(endpointResponse, request, actionLogger);
       transition = FragmentResult.SUCCESS_TRANSITION;
     } else {
@@ -298,7 +298,6 @@ public class HttpAction implements Action {
   private ActionPayload handleErrorResponse(ActionRequest request, String statusCode,
       String statusMessage, ActionLogger actionLogger) {
     ActionPayload payload = ActionPayload.error(request, statusCode, statusMessage);
-    actionLogger.error(RESPONSE, payload.getResponse().toJson());
     return payload;
   }
 
@@ -306,7 +305,6 @@ public class HttpAction implements Action {
       ActionLogger actionLogger) {
     ActionPayload payload = ActionPayload
         .success(request, bodyToJson(response.getBody().toString()));
-    actionLogger.info(RESPONSE, payload.getResponse().toJson());
     Object result = payload.getResult();
     if (result instanceof JsonObject) {
       actionLogger.info(RESULT, (JsonObject) result);

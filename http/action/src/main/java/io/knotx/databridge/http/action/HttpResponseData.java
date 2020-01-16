@@ -16,6 +16,9 @@
 package io.knotx.databridge.http.action;
 
 import io.vertx.core.json.JsonObject;
+import io.vertx.reactivex.core.MultiMap;
+import java.util.List;
+import java.util.Map.Entry;
 
 public class HttpResponseData {
 
@@ -23,21 +26,21 @@ public class HttpResponseData {
   private static final String STATUS_CODE_KEY = "statusCode";
   private static final String STATUS_MESSAGE_KEY = "statusMessage";
   private static final String HEADERS_KEY = "headers";
-  private static final String TAILERS_KEY = "tailers";
+  private static final String TRAILERS_KEY = "trailers";
 
   private String httpVersion;
   private String statusCode;
   private String statusMessage;
-  private String headers;
-  private String tailers;
+  private MultiMap headers;
+  private MultiMap trailers;
 
   public HttpResponseData(String httpVersion, String statusCode, String statusMessage,
-      String headers, String tailers) {
+      MultiMap headers, MultiMap tailers) {
     this.httpVersion = httpVersion;
     this.statusCode = statusCode;
     this.statusMessage = statusMessage;
     this.headers = headers;
-    this.tailers = tailers;
+    this.trailers = tailers;
   }
 
   public Object[] toLog() {
@@ -45,9 +48,15 @@ public class HttpResponseData {
         httpVersion,
         statusCode,
         statusMessage,
-        headers,
-        tailers
+        multiMapToJson(headers.entries()),
+        multiMapToJson(trailers.entries())
     };
+  }
+
+  private JsonObject multiMapToJson(List<Entry<String, String>> entries) {
+    JsonObject json = new JsonObject();
+    entries.forEach(e -> json.put(e.getKey(), e.getValue()));
+    return json;
   }
 
   public JsonObject toJson() {
@@ -55,8 +64,8 @@ public class HttpResponseData {
         .put(HTTP_VERSION_KEY, httpVersion)
         .put(STATUS_CODE_KEY, statusCode)
         .put(STATUS_MESSAGE_KEY, statusMessage)
-        .put(HEADERS_KEY, headers)
-        .put(TAILERS_KEY, tailers);
+        .put(HEADERS_KEY, multiMapToJson(headers.entries()))
+        .put(TRAILERS_KEY, multiMapToJson(trailers.entries()));
   }
 
   public String getHttpVersion() {
@@ -83,19 +92,19 @@ public class HttpResponseData {
     this.statusMessage = statusMessage;
   }
 
-  public String getHeaders() {
+  public MultiMap getHeaders() {
     return headers;
   }
 
-  public void setHeaders(String headers) {
+  public void setHeaders(MultiMap headers) {
     this.headers = headers;
   }
 
-  public String getTailers() {
-    return tailers;
+  public MultiMap getTrailers() {
+    return trailers;
   }
 
-  public void setTailers(String tailers) {
-    this.tailers = tailers;
+  public void setTrailers(MultiMap trailers) {
+    this.trailers = trailers;
   }
 }
