@@ -23,10 +23,15 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import static io.knotx.databridge.http.action.HttpAction.TIMEOUT_TRANSITION;
 import static io.knotx.fragments.handler.api.domain.FragmentResult.ERROR_TRANSITION;
 import static io.knotx.fragments.handler.api.domain.FragmentResult.SUCCESS_TRANSITION;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.knotx.fragments.api.Fragment;
+import io.knotx.fragments.handler.api.actionlog.ActionLogLevel;
 import io.knotx.fragments.handler.api.domain.FragmentContext;
 import io.knotx.fragments.handler.api.domain.FragmentResult;
 import io.knotx.fragments.handler.api.domain.payload.ActionPayload;
@@ -37,7 +42,7 @@ import io.knotx.server.api.context.ClientRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.exceptions.CompositeException;
 import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.ReplyException;
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
@@ -63,8 +68,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import javax.xml.transform.sax.SAXResult;
-
 @ExtendWith(VertxExtension.class)
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.WARN)
@@ -85,8 +88,9 @@ class HttpActionTest {
       "  \"url\": \"http://knotx.io\",\n" +
       "  \"label\": \"Product\"\n" +
       "}";
-  private static final Fragment FRAGMENT = new Fragment("type", new JsonObject(), "expectedBody");
+
   private WireMockServer wireMockServer;
+  private ActionLogLevel actionLogLevel = ActionLogLevel.INFO;
 
   static Stream<Arguments> dataExpectSuccessTransitionAndJsonBody() {
     return Stream.of( //Content-Type, forceJson, JSON predicate, Body,
@@ -139,7 +143,7 @@ class HttpActionTest {
         MultiMap.caseInsensitiveMultiMap(), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -155,7 +159,7 @@ class HttpActionTest {
             .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertTrue(
             fragmentResult.getFragment()
                 .getPayload()
@@ -174,7 +178,7 @@ class HttpActionTest {
             .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       ActionPayload payload = new ActionPayload(
           fragmentResult.getFragment()
               .getPayload()
@@ -196,7 +200,7 @@ class HttpActionTest {
             .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       ActionPayload payload = new ActionPayload(
           fragmentResult.getFragment()
               .getPayload()
@@ -218,8 +222,8 @@ class HttpActionTest {
             .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
-        fragmentResult -> assertEquals(FRAGMENT.getBody(), fragmentResult.getFragment()
+    verifyExecution(tested, clientRequest, createFragment(),
+        fragmentResult -> assertEquals(createFragment().getBody(), fragmentResult.getFragment()
             .getBody()),
         testContext);
   }
@@ -235,7 +239,7 @@ class HttpActionTest {
             .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       ActionPayload payload = new ActionPayload(
           fragmentResult.getFragment()
               .getPayload()
@@ -263,7 +267,7 @@ class HttpActionTest {
         MultiMap.caseInsensitiveMultiMap(), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       ActionPayload payload = new ActionPayload(
           fragmentResult.getFragment()
               .getPayload()
@@ -294,7 +298,7 @@ class HttpActionTest {
             .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       ActionPayload payload = new ActionPayload(
           fragmentResult.getFragment()
               .getPayload()
@@ -323,7 +327,7 @@ class HttpActionTest {
             .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       ActionPayload payload = new ActionPayload(
           fragmentResult.getFragment()
               .getPayload()
@@ -352,7 +356,7 @@ class HttpActionTest {
             .add("requestHeader", "request"), HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(ERROR_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -387,17 +391,18 @@ class HttpActionTest {
         new HttpActionOptions()
             .setEndpointOptions(endpointOptions)
             .setResponseOptions(responseOptions),
-        ACTION_ALIAS);
+        ACTION_ALIAS, actionLogLevel);
 
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
-      assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
-      JsonObject result = fragmentResult.getFragment().getPayload()
-          .getJsonObject("httpAction").getJsonObject("_result");
-      assertEquals(new JsonObject()
-          .put("id", 21762532)
-          .put("url", "http://knotx.io")
-          .put("label", "Product"), result);
-    }, testContext);
+    verifyExecution(tested, clientRequest, new Fragment("type", new JsonObject(), "expectedBody"),
+        fragmentResult -> {
+          assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
+          JsonObject result = fragmentResult.getFragment().getPayload()
+              .getJsonObject("httpAction").getJsonObject("_result");
+          assertEquals(new JsonObject()
+              .put("id", 21762532)
+              .put("url", "http://knotx.io")
+              .put("label", "Product"), result);
+        }, testContext);
   }
 
   @ParameterizedTest(name = "Expect success transition and response as raw text")
@@ -430,9 +435,9 @@ class HttpActionTest {
         new HttpActionOptions()
             .setEndpointOptions(endpointOptions)
             .setResponseOptions(responseOptions),
-        ACTION_ALIAS);
+        ACTION_ALIAS, actionLogLevel);
 
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
       String result = (String) fragmentResult.getFragment().getPayload().getJsonObject("httpAction")
           .getMap().get("_result");
@@ -442,7 +447,7 @@ class HttpActionTest {
 
   @ParameterizedTest(name = "Expect error transition and no response")
   @MethodSource("dataExpectErrorTransitionAndNullBody")
-  void testErrorResponseAndNoResponse(String contentType, boolean forceJson, String jsonPredicate,
+  void testErrorTransitionAndNoResponse(String contentType, boolean forceJson, String jsonPredicate,
       String responseBody, VertxTestContext testContext, Vertx vertx) throws Throwable {
     String endpointPath = "/api/error-no-response";
     Set<String> predicates = new HashSet<>();
@@ -469,14 +474,14 @@ class HttpActionTest {
         new HttpActionOptions()
             .setEndpointOptions(endpointOptions)
             .setResponseOptions(responseOptions),
-        ACTION_ALIAS);
+        ACTION_ALIAS, actionLogLevel);
 
-    verifyExecution(tested, clientRequest, FRAGMENT, fragmentResult -> {
-      assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
-      Object result = fragmentResult.getFragment().getPayload().getJsonObject("httpAction").getMap()
-          .get("_result");
-      assertNull(result);
-    }, testContext);
+    verifyExecution(tested, clientRequest, new Fragment("type", new JsonObject(), "expectedBody"),
+        fragmentResult -> {
+          assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
+          JsonObject result = fragmentResult.getFragment().getPayload();
+          assertEquals(new JsonObject(), result);
+        }, testContext);
   }
 
   @ParameterizedTest(name = "Expect exception and no response")
@@ -508,19 +513,22 @@ class HttpActionTest {
         new HttpActionOptions()
             .setEndpointOptions(endpointOptions)
             .setResponseOptions(responseOptions),
-        ACTION_ALIAS);
+        ACTION_ALIAS, actionLogLevel);
 
-    verifyFailingExecution(tested, clientRequest, FRAGMENT, error -> {
-      assertTrue(error instanceof CompositeException);
-      CompositeException exception = (CompositeException) error;
-      assertEquals(1, exception.getExceptions().size());
-      assertTrue(exception.getExceptions().get(0) instanceof ReplyException);
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
+      assertNotNull(fragmentResult);
+      assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
+      assertEquals(new JsonObject(), fragmentResult.getFragment().getPayload());
+      JsonObject logs = fragmentResult.getNodeLog().getJsonObject("logs");
+      assertEquals(CompositeException.class.getCanonicalName(),
+          logs.getJsonObject("error").getString("className"));
     }, testContext);
   }
 
   @Test
   @DisplayName("Expect IllegalArgumentException when not existing predicate provided")
-  void expectErrorWhenNotExistingPredicateProvided(VertxTestContext testContext, Vertx vertx) throws Throwable {
+  void expectErrorWhenNotExistingPredicateProvided(VertxTestContext testContext, Vertx vertx)
+      throws Throwable {
     String endpointPath = "/api/exception-wrong-predicate";
     Set<String> predicates = new HashSet<>();
     predicates.add(NOT_EXISTING_PREDICATE);
@@ -546,10 +554,150 @@ class HttpActionTest {
         new HttpActionOptions()
             .setEndpointOptions(endpointOptions)
             .setResponseOptions(responseOptions),
-        ACTION_ALIAS);
+        ACTION_ALIAS, actionLogLevel);
 
-    verifyFailingExecution(tested, clientRequest, FRAGMENT, error -> {
-      assertTrue(error instanceof IllegalArgumentException);
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
+      assertNotNull(fragmentResult);
+      assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
+      assertEquals(new JsonObject(), fragmentResult.getFragment().getPayload());
+      JsonObject logs = fragmentResult.getNodeLog().getJsonObject("logs");
+      assertEquals(IllegalArgumentException.class.getCanonicalName(),
+          logs.getJsonObject("error").getString("className"));
+      assertEquals(NOT_EXISTING_PREDICATE,
+          logs.getJsonObject("error").getString("message").toLowerCase());
+    }, testContext);
+  }
+
+  @Test
+  @DisplayName("expect success transition and action log should contain info level messages")
+  void actionLogShouldContainInfoLevelMessages(VertxTestContext testContext, Vertx vertx)
+      throws Throwable {
+    String endpointPath = "/api/info-action-log";
+
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(JSON_BODY)
+            .withHeader("Content-Type", APPLICATION_JSON)));
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), endpointPath);
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(endpointPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions),
+        ACTION_ALIAS, ActionLogLevel.INFO);
+
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
+      assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
+      JsonObject logs = fragmentResult.getNodeLog().getJsonObject("logs");
+      assertEquals(new JsonObject(JSON_BODY), logs.getJsonObject("result"));
+      assertNotNull(logs.getString("rawBody"));
+      assertNotNull(logs.getJsonObject("response"));
+    }, testContext);
+  }
+
+  @Test
+  @DisplayName("Expect success transition and action log should contain error level messages")
+  void actionLogShouldContainErrorLevelMessages(VertxTestContext testContext, Vertx vertx)
+      throws Throwable {
+    String endpointPath = "/api/error-action-log";
+
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(JSON_BODY)
+            .withHeader("Content-Type", APPLICATION_JSON)));
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), endpointPath);
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(endpointPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions),
+        ACTION_ALIAS, ActionLogLevel.ERROR);
+
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
+      assertNotNull(fragmentResult);
+      assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
+      assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
+      JsonObject logs = JsonObject.mapFrom(fragmentResult.getNodeLog().getMap().get("logs"));
+      assertEquals(new JsonObject(), logs);
+    }, testContext);
+  }
+
+  @Test
+  @DisplayName("Logs should contain DecodeException messages when service responds with invalid json when json expected")
+  void logsShouldContainErrorMessagesWhenErrorOccurred(VertxTestContext testContext, Vertx vertx)
+      throws Throwable {
+    String endpointPath = "/api/invalid-api-response";
+
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(RAW_BODY)
+            .withHeader("Content-Type", APPLICATION_JSON)));
+
+    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
+        MultiMap.caseInsensitiveMultiMap(), endpointPath);
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(endpointPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions),
+        ACTION_ALIAS, ActionLogLevel.INFO);
+
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
+      assertNotNull(fragmentResult);
+      assertEquals(ERROR_TRANSITION, fragmentResult.getTransition());
+      assertEquals(new JsonObject(), fragmentResult.getFragment().getPayload());
+      JsonObject logs = fragmentResult.getNodeLog().getJsonObject("logs");
+      assertEquals(DecodeException.class.getCanonicalName(),
+          logs.getJsonObject("error").getString("className"));
+    }, testContext);
+  }
+
+  @Test
+  @DisplayName("Expect error transition and error level logs")
+  void expectErrorTransitionAndErrorLevelLogs(VertxTestContext testContext, Vertx vertx)
+      throws Throwable {
+    int requestTimeoutMs = 1000;
+    wireMockServer.stubFor(get(urlEqualTo(VALID_REQUEST_PATH))
+        .willReturn(aResponse().withFixedDelay(2 * requestTimeoutMs)));
+
+    ClientRequest clientRequest = new ClientRequest();
+    clientRequest.setHeaders(MultiMap.caseInsensitiveMultiMap());
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(VALID_REQUEST_PATH)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port());
+
+    HttpAction tested = new HttpAction(vertx,
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions)
+            .setRequestTimeoutMs(requestTimeoutMs), ACTION_ALIAS, actionLogLevel);
+
+    // then
+    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
+      assertEquals(TIMEOUT_TRANSITION, fragmentResult.getTransition());
+      assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
+      JsonObject logs = fragmentResult.getNodeLog().getJsonObject("logs");
+      assertNull(logs.getJsonObject("result"));
+      assertNull(logs.getString("rawBody"));
+      assertNotNull(logs.getJsonObject("request"));
+      assertTrue(logs.getJsonObject("response").containsKey("error"));
     }, testContext);
   }
 
@@ -573,10 +721,10 @@ class HttpActionTest {
     HttpAction tested = new HttpAction(vertx,
         new HttpActionOptions()
             .setEndpointOptions(endpointOptions)
-            .setRequestTimeoutMs(requestTimeoutMs), ACTION_ALIAS);
+            .setRequestTimeoutMs(requestTimeoutMs), ACTION_ALIAS, actionLogLevel);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(TIMEOUT_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -597,10 +745,10 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, actionLogLevel);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(ERROR_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -619,7 +767,7 @@ class HttpActionTest {
         clientRequestHeaders, HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -638,7 +786,7 @@ class HttpActionTest {
         clientRequestHeaders, HttpActionTest.VALID_REQUEST_PATH);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
 
@@ -658,7 +806,7 @@ class HttpActionTest {
     ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
         clientRequestHeaders, HttpActionTest.VALID_REQUEST_PATH);
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -687,10 +835,10 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, actionLogLevel);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -719,10 +867,10 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, actionLogLevel);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -749,10 +897,10 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, actionLogLevel);
 
     // then
-    verifyExecution(tested, clientRequest, FRAGMENT,
+    verifyExecution(tested, clientRequest, createFragment(),
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -779,11 +927,11 @@ class HttpActionTest {
         .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
 
     HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, actionLogLevel);
 
     // then
     verifyExecution(tested, clientRequest,
-        FRAGMENT.appendPayload("thumbnail", new JsonObject().put("extension", "png")),
+        createFragment().appendPayload("thumbnail", new JsonObject().put("extension", "png")),
         fragmentResult -> assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition()),
         testContext);
   }
@@ -813,7 +961,7 @@ class HttpActionTest {
         .setAllowedRequestHeaders(Collections.singleton("requestHeader"));
 
     return new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, actionLogLevel);
   }
 
   private HttpAction getHttpActionWithAdditionalHeaders(Vertx vertx,
@@ -831,7 +979,7 @@ class HttpActionTest {
         .setAdditionalHeaders(additionalHeaders);
 
     return new HttpAction(vertx,
-        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS);
+        new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, actionLogLevel);
   }
 
   private void verifyFailingExecution(HttpAction tested, ClientRequest clientRequest,
@@ -872,5 +1020,9 @@ class HttpActionTest {
     clientRequest.setHeaders(headers);
     clientRequest.setParams(clientRequestParams);
     return clientRequest;
+  }
+
+  private Fragment createFragment() {
+    return new Fragment("type", new JsonObject(), "expectedBody");
   }
 }

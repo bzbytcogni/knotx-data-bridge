@@ -31,6 +31,7 @@ public class HttpActionOptions {
   private EndpointOptions endpointOptions;
   private ResponseOptions responseOptions;
   private long requestTimeoutMs;
+  private String logLevel;
 
   public HttpActionOptions() {
     init();
@@ -53,8 +54,8 @@ public class HttpActionOptions {
 
   /**
    * Set the {@code WebClientOptions} used by the HTTP client to communicate with remote http
-   * endpoint. See https://vertx.io/docs/vertx-web-client/dataobjects.html#WebClientOptions for
-   * the details what can be configured.
+   * endpoint. See https://vertx.io/docs/vertx-web-client/dataobjects.html#WebClientOptions for the
+   * details what can be configured.
    *
    * @param webClientOptions {@link WebClientOptions} object
    * @return a reference to this, so the API can be used fluently
@@ -105,6 +106,21 @@ public class HttpActionOptions {
     return this;
   }
 
+  public String getLogLevel() {
+    return logLevel;
+  }
+
+  /**
+   * Set level of action logs.
+   *
+   * @param logLevel alevel of action logs
+   * @return a reference to this, so the API can be used fluently
+   */
+  public HttpActionOptions setLogLevel(String logLevel) {
+    this.logLevel = logLevel;
+    return this;
+  }
+
   @Override
   public String toString() {
     return "HttpActionOptions{" +
@@ -112,6 +128,7 @@ public class HttpActionOptions {
         ", endpointOptions=" + endpointOptions +
         ", responseOptions=" + responseOptions +
         ", requestTimeoutMs=" + requestTimeoutMs +
+        ", logLevel=" + logLevel +
         '}';
   }
 }
