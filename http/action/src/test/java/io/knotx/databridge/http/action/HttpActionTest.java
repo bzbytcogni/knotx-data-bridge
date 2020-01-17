@@ -488,7 +488,7 @@ class HttpActionTest {
         }, testContext);
   }
 
-  @ParameterizedTest(name = "Expect _error transition, empty payload and error message in logs")
+  @ParameterizedTest(name = "Expect _error transition, empty payload and CompositeException")
   @MethodSource("dataExpectExceptionAndNullBody")
   void testExpectExceptionAndNoResponse(String contentType, boolean forceJson, String jsonPredicate,
       String responseBody, VertxTestContext testContext, Vertx vertx) throws Throwable {
@@ -571,74 +571,9 @@ class HttpActionTest {
   }
 
   @Test
-  @DisplayName("expect success transition and action log should contain info level messages")
-  void actionLogShouldContainInfoLevelMessages(VertxTestContext testContext, Vertx vertx)
-      throws Throwable {
-    String endpointPath = "/api/info-action-log";
-
-    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
-        .willReturn(aResponse().withBody(JSON_BODY)
-            .withHeader("Content-Type", APPLICATION_JSON)));
-
-    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
-        MultiMap.caseInsensitiveMultiMap(), endpointPath);
-
-    EndpointOptions endpointOptions = new EndpointOptions()
-        .setPath(endpointPath)
-        .setDomain("localhost")
-        .setPort(wireMockServer.port())
-        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
-
-    HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions()
-            .setEndpointOptions(endpointOptions),
-        ACTION_ALIAS, ActionLogLevel.INFO);
-
-    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
-      assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
-      JsonObject logs = fragmentResult.getNodeLog().getJsonObject("logs");
-      assertEquals(new JsonObject(JSON_BODY), logs.getJsonObject("result"));
-      assertNotNull(logs.getString("rawBody"));
-      assertNotNull(logs.getJsonObject("response"));
-    }, testContext);
-  }
-
-  @Test
-  @DisplayName("Expect success transition and action log should contain error level messages")
-  void actionLogShouldContainErrorLevelMessages(VertxTestContext testContext, Vertx vertx)
-      throws Throwable {
-    String endpointPath = "/api/error-action-log";
-
-    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
-        .willReturn(aResponse().withBody(JSON_BODY)
-            .withHeader("Content-Type", APPLICATION_JSON)));
-
-    ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
-        MultiMap.caseInsensitiveMultiMap(), endpointPath);
-
-    EndpointOptions endpointOptions = new EndpointOptions()
-        .setPath(endpointPath)
-        .setDomain("localhost")
-        .setPort(wireMockServer.port())
-        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
-
-    HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions()
-            .setEndpointOptions(endpointOptions),
-        ACTION_ALIAS, ActionLogLevel.ERROR);
-
-    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
-      assertNotNull(fragmentResult);
-      assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
-      assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
-      JsonObject logs = JsonObject.mapFrom(fragmentResult.getNodeLog().getMap().get("logs"));
-      assertEquals(EMPTY_JSON, logs);
-    }, testContext);
-  }
-
-  @Test
-  @DisplayName("Logs should contain DecodeException messages when service responds with invalid json when json expected")
-  void logsShouldContainErrorMessagesWhenErrorOccurred(VertxTestContext testContext, Vertx vertx)
+  @DisplayName("Expect _error transition, empty payload and DecodeException when service responds with invalid json when json expected")
+  void expectErrorTransitionAndEmptyPayloadWhenInvalidJsonProvided(VertxTestContext testContext,
+      Vertx vertx)
       throws Throwable {
     String endpointPath = "/api/invalid-api-response";
 
@@ -671,40 +606,7 @@ class HttpActionTest {
   }
 
   @Test
-  @DisplayName("Expect error transition and error level logs")
-  void expectErrorTransitionAndErrorLevelLogs(VertxTestContext testContext, Vertx vertx)
-      throws Throwable {
-    int requestTimeoutMs = 1000;
-    wireMockServer.stubFor(get(urlEqualTo(VALID_REQUEST_PATH))
-        .willReturn(aResponse().withFixedDelay(2 * requestTimeoutMs)));
-
-    ClientRequest clientRequest = new ClientRequest();
-    clientRequest.setHeaders(MultiMap.caseInsensitiveMultiMap());
-
-    EndpointOptions endpointOptions = new EndpointOptions()
-        .setPath(VALID_REQUEST_PATH)
-        .setDomain("localhost")
-        .setPort(wireMockServer.port());
-
-    HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions()
-            .setEndpointOptions(endpointOptions)
-            .setRequestTimeoutMs(requestTimeoutMs), ACTION_ALIAS, actionLogLevel);
-
-    // then
-    verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
-      assertEquals(TIMEOUT_TRANSITION, fragmentResult.getTransition());
-      assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
-      JsonObject logs = fragmentResult.getNodeLog().getJsonObject("logs");
-      assertNull(logs.getJsonObject("result"));
-      assertNull(logs.getString("rawBody"));
-      assertNotNull(logs.getJsonObject("request"));
-      assertTrue(logs.getJsonObject("response").containsKey("error"));
-    }, testContext);
-  }
-
-  @Test
-  @DisplayName("Expect error transition when endpoint times out")
+  @DisplayName("Expect _timeout transition when endpoint times out")
   void errorTransitionWhenEndpointTimesOut(VertxTestContext testContext, Vertx vertx)
       throws Throwable {
     // given, when

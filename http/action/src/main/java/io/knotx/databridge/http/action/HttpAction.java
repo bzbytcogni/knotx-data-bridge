@@ -57,7 +57,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -134,7 +133,7 @@ public class HttpAction implements Action {
                   logResponse(request, new HttpResponseData(null, String.valueOf(resp.statusCode()),
                       resp.statusMessage(), resp.headers(), resp.trailers()), actionLogger);
                 })
-                .doOnError(actionLogger::error)
+                .doOnError(throwable -> logErrorAndRequest(actionLogger, throwable, request))
                 .map(EndpointResponse::fromHttpResponse)
                 .onErrorReturn(this::handleTimeout)
                 .map(resp -> Pair.of(request, resp)))
@@ -163,6 +162,21 @@ public class HttpAction implements Action {
     request.getHeaders().entries().forEach(e -> headers.put(e.getKey(), e.getValue()));
     actionLogger.info(REQUEST, new JsonObject().put("path", request.getPath())
         .put("requestHeaders", headers));
+  }
+
+  private void logErrorAndRequest(ActionLogger actionLogger, Throwable throwable,
+      EndpointRequest request) {
+    JsonObject headers = new JsonObject();
+    request.getHeaders().entries().forEach(e -> headers.put(e.getKey(), e.getValue()));
+    actionLogger.error(REQUEST, new JsonObject().put("path", request.getPath())
+        .put("requestHeaders", headers));
+    actionLogger.error(throwable);
+  }
+
+  private void logResponseOnErrorLevel(ActionLogger actionLogger, EndpointRequest request,
+      HttpResponseData httpResponseData) {
+    JsonObject responseData = getResponseData(request, httpResponseData);
+    actionLogger.error(RESPONSE, responseData);
   }
 
   private EndpointResponse handleTimeout(Throwable throwable) {
@@ -267,7 +281,16 @@ public class HttpAction implements Action {
     ActionPayload payload;
     if (SUCCESS.contains(endpointResponse.getStatusCode().code())) {
       actionLogger.info(RAW_BODY, endpointResponse.getBody().toString());
-      payload = handleSuccessResponse(endpointResponse, request, actionLogger);
+      try {
+        payload = handleSuccessResponse(endpointResponse, request, actionLogger);
+      } catch (Exception e) {
+        logErrorAndRequest(actionLogger, e, endpointRequest);
+        logResponseOnErrorLevel(actionLogger, endpointRequest,
+            new HttpResponseData(null, String.valueOf(endpointResponse.getStatusCode()),
+                endpointResponse.getStatusMessage(), endpointResponse.getHeaders(),
+                endpointResponse.getTrailers()));
+        throw e;
+      }
       transition = FragmentResult.SUCCESS_TRANSITION;
     } else {
       payload = handleErrorResponse(request, endpointResponse.getStatusCode().toString(),

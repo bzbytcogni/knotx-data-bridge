@@ -25,6 +25,7 @@ class EndpointResponse {
   private final HttpResponseStatus statusCode;
   private String statusMessage;
   private MultiMap headers = MultiMap.caseInsensitiveMultiMap();
+  private MultiMap trailers = MultiMap.caseInsensitiveMultiMap();
   private Buffer body;
 
   EndpointResponse(HttpResponseStatus statusCode) {
@@ -36,6 +37,7 @@ class EndpointResponse {
         HttpResponseStatus.valueOf(response.statusCode()));
     endpointResponse.body = getResponsetBody(response);
     endpointResponse.headers = response.headers();
+    endpointResponse.trailers = response.trailers();
     endpointResponse.statusMessage = response.statusMessage();
     return endpointResponse;
   }
@@ -47,6 +49,10 @@ class EndpointResponse {
 
   public MultiMap getHeaders() {
     return headers;
+  }
+
+  public MultiMap getTrailers() {
+    return trailers;
   }
 
   public Buffer getBody() {
@@ -63,6 +69,7 @@ class EndpointResponse {
         "statusCode=" + statusCode +
         ", statusMessage='" + statusMessage + '\'' +
         ", headers=" + headers +
+        ", trailers=" + trailers +
         ", body=" + body +
         '}';
   }
