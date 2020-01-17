@@ -26,7 +26,6 @@ import static io.knotx.fragments.handler.api.domain.FragmentResult.SUCCESS_TRANS
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -67,8 +66,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-
-import javax.xml.transform.sax.SAXResult;
 
 @ExtendWith(VertxExtension.class)
 @ExtendWith(MockitoExtension.class)
@@ -370,31 +367,11 @@ class HttpActionTest {
       String jsonPredicate, String responseBody, VertxTestContext testContext, Vertx vertx)
       throws Throwable {
     String endpointPath = "/api/success-json";
-    Set<String> predicates = new HashSet<>();
-
-    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
-        .willReturn(aResponse().withBody(responseBody)
-            .withHeader("Content-Type", contentType)));
 
     ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
         MultiMap.caseInsensitiveMultiMap(), endpointPath);
-
-    EndpointOptions endpointOptions = new EndpointOptions()
-        .setPath(endpointPath)
-        .setDomain("localhost")
-        .setPort(wireMockServer.port())
-        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
-
-    Optional.ofNullable(jsonPredicate).ifPresent(predicates::add);
-    ResponseOptions responseOptions = new ResponseOptions()
-        .setPredicates(predicates)
-        .setForceJson(forceJson);
-
-    HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions()
-            .setEndpointOptions(endpointOptions)
-            .setResponseOptions(responseOptions),
-        ACTION_ALIAS, actionLogLevel);
+    HttpAction tested = setupTestingInstances(vertx, endpointPath, responseBody, contentType,
+        jsonPredicate, forceJson, actionLogLevel);
 
     verifyExecution(tested, clientRequest, new Fragment("type", new JsonObject(), "expectedBody"),
         fragmentResult -> {
@@ -414,31 +391,11 @@ class HttpActionTest {
       String jsonPredicate, String responseBody, VertxTestContext testContext, Vertx vertx)
       throws Throwable {
     String endpointPath = "/api/success-text";
-    Set<String> predicates = new HashSet<>();
-
-    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
-        .willReturn(aResponse().withBody(responseBody)
-            .withHeader("Content-Type", contentType)));
 
     ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
         MultiMap.caseInsensitiveMultiMap(), endpointPath);
-
-    EndpointOptions endpointOptions = new EndpointOptions()
-        .setPath(endpointPath)
-        .setDomain("localhost")
-        .setPort(wireMockServer.port())
-        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
-
-    Optional.ofNullable(jsonPredicate).ifPresent(predicates::add);
-    ResponseOptions responseOptions = new ResponseOptions()
-        .setPredicates(predicates)
-        .setForceJson(forceJson);
-
-    HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions()
-            .setEndpointOptions(endpointOptions)
-            .setResponseOptions(responseOptions),
-        ACTION_ALIAS, actionLogLevel);
+    HttpAction tested = setupTestingInstances(vertx, endpointPath, responseBody, contentType,
+        jsonPredicate, forceJson, actionLogLevel);
 
     verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       assertEquals(SUCCESS_TRANSITION, fragmentResult.getTransition());
@@ -451,34 +408,14 @@ class HttpActionTest {
   @ParameterizedTest(name = "Expect _error transition and empty payload")
   @MethodSource("dataExpectErrorTransitionAndNullBody")
   void testErrorTransitionAndEmptyPayload(String contentType, boolean forceJson,
-      String jsonPredicate,
-      String responseBody, VertxTestContext testContext, Vertx vertx) throws Throwable {
+      String jsonPredicate, String responseBody, VertxTestContext testContext, Vertx vertx)
+      throws Throwable {
     String endpointPath = "/api/error-no-response";
-    Set<String> predicates = new HashSet<>();
-
-    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
-        .willReturn(aResponse().withBody(responseBody)
-            .withHeader("Content-Type", contentType)));
 
     ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
         MultiMap.caseInsensitiveMultiMap(), endpointPath);
-
-    EndpointOptions endpointOptions = new EndpointOptions()
-        .setPath(endpointPath)
-        .setDomain("localhost")
-        .setPort(wireMockServer.port())
-        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
-
-    Optional.ofNullable(jsonPredicate).ifPresent(predicates::add);
-    ResponseOptions responseOptions = new ResponseOptions()
-        .setPredicates(predicates)
-        .setForceJson(forceJson);
-
-    HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions()
-            .setEndpointOptions(endpointOptions)
-            .setResponseOptions(responseOptions),
-        ACTION_ALIAS, actionLogLevel);
+    HttpAction tested = setupTestingInstances(vertx, endpointPath, responseBody, contentType,
+        jsonPredicate, forceJson, actionLogLevel);
 
     verifyExecution(tested, clientRequest, new Fragment("type", EMPTY_JSON, "expectedBody"),
         fragmentResult -> {
@@ -493,31 +430,11 @@ class HttpActionTest {
   void testExpectExceptionAndNoResponse(String contentType, boolean forceJson, String jsonPredicate,
       String responseBody, VertxTestContext testContext, Vertx vertx) throws Throwable {
     String endpointPath = "/api/exception-no-response";
-    Set<String> predicates = new HashSet<>();
-
-    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
-        .willReturn(aResponse().withBody(responseBody)
-            .withHeader("Content-Type", contentType)));
 
     ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
         MultiMap.caseInsensitiveMultiMap(), endpointPath);
-
-    EndpointOptions endpointOptions = new EndpointOptions()
-        .setPath(endpointPath)
-        .setDomain("localhost")
-        .setPort(wireMockServer.port())
-        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
-
-    Optional.ofNullable(jsonPredicate).ifPresent(predicates::add);
-    ResponseOptions responseOptions = new ResponseOptions()
-        .setPredicates(predicates)
-        .setForceJson(forceJson);
-
-    HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions()
-            .setEndpointOptions(endpointOptions)
-            .setResponseOptions(responseOptions),
-        ACTION_ALIAS, actionLogLevel);
+    HttpAction tested = setupTestingInstances(vertx, endpointPath, responseBody, contentType,
+        jsonPredicate, forceJson, actionLogLevel);
 
     verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       assertNotNull(fragmentResult);
@@ -534,31 +451,11 @@ class HttpActionTest {
   void expectErrorWhenNotExistingPredicateProvided(VertxTestContext testContext, Vertx vertx)
       throws Throwable {
     String endpointPath = "/api/exception-wrong-predicate";
-    Set<String> predicates = new HashSet<>();
-    predicates.add(NOT_EXISTING_PREDICATE);
-
-    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
-        .willReturn(aResponse().withBody(JSON_BODY)
-            .withHeader("Content-Type", APPLICATION_JSON)));
 
     ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
         MultiMap.caseInsensitiveMultiMap(), endpointPath);
-
-    EndpointOptions endpointOptions = new EndpointOptions()
-        .setPath(endpointPath)
-        .setDomain("localhost")
-        .setPort(wireMockServer.port())
-        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
-
-    ResponseOptions responseOptions = new ResponseOptions()
-        .setPredicates(predicates)
-        .setForceJson(false);
-
-    HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions()
-            .setEndpointOptions(endpointOptions)
-            .setResponseOptions(responseOptions),
-        ACTION_ALIAS, actionLogLevel);
+    HttpAction tested = setupTestingInstances(vertx, endpointPath, JSON_BODY, APPLICATION_JSON,
+        NOT_EXISTING_PREDICATE, false, actionLogLevel);
 
     verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       assertNotNull(fragmentResult);
@@ -577,23 +474,10 @@ class HttpActionTest {
       throws Throwable {
     String endpointPath = "/api/invalid-api-response";
 
-    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
-        .willReturn(aResponse().withBody(RAW_BODY)
-            .withHeader("Content-Type", APPLICATION_JSON)));
-
     ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
         MultiMap.caseInsensitiveMultiMap(), endpointPath);
-
-    EndpointOptions endpointOptions = new EndpointOptions()
-        .setPath(endpointPath)
-        .setDomain("localhost")
-        .setPort(wireMockServer.port())
-        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
-
-    HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions()
-            .setEndpointOptions(endpointOptions),
-        ACTION_ALIAS, ActionLogLevel.INFO);
+    HttpAction tested = setupTestingInstances(vertx, endpointPath, RAW_BODY, APPLICATION_JSON,
+        null, false, ActionLogLevel.INFO);
 
     verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       assertNotNull(fragmentResult);
@@ -886,20 +770,29 @@ class HttpActionTest {
         new HttpActionOptions().setEndpointOptions(endpointOptions), ACTION_ALIAS, actionLogLevel);
   }
 
-  private void verifyFailingExecution(HttpAction tested, ClientRequest clientRequest,
-      Fragment fragment,
-      Consumer<Throwable> failureAssertions,
-      VertxTestContext testContext) throws Throwable {
-    tested.apply(new FragmentContext(fragment, clientRequest),
-        testContext.failing(error -> {
-          testContext.verify(() -> failureAssertions.accept(error));
-          testContext.completeNow();
-        }));
-    //then
-    assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
-    if (testContext.failed()) {
-      throw testContext.causeOfFailure();
-    }
+  private HttpAction setupTestingInstances(Vertx vertx, String endpointPath, String body,
+      String contentType, String jsonPredicate, boolean forceJson, ActionLogLevel logLevel) {
+    Set<String> predicates = new HashSet<>();
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(body)
+            .withHeader("Content-Type", contentType)));
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(endpointPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    Optional.ofNullable(jsonPredicate).ifPresent(predicates::add);
+    ResponseOptions responseOptions = new ResponseOptions()
+        .setPredicates(predicates)
+        .setForceJson(forceJson);
+
+    return new HttpAction(vertx,
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions)
+            .setResponseOptions(responseOptions),
+        ACTION_ALIAS, logLevel);
   }
 
   private void verifyExecution(HttpAction tested, ClientRequest clientRequest, Fragment fragment,

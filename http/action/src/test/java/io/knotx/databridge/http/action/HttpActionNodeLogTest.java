@@ -19,9 +19,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
-import static io.knotx.databridge.http.action.HttpAction.TIMEOUT_TRANSITION;
-import static io.knotx.fragments.handler.api.domain.FragmentResult.ERROR_TRANSITION;
-import static io.knotx.fragments.handler.api.domain.FragmentResult.SUCCESS_TRANSITION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -33,9 +30,7 @@ import io.knotx.fragments.handler.api.actionlog.ActionLogLevel;
 import io.knotx.fragments.handler.api.domain.FragmentContext;
 import io.knotx.fragments.handler.api.domain.FragmentResult;
 import io.knotx.server.api.context.ClientRequest;
-import io.reactivex.exceptions.CompositeException;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -50,8 +45,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -65,16 +58,11 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.WARN)
 public class HttpActionNodeLogTest {
 
-  private static final String VALID_REQUEST_PATH = "/valid-service";
-  private static final String VALID_JSON_RESPONSE_BODY = "{ \"data\": \"service response\"}";
-  private static final String VALID_JSON_ARRAY_RESPONSE_BODY = "[ \"first service response\", \" second service response\"]";
-  private static final String VALID_EMPTY_RESPONSE_BODY = "";
   private static final String ACTION_ALIAS = "httpAction";
   private static final String RAW_BODY = "<html>Hello</html>";
   private static final String APPLICATION_JSON = "application/json";
   private static final String APPLICATION_TEXT = "application/text";
   private static final String JSON = "JSON";
-  private static final String NOT_EXISTING_PREDICATE = "not existing predicate";
   private static final String JSON_BODY = "{\n" +
       "  \"id\": 21762532,\n" +
       "  \"url\": \"http://knotx.io\",\n" +
@@ -82,6 +70,17 @@ public class HttpActionNodeLogTest {
       "}";
   private static final JsonObject EMPTY_JSON = new JsonObject();
   private WireMockServer wireMockServer;
+
+  static Stream<Arguments> succeedingRequestsCasesWithLogLevels() {
+    return Stream.of(
+        Arguments.of(APPLICATION_JSON, false, null, JSON_BODY, ActionLogLevel.INFO),
+        Arguments.of(APPLICATION_TEXT, true, null, JSON_BODY, ActionLogLevel.INFO),
+        Arguments.of(APPLICATION_JSON, false, JSON, JSON_BODY, ActionLogLevel.INFO),
+        Arguments.of(APPLICATION_JSON, false, null, JSON_BODY, ActionLogLevel.ERROR),
+        Arguments.of(APPLICATION_TEXT, true, null, JSON_BODY, ActionLogLevel.ERROR),
+        Arguments.of(APPLICATION_JSON, false, JSON, JSON_BODY, ActionLogLevel.ERROR)
+    );
+  }
 
   static Stream<Arguments> failingBodyDecodingCasesWithLogLevels() {
     return Stream.of( //Content-Type, forceJson, JSON predicate, Body
@@ -103,13 +102,6 @@ public class HttpActionNodeLogTest {
     );
   }
 
-  static Stream<ActionLogLevel> logLevels() {
-    return Stream.of( //ActionLogLevel
-        ActionLogLevel.INFO,
-        ActionLogLevel.ERROR
-    );
-  }
-
   @BeforeEach
   void setUp() {
     this.wireMockServer = new WireMockServer(options().dynamicPort());
@@ -122,29 +114,16 @@ public class HttpActionNodeLogTest {
   }
 
   @ParameterizedTest(name = "expect success transition and action log should contain info level messages")
-  @MethodSource("logLevels")
-  void actionLogShouldContainSuccessfulLogsOnlyWhenInfoLogLevel(ActionLogLevel logLevel,
-      VertxTestContext testContext, Vertx vertx)
-      throws Throwable {
+  @MethodSource("succeedingRequestsCasesWithLogLevels")
+  void actionLogShouldContainSuccessfulLogsOnlyWhenInfoLogLevel(String contentType,
+      boolean forceJson, String jsonPredicate, String responseBody, ActionLogLevel logLevel,
+      VertxTestContext testContext, Vertx vertx) throws Throwable {
     String endpointPath = "/api/info-action-log";
-
-    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
-        .willReturn(aResponse().withBody(JSON_BODY)
-            .withHeader("Content-Type", APPLICATION_JSON)));
 
     ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
         MultiMap.caseInsensitiveMultiMap(), endpointPath);
-
-    EndpointOptions endpointOptions = new EndpointOptions()
-        .setPath(endpointPath)
-        .setDomain("localhost")
-        .setPort(wireMockServer.port())
-        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
-
-    HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions()
-            .setEndpointOptions(endpointOptions),
-        ACTION_ALIAS, logLevel);
+    HttpAction tested = setupTestingInstances(vertx, endpointPath, responseBody, contentType,
+        jsonPredicate, forceJson, logLevel);
 
     verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       assertNotNull(fragmentResult.getNodeLog().getMap().get("logs"));
@@ -166,36 +145,14 @@ public class HttpActionNodeLogTest {
   @ParameterizedTest(name = "Expect request, response, and error logs when decoding exception occurs")
   @MethodSource("failingBodyDecodingCasesWithLogLevels")
   void actionLogShouldContainRequestRawBodyAndError(String contentType, boolean forceJson,
-      String jsonPredicate,
-      String responseBody,
-      ActionLogLevel logLevel,
+      String jsonPredicate, String responseBody, ActionLogLevel logLevel,
       VertxTestContext testContext, Vertx vertx) throws Throwable {
     String endpointPath = "/api/error-no-response";
-    Set<String> predicates = new HashSet<>();
-
-    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
-        .willReturn(aResponse().withBody(responseBody)
-            .withHeader("Content-Type", contentType)));
 
     ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
         MultiMap.caseInsensitiveMultiMap(), endpointPath);
-
-    EndpointOptions endpointOptions = new EndpointOptions()
-        .setPath(endpointPath)
-        .setDomain("localhost")
-        .setPort(wireMockServer.port())
-        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
-
-    Optional.ofNullable(jsonPredicate).ifPresent(predicates::add);
-    ResponseOptions responseOptions = new ResponseOptions()
-        .setPredicates(predicates)
-        .setForceJson(forceJson);
-
-    HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions()
-            .setEndpointOptions(endpointOptions)
-            .setResponseOptions(responseOptions),
-        ACTION_ALIAS, logLevel);
+    HttpAction tested = setupTestingInstances(vertx, endpointPath, responseBody, contentType,
+        jsonPredicate, forceJson, logLevel);
 
     verifyExecution(tested, clientRequest, new Fragment("type", EMPTY_JSON, "expectedBody"),
         fragmentResult -> {
@@ -220,31 +177,11 @@ public class HttpActionNodeLogTest {
       String jsonPredicate, String responseBody, ActionLogLevel logLevel,
       VertxTestContext testContext, Vertx vertx) throws Throwable {
     String endpointPath = "/api/exception-no-response";
-    Set<String> predicates = new HashSet<>();
-
-    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
-        .willReturn(aResponse().withBody(responseBody)
-            .withHeader("Content-Type", contentType)));
 
     ClientRequest clientRequest = prepareClientRequest(MultiMap.caseInsensitiveMultiMap(),
         MultiMap.caseInsensitiveMultiMap(), endpointPath);
-
-    EndpointOptions endpointOptions = new EndpointOptions()
-        .setPath(endpointPath)
-        .setDomain("localhost")
-        .setPort(wireMockServer.port())
-        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
-
-    Optional.ofNullable(jsonPredicate).ifPresent(predicates::add);
-    ResponseOptions responseOptions = new ResponseOptions()
-        .setPredicates(predicates)
-        .setForceJson(forceJson);
-
-    HttpAction tested = new HttpAction(vertx,
-        new HttpActionOptions()
-            .setEndpointOptions(endpointOptions)
-            .setResponseOptions(responseOptions),
-        ACTION_ALIAS, logLevel);
+    HttpAction tested = setupTestingInstances(vertx, endpointPath, responseBody, contentType,
+        jsonPredicate, forceJson, logLevel);
 
     verifyExecution(tested, clientRequest, createFragment(), fragmentResult -> {
       assertNotNull(fragmentResult.getNodeLog().getJsonObject("logs"));
@@ -257,6 +194,31 @@ public class HttpActionNodeLogTest {
       assertRequestLogs(logs.getJsonObject("request"));
       assertErrorLogs(logs.getJsonObject("error"));
     }, testContext);
+  }
+
+  private HttpAction setupTestingInstances(Vertx vertx, String endpointPath, String body,
+      String contentType, String jsonPredicate, boolean forceJson, ActionLogLevel logLevel) {
+    Set<String> predicates = new HashSet<>();
+    wireMockServer.stubFor(get(urlEqualTo(endpointPath))
+        .willReturn(aResponse().withBody(body)
+            .withHeader("Content-Type", contentType)));
+
+    EndpointOptions endpointOptions = new EndpointOptions()
+        .setPath(endpointPath)
+        .setDomain("localhost")
+        .setPort(wireMockServer.port())
+        .setAllowedRequestHeaderPatterns(Collections.singletonList(Pattern.compile(".*")));
+
+    Optional.ofNullable(jsonPredicate).ifPresent(predicates::add);
+    ResponseOptions responseOptions = new ResponseOptions()
+        .setPredicates(predicates)
+        .setForceJson(forceJson);
+
+    return new HttpAction(vertx,
+        new HttpActionOptions()
+            .setEndpointOptions(endpointOptions)
+            .setResponseOptions(responseOptions),
+        ACTION_ALIAS, logLevel);
   }
 
   private void assertRequestLogs(JsonObject requestLog) {
