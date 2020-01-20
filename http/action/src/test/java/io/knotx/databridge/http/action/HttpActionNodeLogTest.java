@@ -221,17 +221,17 @@ public class HttpActionNodeLogTest {
         ACTION_ALIAS, logLevel);
   }
 
-  private void assertRequestLogs(JsonObject requestLog) {
+  private static void assertRequestLogs(JsonObject requestLog) {
     assertTrue(requestLog.containsKey("path"));
     assertTrue(requestLog.containsKey("requestHeaders"));
   }
 
-  private void assertErrorLogs(JsonObject errorLog) {
+  private static void assertErrorLogs(JsonObject errorLog) {
     assertTrue(errorLog.containsKey("className"));
     assertTrue(errorLog.containsKey("message"));
   }
 
-  private void assertResponseLogs(JsonObject responseLog) {
+  private static void assertResponseLogs(JsonObject responseLog) {
     assertTrue(responseLog.containsKey("httpVersion"));
     assertTrue(responseLog.containsKey("httpMethod"));
     assertTrue(responseLog.containsKey("statusCode"));

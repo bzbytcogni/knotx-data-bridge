@@ -158,19 +158,23 @@ public class HttpAction implements Action {
   }
 
   private void logRequest(ActionLogger actionLogger, EndpointRequest request) {
-    JsonObject headers = new JsonObject();
-    request.getHeaders().entries().forEach(e -> headers.put(e.getKey(), e.getValue()));
+    JsonObject headers = getHeadersFromRequest(request);
     actionLogger.info(REQUEST, new JsonObject().put("path", request.getPath())
         .put("requestHeaders", headers));
   }
 
   private void logErrorAndRequest(ActionLogger actionLogger, Throwable throwable,
       EndpointRequest request) {
-    JsonObject headers = new JsonObject();
-    request.getHeaders().entries().forEach(e -> headers.put(e.getKey(), e.getValue()));
+    JsonObject headers = getHeadersFromRequest(request);
     actionLogger.error(REQUEST, new JsonObject().put("path", request.getPath())
         .put("requestHeaders", headers));
     actionLogger.error(throwable);
+  }
+
+  private JsonObject getHeadersFromRequest(EndpointRequest request) {
+    JsonObject headers = new JsonObject();
+    request.getHeaders().entries().forEach(e -> headers.put(e.getKey(), e.getValue()));
+    return headers;
   }
 
   private void logResponseOnErrorLevel(ActionLogger actionLogger, EndpointRequest request,
@@ -376,5 +380,4 @@ public class HttpAction implements Action {
     });
     return responseHeaders;
   }
-
 }

@@ -53,7 +53,7 @@ public class HttpResponseData {
     };
   }
 
-  private JsonObject multiMapToJson(List<Entry<String, String>> entries) {
+  private static JsonObject multiMapToJson(List<Entry<String, String>> entries) {
     JsonObject json = new JsonObject();
     entries.forEach(e -> json.put(e.getKey(), e.getValue()));
     return json;
